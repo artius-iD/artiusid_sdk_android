@@ -13,6 +13,9 @@
     <uses-feature
         android:name="android.hardware.camera.front"
         android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
     
     <!-- NFC feature -->
     <uses-feature
@@ -20,7 +23,24 @@
         android:required="false" />
 
     <application>
-        <!-- SDK Activities will be added here -->
+        <!-- SDK Activities -->
+        <activity
+            android:name=".ui.activities.FaceLivenessActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Material3.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+            
+        <activity
+            android:name=".ui.activities.DocumentScanActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Material3.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+            
+        <activity
+            android:name=".ui.activities.VerificationFlowActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Material3.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
