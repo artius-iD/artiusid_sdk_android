@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ArtiusID SDK</string>
+    <string name="face_verification_title">Face Verification</string>
+    <string name="document_scan_title">Document Scan</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="retry_button">Retry</string>
+    <string name="continue_button">Continue</string>
+</resources>
