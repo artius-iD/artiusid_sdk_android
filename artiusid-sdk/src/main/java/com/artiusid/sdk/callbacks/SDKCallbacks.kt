@@ -1,6 +1,6 @@
-package com.artiusid.sdk.callbacks
+package com.artiusid.sdk.sdk.callbacks
 
-import com.artiusid.sdk.models.*
+import com.artiusid.sdk.sdk.models.*
 
 /**
  * Callback interface for complete verification flow

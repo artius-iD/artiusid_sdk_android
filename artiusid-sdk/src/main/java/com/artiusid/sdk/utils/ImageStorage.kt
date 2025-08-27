@@ -1,156 +1,83 @@
 package com.artiusid.sdk.utils
 
 import android.graphics.Bitmap
+import com.artiusid.sdk.domain.model.CapturedImages
+import com.artiusid.sdk.data.models.passport.PassportMRZData
 
-/**
- * Utility class for managing captured images during SDK flows
- */
 object ImageStorage {
-    private const val TAG = "ImageStorage"
-    
-    private var faceImage: Bitmap? = null
     private var frontImage: Bitmap? = null
     private var backImage: Bitmap? = null
-    private var passportImage: Bitmap? = null
+    private var faceImage: Bitmap? = null
+    private var passportImage: Bitmap? = null // Add passport image
+    
+    // Add OCR data storage
     private var frontOcrData: Map<String, String>? = null
-    private var backOcrData: Map<String, String>? = null
     
-    /**
-     * Store face image from liveness detection
-     */
-    fun setFaceImage(bitmap: Bitmap) {
-        faceImage = bitmap
-        android.util.Log.d(TAG, "Face image stored")
-    }
-    
-    /**
-     * Get stored face image
-     */
-    fun getFaceImage(): Bitmap? = faceImage
-    
-    /**
-     * Store front document image
-     */
+    // Add passport MRZ data storage
+    private var passportMRZData: PassportMRZData? = null
+
     fun setFrontImage(bitmap: Bitmap) {
         frontImage = bitmap
-        android.util.Log.d(TAG, "Front document image stored")
+        android.util.Log.d("ImageStorage", "Front image set: ${bitmap.width}x${bitmap.height}")
     }
-    
-    /**
-     * Get stored front document image
-     */
-    fun getFrontImage(): Bitmap? = frontImage
-    
-    /**
-     * Store back document image
-     */
+
     fun setBackImage(bitmap: Bitmap) {
         backImage = bitmap
-        android.util.Log.d(TAG, "Back document image stored")
+        android.util.Log.d("ImageStorage", "Back image set: ${bitmap.width}x${bitmap.height}")
+    }
+
+    fun setFaceImage(bitmap: Bitmap) {
+        faceImage = bitmap
+        android.util.Log.d("ImageStorage", "Face image set: ${bitmap.width}x${bitmap.height}")
     }
     
-    /**
-     * Get stored back document image
-     */
-    fun getBackImage(): Bitmap? = backImage
+    // Add OCR data storage methods
+    fun setFrontOcrData(ocrData: Map<String, String>) {
+        frontOcrData = ocrData
+        android.util.Log.d("ImageStorage", "Front OCR data stored: ${ocrData.keys}")
+    }
     
-    /**
-     * Store passport image from NFC
-     */
+    fun getFrontOcrData(): Map<String, String>? {
+        return frontOcrData
+    }
+
     fun setPassportImage(bitmap: Bitmap) {
         passportImage = bitmap
-        android.util.Log.d(TAG, "Passport image stored")
+        android.util.Log.d("ImageStorage", "Passport image set: ${bitmap.width}x${bitmap.height}")
     }
     
-    /**
-     * Get stored passport image
-     */
-    fun getPassportImage(): Bitmap? = passportImage
-    
-    /**
-     * Store OCR data from front document
-     */
-    fun setFrontOcrData(data: Map<String, String>) {
-        frontOcrData = data
-        android.util.Log.d(TAG, "Front OCR data stored: ${data.size} fields")
+    fun getPassportImage(): Bitmap? {
+        return passportImage
     }
     
-    /**
-     * Get OCR data from front document
-     */
-    fun getFrontOcrData(): Map<String, String>? = frontOcrData
-    
-    /**
-     * Store OCR data from back document
-     */
-    fun setBackOcrData(data: Map<String, String>) {
-        backOcrData = data
-        android.util.Log.d(TAG, "Back OCR data stored: ${data.size} fields")
+    fun setPassportMRZData(mrzData: PassportMRZData) {
+        passportMRZData = mrzData
+        android.util.Log.d("ImageStorage", "Passport MRZ data set: ${mrzData.passportNumber}")
     }
     
-    /**
-     * Get OCR data from back document
-     */
-    fun getBackOcrData(): Map<String, String>? = backOcrData
+    fun getPassportMRZData(): PassportMRZData? = passportMRZData
     
-    /**
-     * Get all captured images as a data class
-     */
+    fun clearPassportImage() {
+        passportImage = null
+        passportMRZData = null
+        android.util.Log.d("ImageStorage", "Passport image and MRZ data cleared for recapture")
+    }
+
     fun getCapturedImages(): CapturedImages {
         return CapturedImages(
-            faceImage = faceImage,
             frontImage = frontImage,
             backImage = backImage,
+            faceImage = faceImage,
             passportImage = passportImage
         )
     }
-    
-    /**
-     * Clear all stored images and data
-     */
+
     fun clearAll() {
-        faceImage?.recycle()
-        frontImage?.recycle()
-        backImage?.recycle()
-        passportImage?.recycle()
-        
-        faceImage = null
         frontImage = null
         backImage = null
+        faceImage = null
         passportImage = null
         frontOcrData = null
-        backOcrData = null
-        
-        android.util.Log.d(TAG, "All stored images and data cleared")
+        passportMRZData = null
     }
-    
-    /**
-     * Check if face image is available
-     */
-    fun hasFaceImage(): Boolean = faceImage != null
-    
-    /**
-     * Check if front document image is available
-     */
-    fun hasFrontImage(): Boolean = frontImage != null
-    
-    /**
-     * Check if back document image is available
-     */
-    fun hasBackImage(): Boolean = backImage != null
-    
-    /**
-     * Check if passport image is available
-     */
-    fun hasPassportImage(): Boolean = passportImage != null
-}
-
-/**
- * Data class to hold all captured images
- */
-data class CapturedImages(
-    val faceImage: Bitmap? = null,
-    val frontImage: Bitmap? = null,
-    val backImage: Bitmap? = null,
-    val passportImage: Bitmap? = null
-)
+} 

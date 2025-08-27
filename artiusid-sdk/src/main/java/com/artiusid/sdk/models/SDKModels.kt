@@ -1,4 +1,4 @@
-package com.artiusid.sdk.models
+package com.artiusid.sdk.sdk.models
 
 import android.graphics.Bitmap
 import android.os.Parcelable

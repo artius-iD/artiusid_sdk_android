@@ -1,4 +1,4 @@
-package com.artiusid.sdk.ui.theme
+package com.artiusid.sdk.sdk.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

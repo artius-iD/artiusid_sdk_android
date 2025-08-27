@@ -1,4 +1,4 @@
-package com.artiusid.sdk.ui.activities
+package com.artiusid.sdk.sdk.ui.activities
 
 import android.os.Bundle
 import androidx.compose.foundation.layout.*
@@ -8,11 +8,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import com.artiusid.sdk.ArtiusIDSDK
-import com.artiusid.sdk.callbacks.VerificationStep
-import com.artiusid.sdk.config.VerificationConfig
-import com.artiusid.sdk.models.*
-import com.artiusid.sdk.utils.ImageStorage
+import com.artiusid.sdk.sdk.ArtiusIDSDK
+import com.artiusid.sdk.sdk.callbacks.VerificationStep
+import com.artiusid.sdk.sdk.config.VerificationConfig
+import com.artiusid.sdk.sdk.models.*
+import com.artiusid.sdk.sdk.utils.ImageStorage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

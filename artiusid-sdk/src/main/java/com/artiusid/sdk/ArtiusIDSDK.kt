@@ -1,12 +1,12 @@
-package com.artiusid.sdk
+package com.artiusid.sdk.sdk
 
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import com.artiusid.sdk.callbacks.*
-import com.artiusid.sdk.config.*
-import com.artiusid.sdk.models.*
-import com.artiusid.sdk.ui.activities.*
+import com.artiusid.sdk.sdk.callbacks.*
+import com.artiusid.sdk.sdk.config.*
+import com.artiusid.sdk.sdk.models.*
+import com.artiusid.sdk.sdk.ui.activities.*
 
 /**
  * Main entry point for the ArtiusID Android SDK

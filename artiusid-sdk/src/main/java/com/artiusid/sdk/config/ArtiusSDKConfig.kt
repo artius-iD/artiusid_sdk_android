@@ -1,4 +1,4 @@
-package com.artiusid.sdk.config
+package com.artiusid.sdk.sdk.config
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

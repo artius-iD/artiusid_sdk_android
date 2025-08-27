@@ -1,4 +1,4 @@
-package com.artiusid.sdk.ui.activities
+package com.artiusid.sdk.sdk.ui.activities
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*

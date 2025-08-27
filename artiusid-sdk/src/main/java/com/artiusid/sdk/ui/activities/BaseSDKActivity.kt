@@ -1,4 +1,4 @@
-package com.artiusid.sdk.ui.activities
+package com.artiusid.sdk.sdk.ui.activities
 
 import android.app.Activity
 import android.content.Intent
@@ -10,7 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.artiusid.sdk.ui.theme.SDKTheme
+import com.artiusid.sdk.sdk.ui.theme.SDKTheme
 
 /**
  * Base activity for all SDK activities

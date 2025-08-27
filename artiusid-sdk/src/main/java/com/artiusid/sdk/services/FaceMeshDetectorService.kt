@@ -1,9 +1,9 @@
-package com.artiusid.sdk.services
+package com.artiusid.sdk.sdk.services
 
 import android.graphics.Bitmap
 import androidx.camera.core.ImageAnalysis
-import com.artiusid.sdk.config.LivenessConfig
-import com.artiusid.sdk.models.HeadMovement
+import com.artiusid.sdk.sdk.config.LivenessConfig
+import com.artiusid.sdk.sdk.models.HeadMovement
 import kotlinx.coroutines.flow.StateFlow
 
 /**
