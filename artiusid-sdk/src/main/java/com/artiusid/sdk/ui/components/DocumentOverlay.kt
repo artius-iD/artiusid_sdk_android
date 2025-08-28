@@ -1,4 +1,4 @@
-package com.artiusid.sdk.presentation.components
+package com.artiusid.presentation.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box

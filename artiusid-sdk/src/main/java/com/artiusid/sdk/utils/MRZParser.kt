@@ -1,6 +1,6 @@
 package com.artiusid.sdk.utils.passport
 
-import com.artiusid.sdk.data.models.passport.PassportMRZData
+import com.artiusid.sdk.sdk.data.models.passport.PassportMRZData
 import java.util.regex.Pattern
 
 /**

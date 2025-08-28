@@ -4,13 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -18,337 +12,230 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.artiusid.sdk.ArtiusIDSDK
-import com.artiusid.sdk.config.DocumentType
-import com.artiusid.sdk.document.DocumentInfoExtractor
-import com.artiusid.sdk.models.DocumentScanResult
-import com.artiusid.sdk.models.MRZData
-import com.artiusid.sdk.models.SDKError
-import com.artiusid.sdk.ui.components.DocumentOverlay
-import com.artiusid.sdk.utils.ImageStorage
-import com.artiusid.sdk.utils.MRZParser
-import com.artiusid.sdk.utils.passport.PassportTextAnalyzer
+import com.artiusid.sdk.sdk.ArtiusIDSDK
+import com.artiusid.sdk.sdk.models.*
+import com.artiusid.sdk.sdk.services.EnhancedCameraService
+import com.artiusid.sdk.sdk.services.DocumentScanService
+import com.artiusid.sdk.sdk.ui.theme.ArtiusIDSDKTheme
 import kotlinx.coroutines.launch
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 /**
- * Real Document Scan Activity using actual ML Kit OCR and MRZ parsing
+ * Activity for document scanning with real camera and OCR
  */
 class DocumentScanActivity : BaseSDKActivity() {
     
-    private lateinit var cameraExecutor: ExecutorService
-    private var documentInfoExtractor: DocumentInfoExtractor? = null
-    private var passportTextAnalyzer: PassportTextAnalyzer? = null
+    private lateinit var enhancedCameraService: EnhancedCameraService
+    private lateinit var documentScanService: DocumentScanService
+    private var documentType: DocumentType = DocumentType.PASSPORT
+    
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            startDocumentScan()
+        } else {
+            finishWithError(SDKError(
+                code = SDKErrorCode.PERMISSION_DENIED,
+                message = "Camera permission is required for document scanning"
+            ))
+        }
+    }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        cameraExecutor = Executors.newSingleThreadExecutor()
         
-        // Initialize document processing services
-        documentInfoExtractor = DocumentInfoExtractor()
-        passportTextAnalyzer = PassportTextAnalyzer(
-            onMRZDetected = { mrzData, bitmap ->
-                handleMRZDetected(mrzData, bitmap)
-            }
+        // Initialize services
+        enhancedCameraService = EnhancedCameraService(this)
+        documentScanService = DocumentScanService(this)
+        
+        // Get document type from intent
+        documentType = DocumentType.valueOf(
+            intent.getStringExtra("document_type") ?: DocumentType.PASSPORT.name
         )
+        
+        // Check camera permission
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                startDocumentScan()
+            }
+            else -> {
+                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
     }
     
     @Composable
     override fun Content() {
-        val context = LocalContext.current
-        val lifecycleOwner = LocalLifecycleOwner.current
-        
-        var hasCameraPermission by remember {
-            mutableStateOf(
-                ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.CAMERA
-                ) == PackageManager.PERMISSION_GRANTED
-            )
-        }
-        
-        val launcher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            hasCameraPermission = isGranted
-        }
-        
-        var scanningStatus by remember { mutableStateOf("Position document in frame") }
+        var instruction by remember { mutableStateOf("Position document in frame") }
         var isProcessing by remember { mutableStateOf(false) }
+        var previewView by remember { mutableStateOf<PreviewView?>(null) }
         
-        if (!hasCameraPermission) {
-            // Request camera permission
+        val cameraReady by enhancedCameraService.isCameraReady.collectAsState()
+        val focusStable by enhancedCameraService.isFocusStable.collectAsState()
+        
+        ArtiusIDSDKTheme {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Camera Permission Required",
+                    text = "Document Scanning",
                     style = MaterialTheme.typography.headlineMedium
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Document scanning requires camera access",
+                    text = "Scan your ${documentType.name.lowercase().replace("_", " ")}",
                     style = MaterialTheme.typography.bodyLarge
                 )
                 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 
-                Button(
-                    onClick = {
-                        launcher.launch(Manifest.permission.CAMERA)
-                    }
+                // Real camera preview
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
                 ) {
-                    Text("Grant Camera Permission")
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Button(
-                    onClick = { finishAsCancelled() }
-                ) {
-                    Text("Cancel")
-                }
-            }
-        } else {
-            // Camera preview with document detection
-            Box(modifier = Modifier.fillMaxSize()) {
-                // Camera preview
-                AndroidView(
-                    factory = { ctx ->
-                        PreviewView(ctx).apply {
-                            setupCamera(this, lifecycleOwner) { status ->
-                                scanningStatus = status
+                    AndroidView(
+                        factory = { context ->
+                            PreviewView(context).also { preview ->
+                                previewView = preview
                             }
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize()
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text(
+                    text = instruction,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 
-                // Document overlay
-                DocumentOverlay(
-                    modifier = Modifier.fillMaxSize()
-                )
-                
-                // Status text
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(bottom = 100.dp),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text(
-                            text = scanningStatus,
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
+                // Focus stability indicator
+                if (cameraReady && focusStable) {
+                    Text(
+                        text = "📷 Focus Ready",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
                 
-                // Processing indicator
-                if (isProcessing) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                CircularProgressIndicator()
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text("Processing document...")
-                            }
-                        }
-                    }
-                }
+                Spacer(modifier = Modifier.height(24.dp))
                 
-                // Cancel button
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.TopEnd
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Button(
+                    OutlinedButton(
                         onClick = { finishAsCancelled() },
                         enabled = !isProcessing
                     ) {
                         Text("Cancel")
                     }
-                }
-            }
-        }
-    }
-    
-    private fun setupCamera(
-        previewView: PreviewView, 
-        lifecycleOwner: androidx.lifecycle.LifecycleOwner,
-        onStatusUpdate: (String) -> Unit
-    ) {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-        
-        cameraProviderFuture.addListener({
-            try {
-                val cameraProvider = cameraProviderFuture.get()
-                
-                // Preview
-                val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
-                
-                // Image analysis for document detection
-                val imageAnalyzer = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .also { analyzer ->
-                        analyzer.setAnalyzer(cameraExecutor) { imageProxy ->
-                            processImageForDocument(imageProxy, onStatusUpdate)
+                    
+                    Button(
+                        onClick = {
+                            captureAndProcessDocument { newInstruction ->
+                                instruction = newInstruction
+                                isProcessing = newInstruction.contains("Processing")
+                            }
+                        },
+                        enabled = cameraReady && !isProcessing
+                    ) {
+                        if (isProcessing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text("Capture")
                         }
                     }
-                
-                // Select back camera for document scanning
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-                
-                // Unbind use cases before rebinding
-                cameraProvider.unbindAll()
-                
-                // Bind use cases to camera
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    imageAnalyzer
-                )
-                
-            } catch (exc: Exception) {
-                android.util.Log.e("DocumentScanActivity", "Use case binding failed", exc)
-                
-                val sdkError = SDKError(
-                    code = SDKError.ERROR_CAMERA_UNAVAILABLE,
-                    message = "Failed to start camera: ${exc.message}"
-                )
-                
-                ArtiusIDSDK.getDocumentScanCallback()?.onError(sdkError)
-                ArtiusIDSDK.clearDocumentScanCallback()
-                
-                finishWithError(sdkError.code, sdkError.message)
+                }
             }
-        }, ContextCompat.getMainExecutor(this))
-    }
-    
-    private fun processImageForDocument(imageProxy: ImageProxy, onStatusUpdate: (String) -> Unit) {
-        try {
-            val bitmap = imageProxy.toBitmap()
-            
-            // Use the real passport text analyzer for MRZ detection
-            passportTextAnalyzer?.analyzeImage(bitmap)
-            
-            onStatusUpdate("Scanning for document...")
-            
-        } catch (e: Exception) {
-            android.util.Log.e("DocumentScanActivity", "Error processing image", e)
-        } finally {
-            imageProxy.close()
+        }
+        
+        // Start camera when preview is ready
+        LaunchedEffect(previewView) {
+            previewView?.let { preview ->
+                enhancedCameraService.startCamera(
+                    lifecycleOwner = this@DocumentScanActivity,
+                    previewView = preview
+                )
+            }
         }
     }
     
-    private fun handleMRZDetected(mrzData: com.artiusid.data.models.passport.PassportMRZData, bitmap: Bitmap) {
-        lifecycleScope.launch {
-            try {
-                // Store the document image
-                ImageStorage.setFrontImage(bitmap)
+    private fun startDocumentScan() {
+        // Camera will be started when preview is ready
+        android.util.Log.d("DocumentScanActivity", "Document scan initialized for type: $documentType")
+    }
+    
+    private fun captureAndProcessDocument(onInstructionUpdate: (String) -> Unit) {
+        onInstructionUpdate("Capturing image...")
+        
+        enhancedCameraService.captureImage { bitmap ->
+            if (bitmap != null) {
+                onInstructionUpdate("Processing document...")
                 
-                // Convert to SDK MRZ format
-                val sdkMrzData = MRZData(
-                    documentType = "P",
-                    issuingCountry = mrzData.issuingCountry ?: "",
-                    documentNumber = mrzData.passportNumber ?: "",
-                    dateOfBirth = mrzData.dateOfBirth ?: "",
-                    dateOfExpiry = mrzData.dateOfExpiry ?: "",
-                    nationality = mrzData.nationality ?: "",
-                    sex = mrzData.sex ?: "",
-                    surname = mrzData.surname ?: "",
-                    givenNames = mrzData.givenNames ?: "",
-                    checkDigitsValid = mrzData.isValid,
-                    rawMRZ = "${mrzData.mrzLine1}\n${mrzData.mrzLine2}"
-                )
-                
-                // Extract additional document info using OCR
-                val extractedData = documentInfoExtractor?.extractInfo(
-                    bitmap, 
-                    com.artiusid.sdk.document.DocumentType.PASSPORT
-                ) ?: emptyMap()
-                
-                // Create document scan result
-                val documentResult = DocumentScanResult(
-                    documentType = DocumentType.PASSPORT,
-                    frontImage = bitmap,
-                    backImage = null,
-                    extractedData = extractedData,
-                    mrzData = sdkMrzData,
-                    barcodeData = null,
-                    qualityScore = 0.92f,
-                    processingTime = System.currentTimeMillis(),
-                    ocrConfidence = 0.89f
-                )
-                
-                // Return result to SDK
-                ArtiusIDSDK.getDocumentScanCallback()?.onSuccess(documentResult)
-                ArtiusIDSDK.clearDocumentScanCallback()
-                
-                finishWithSuccess()
-                
-            } catch (e: Exception) {
-                android.util.Log.e("DocumentScanActivity", "Error processing MRZ", e)
-                
-                val sdkError = SDKError(
-                    code = SDKError.ERROR_PROCESSING_FAILED,
-                    message = "Failed to process document: ${e.message}"
-                )
-                
-                ArtiusIDSDK.getDocumentScanCallback()?.onError(sdkError)
-                ArtiusIDSDK.clearDocumentScanCallback()
-                
-                finishWithError(sdkError.code, sdkError.message)
+                lifecycleScope.launch {
+                    try {
+                        val result = documentScanService.scanDocument(bitmap, documentType)
+                        
+                        android.util.Log.d("DocumentScanActivity", "Document scan result: ${result.success}")
+                        android.util.Log.d("DocumentScanActivity", "Extracted data: ${result.extractedData}")
+                        
+                        if (result.success && result.extractedData.isNotEmpty()) {
+                            onInstructionUpdate("Document scanned successfully!")
+                            
+                            // Store the captured image and OCR data
+                            com.artiusid.sdk.utils.ImageStorage.setDocumentImage(bitmap)
+                            com.artiusid.sdk.utils.ImageStorage.setFrontOcrData(result.extractedData)
+                            
+                            android.util.Log.d("DocumentScanActivity", "Stored OCR data: ${result.extractedData}")
+                            
+                            ArtiusIDSDK.documentScanCallback?.onDocumentScanComplete(result)
+                            finishWithSuccess()
+                        } else {
+                            onInstructionUpdate("Could not read document. Try again.")
+                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                onInstructionUpdate("Position document in frame")
+                            }, 2000)
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("DocumentScanActivity", "Error processing document", e)
+                        onInstructionUpdate("Error processing document. Try again.")
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            onInstructionUpdate("Position document in frame")
+                        }, 2000)
+                    }
+                }
+            } else {
+                onInstructionUpdate("Failed to capture image. Try again.")
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    onInstructionUpdate("Position document in frame")
+                }, 2000)
             }
         }
     }
     
     override fun onDestroy() {
         super.onDestroy()
-        cameraExecutor.shutdown()
+        enhancedCameraService.release()
+        documentScanService.release()
     }
-}
-
-// Extension function to convert ImageProxy to Bitmap
-private fun ImageProxy.toBitmap(): Bitmap {
-    val buffer = planes[0].buffer
-    val bytes = ByteArray(buffer.remaining())
-    buffer.get(bytes)
-    return android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
 }

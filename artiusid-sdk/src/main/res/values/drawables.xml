@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Only keep drawables that are actually referenced in code or layouts -->
+    <drawable name="ic_document">@drawable/document_right_arrow</drawable>
+    <drawable name="ic_document_scan">@drawable/doc_scan_icon</drawable>
+    <drawable name="ic_document_success">@drawable/img_success</drawable>
+    <drawable name="ic_document_error">@drawable/img_system_error</drawable>
+    <drawable name="ic_document_failed">@drawable/img_failed</drawable>
+    <drawable name="ic_document_back">@drawable/back_button_icon</drawable>
+    <drawable name="ic_document_next">@drawable/document_right_arrow</drawable>
+    <drawable name="ic_document_previous">@drawable/back_button_icon</drawable>
+    <drawable name="ic_state_id">@drawable/stateid_icon</drawable>
+    <drawable name="ic_passport">@drawable/passport_icon</drawable>
+    <drawable name="ic_search">@drawable/img_search</drawable>
+    <drawable name="ic_back">@drawable/back_button_icon</drawable>
+</resources> 

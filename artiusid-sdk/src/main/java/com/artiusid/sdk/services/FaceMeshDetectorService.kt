@@ -1,86 +1,102 @@
-package com.artiusid.sdk.sdk.services
+package com.artiusid.services
 
 import android.graphics.Bitmap
 import androidx.camera.core.ImageAnalysis
-import com.artiusid.sdk.sdk.config.LivenessConfig
-import com.artiusid.sdk.sdk.models.HeadMovement
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
-/**
- * Interface for face mesh detection service
- */
 interface FaceMeshDetectorService {
-    
-    /**
-     * Current segment status (completed/incomplete)
-     */
-    val segmentStatus: StateFlow<List<Boolean>>
-    
-    /**
-     * Current instruction for the user
-     */
-    val currentInstruction: StateFlow<String>
-    
-    /**
-     * Whether processing is complete
-     */
-    val isProcessingComplete: StateFlow<Boolean>
-    
-    /**
-     * Current error state
-     */
-    val error: StateFlow<String?>
-    
-    /**
-     * Current face detection result
-     */
     val faceResult: StateFlow<FaceMeshResult?>
+    val segmentStatus: StateFlow<List<Boolean>>
+    val currentInstruction: StateFlow<String>
+    val isProcessingComplete: StateFlow<Boolean>
+    val isLoading: StateFlow<Boolean>
+    val error: StateFlow<String?>
+    val calibrationCountdown: StateFlow<Int> // Countdown timer during calibration
     
-    /**
-     * Calibration countdown
-     */
-    val calibrationCountdown: StateFlow<Int>
+    suspend fun detectFaceMesh(bitmap: Bitmap): FaceMeshResult
     
-    /**
-     * Initialize the service with configuration
-     */
-    fun initialize(config: LivenessConfig?)
+    fun startFaceDetection(): Flow<FaceMeshResult>
     
-    /**
-     * Create image analyzer for camera
-     */
-    fun createImageAnalyzer(): ImageAnalysis
-    
-    /**
-     * Start face detection
-     */
-    fun startFaceDetection()
-    
-    /**
-     * Stop face detection
-     */
     fun stopFaceDetection()
     
-    /**
-     * Reset detection state
-     */
-    fun reset()
+    fun createImageAnalyzer(): ImageAnalysis
 }
 
-/**
- * Face mesh detection result
- */
+enum class ProcessingStage {
+    INITIAL_INSTRUCTIONS,
+    CAPTURE_PHOTO,
+    CALIBRATING,
+    SELFIE_CAPTURE,
+    GUIDED_MESH_CAPTURE,
+    BLINK_DETECTION, // Added for explicit blink detection
+    COMPLETED
+}
+
 data class FaceMeshResult(
     val hasFace: Boolean,
-    val faceId: Int? = null,
-    val headEulerAngleX: Float = 0f, // Pitch
-    val headEulerAngleY: Float = 0f, // Yaw
-    val headEulerAngleZ: Float = 0f, // Roll
-    val leftEyeOpenProbability: Float? = null,
-    val rightEyeOpenProbability: Float? = null,
-    val smilingProbability: Float? = null,
-    val faceBounds: android.graphics.RectF? = null,
-    val distanceToFace: Float = 0f,
-    val qualityScore: Float = 0f,
-    val timestamp: Long = System.currentTimeMillis()
+    val confidence: Float,
+    val landmarks: List<Point> = emptyList(),
+    val error: String? = null,
+    // iOS-like liveness detection properties
+    val headYaw: Double = 0.0,
+    val headPitch: Double = 0.0,
+    val headRoll: Double = 0.0,
+    val distanceToFace: Float = 0.0f,
+    val blinkDetected: Boolean = false,
+    val segmentIndex: Int = -1,
+    val visitedSegments: List<Int> = emptyList(),
+    val processingStage: ProcessingStage = ProcessingStage.INITIAL_INSTRUCTIONS,
+    val instructionText: String = "",
+    val hintText: String = "",
+    val alignmentDirection: String = "",
+    // Enhanced 3D Face Mesh properties (MediaPipe Face Landmarker)
+    val faceLandmarks: List<FaceLandmark3D> = emptyList(), // 478 3D landmarks
+    val blendshapes: List<Blendshape> = emptyList(), // 52 facial expression coefficients
+    val faceTransformationMatrix: FloatArray? = null, // 4x4 transformation matrix
+    val faceMeshVertices: List<Point3D> = emptyList(), // 3D mesh vertices
+    val faceMeshTriangles: List<Triangle> = emptyList() // Face mesh triangulation
 )
+
+data class Point(
+    val x: Float,
+    val y: Float
+)
+
+// 3D point for advanced face mesh
+data class Point3D(
+    val x: Float,
+    val y: Float,
+    val z: Float
+)
+
+// 3D face landmark with visibility
+data class FaceLandmark3D(
+    val point: Point3D,
+    val visibility: Float = 1.0f,
+    val presence: Float = 1.0f
+)
+
+// Facial expression blendshape coefficient  
+data class Blendshape(
+    val categoryName: String,
+    val score: Float
+)
+
+// Triangle for face mesh triangulation
+data class Triangle(
+    val vertexA: Int,
+    val vertexB: Int, 
+    val vertexC: Int
+)
+
+data class ScannedMesh(
+    val segment: Int,
+    val faceMeshData: String // JSON representation of face mesh
+)
+
+data class FaceCapture(
+    val capturedImage: Bitmap?,
+    val faceMeshData: String?,
+    val scannedMeshes: List<ScannedMesh> = emptyList()
+) 

@@ -4,25 +4,43 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.ArtiusIDSDK
 import com.artiusid.sdk.callbacks.*
 import com.artiusid.sdk.config.*
 import com.artiusid.sdk.models.*
+import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Date
 
+/**
+ * MINIMAL Sample Application for ArtiusID SDK
+ * 
+ * This demonstrates the CORRECT SDK integration pattern:
+ * 
+ * 1. Host app provides ONLY configuration (theme, branding, API keys)
+ * 2. Host app calls SDK.startVerificationFlow() - SDK handles EVERYTHING
+ * 3. Host app calls SDK.startAuthenticationFlow() - SDK handles EVERYTHING  
+ * 4. SDK provides COMPLETE standalone app experience internally
+ * 5. SDK returns results to host app via callbacks
+ * 
+ * The SDK contains the ENTIRE standalone application UI/UX and functionality.
+ * The host app just launches it and receives results.
+ */
 class MainActivity : ComponentActivity() {
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize SDK with comprehensive configuration
+        // 1. CONFIGURE SDK with host app's branding and settings
         initializeSDK()
         
         setContent {
@@ -31,324 +49,338 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen()
+                    SampleAppContent()
                 }
             }
         }
     }
     
+    /**
+     * Initialize SDK with host app configuration
+     * This is the ONLY setup the host app needs to do
+     */
     private fun initializeSDK() {
-        val config = ArtiusSDKConfig.Builder()
-            .setApiKey("sample-api-key-12345")
+        val sdkConfig = ArtiusSDKConfig.Builder()
+            // API Configuration
+            .setApiEndpoint("https://api.artiusid.com")
+            .setApiKey("demo-api-key-12345")
             .setEnvironment(Environment.DEVELOPMENT)
-            .setBrandingConfig(
-                BrandingConfig(
-                    colorScheme = ColorScheme.LIGHT,
-                    companyName = "Sample Company Inc.",
-                    companyLogo = "sample_logo"
-                )
-            )
-            .setLocalizationConfig(
-                LocalizationConfig(
-                    defaultLanguage = "en",
-                    supportedLanguages = listOf("en", "es", "fr")
-                )
-            )
-            .setVerificationConfig(
-                VerificationConfig(
-                    enableFaceVerification = true,
-                    enableDocumentScanning = true,
-                    enableNFCReading = true, // Enable all features for demo
-                    livenessConfig = LivenessConfig(
-                        segmentCount = 8,
-                        headMovementThreshold = 5.0f,
-                        requireBlink = true
-                    )
-                )
-            )
+            
+            // Host App Branding (SDK will use this in its UI)
+            .setTheme(createHostAppTheme())
+            .setSecurityConfig(createSecurityConfig())
+            
+            // Firebase Token Provider (for mTLS)
+            .setFirebaseTokenProvider { getFirebaseToken() }
+            
+            // Optional: Localization
+            .setLocalizationConfig(createLocalizationConfig())
+            
             .setDebugMode(true)
             .build()
-            
-        ArtiusIDSDK.initialize(this, config)
+        
+        // Initialize SDK - this prepares it to provide complete standalone experience
+        ArtiusIDSDK.initialize(this, sdkConfig)
+        
+        android.util.Log.i("SampleApp", "✅ ArtiusID SDK initialized with complete standalone functionality")
+        android.util.Log.i("SampleApp", "🎨 SDK will use host app branding in its sophisticated UI")
+        android.util.Log.i("SampleApp", "🚀 Ready to launch complete verification/authentication flows")
+    }
+    
+    /**
+     * Create host app theme that SDK will use in its UI
+     */
+    private fun createHostAppTheme(): SDKTheme {
+        return SDKTheme.Builder()
+            .setPrimaryColor(Color(0xFF1976D2))      // Host app blue
+            .setSecondaryColor(Color(0xFF424242))    // Host app gray
+            .setAccentColor(Color(0xFF4CAF50))       // Host app green
+            .setBackgroundColor(Color(0xFFFAFAFA))   // Host app background
+            .setSurfaceColor(Color.White)            // Host app surface
+            .setErrorColor(Color(0xFFD32F2F))        // Host app error red
+            .setTextPrimaryColor(Color(0xFF212121))  // Host app text
+            .setTextSecondaryColor(Color(0xFF757575)) // Host app secondary text
+            .setButtonStyle(ButtonStyle.ROUNDED)
+            .setProgressStyle(ProgressStyle.CIRCULAR)
+            .setLogoUrl("https://example.com/logo.png") // Host app logo in SDK
+            .build()
+    }
+    
+    private fun createSecurityConfig(): SecurityConfig {
+        return SecurityConfig.Builder()
+            .setEnableCertificatePinning(true)
+            .setEnableRootDetection(true)
+            .setEnableAntiTampering(true)
+            .build()
+    }
+    
+    private fun createLocalizationConfig(): LocalizationConfig {
+        return LocalizationConfig.Builder()
+            .setLanguage("en")
+            .setCountry("US")
+            .build()
+    }
+    
+    /**
+     * Simulated Firebase token provider
+     * In real app, this would get actual Firebase token for mTLS
+     */
+    private suspend fun getFirebaseToken(): String {
+        delay(100) // Simulate network call
+        return "firebase-token-${System.currentTimeMillis()}"
     }
 }
 
+/**
+ * MINIMAL host app UI - just two buttons to launch SDK flows
+ * All the sophisticated UI/UX happens inside the SDK
+ */
 @Composable
-fun MainScreen() {
-    val context = LocalContext.current
-    var resultText by remember { mutableStateOf("") }
-    var isProcessing by remember { mutableStateOf(false) }
+fun SampleAppContent() {
+    var lastResult by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.Center
     ) {
+        // Host App Header
         Text(
             text = "ArtiusID SDK Demo",
-            style = MaterialTheme.typography.headlineLarge
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1976D2),
+            textAlign = TextAlign.Center
         )
+        
+        Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Complete Identity Verification Solution",
-            style = MaterialTheme.typography.bodyLarge
+            text = "Complete Standalone App Experience",
+            fontSize = 16.sp,
+            color = Color(0xFF757575),
+            textAlign = TextAlign.Center
         )
         
-        if (resultText.isNotEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Text(
-                    text = resultText,
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = FontFamily.Monospace
-                    )
-                )
-            }
-        }
+        Spacer(modifier = Modifier.height(48.dp))
         
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Complete Verification Flow - THE MAIN FEATURE
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
+        // Launch Complete Verification Flow
+        Button(
+            onClick = {
+                isLoading = true
+                launchCompleteVerificationFlow { result ->
+                    lastResult = result
+                    isLoading = false
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            enabled = !isLoading,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF1976D2)
             )
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "🔐 Complete Verification Flow",
-                    style = MaterialTheme.typography.headlineSmall
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = Color.White
                 )
-                
+            } else {
                 Text(
-                    text = "Face Liveness + Document Scan + NFC Reading",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "🔍 Start Complete Verification Flow",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
                 )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Button(
-                    onClick = {
-                        isProcessing = true
-                        resultText = "Starting complete verification flow..."
-                        
-                        ArtiusIDSDK.startVerificationFlow(
-                            activity = context as ComponentActivity,
-                            callback = object : VerificationCallback {
-                                override fun onSuccess(result: VerificationResult) {
-                                    isProcessing = false
-                                    val summary = buildString {
-                                        appendLine("🎉 VERIFICATION COMPLETED SUCCESSFULLY!")
-                                        appendLine("=" .repeat(50))
-                                        appendLine("Session ID: ${result.sessionId}")
-                                        appendLine("Verification ID: ${result.verificationId}")
-                                        appendLine("Overall Score: ${(result.overallScore * 100).toInt()}%")
-                                        appendLine("Processing Time: ${result.processingTime}ms")
-                                        appendLine("Timestamp: ${result.timestamp}")
-                                        appendLine()
-                                        
-                                        result.livenessResult?.let { liveness ->
-                                            appendLine("👤 FACE LIVENESS RESULTS:")
-                                            appendLine("  ✅ Live Detection: ${liveness.isLive}")
-                                            appendLine("  📊 Liveness Score: ${(liveness.livenessScore * 100).toInt()}%")
-                                            appendLine("  🎯 Quality Score: ${(liveness.qualityScore * 100).toInt()}%")
-                                            appendLine("  🔄 Segments Completed: ${liveness.segmentsCompleted}/${liveness.totalSegments}")
-                                            appendLine("  👁️ Blink Detected: ${liveness.blinkDetected}")
-                                            appendLine("  ⏱️ Processing Time: ${liveness.processingTime}ms")
-                                            appendLine()
-                                        }
-                                        
-                                        result.documentResult?.let { doc ->
-                                            appendLine("📄 DOCUMENT SCAN RESULTS:")
-                                            appendLine("  📋 Document Type: ${doc.documentType}")
-                                            appendLine("  🎯 Quality Score: ${(doc.qualityScore * 100).toInt()}%")
-                                            appendLine("  🔍 OCR Confidence: ${(doc.ocrConfidence * 100).toInt()}%")
-                                            appendLine("  ⏱️ Processing Time: ${doc.processingTime}ms")
-                                            appendLine("  📝 Extracted Data:")
-                                            doc.extractedData.forEach { (key, value) ->
-                                                appendLine("    • $key: $value")
-                                            }
-                                            doc.mrzData?.let { mrz ->
-                                                appendLine("  🔐 MRZ Data:")
-                                                appendLine("    • Document: ${mrz.documentNumber}")
-                                                appendLine("    • Name: ${mrz.givenNames} ${mrz.surname}")
-                                                appendLine("    • Country: ${mrz.issuingCountry}")
-                                                appendLine("    • Valid: ${mrz.checkDigitsValid}")
-                                            }
-                                            appendLine()
-                                        }
-                                        
-                                        result.nfcResult?.let { nfc ->
-                                            appendLine("📱 NFC READING RESULTS:")
-                                            appendLine("  ✅ Success: ${nfc.isSuccessful}")
-                                            appendLine("  🛡️ Security Score: ${(nfc.securityFeatures.securityScore * 100).toInt()}%")
-                                            appendLine("  ⏱️ Processing Time: ${nfc.processingTime}ms")
-                                            appendLine("  🔐 Security Features:")
-                                            appendLine("    • Active Auth: ${nfc.securityFeatures.activeAuthentication}")
-                                            appendLine("    • Passive Auth: ${nfc.securityFeatures.passiveAuthentication}")
-                                            appendLine("    • Chip Auth: ${nfc.securityFeatures.chipAuthentication}")
-                                            appendLine("  📋 Passport Data:")
-                                            appendLine("    • Name: ${nfc.passportData.givenNames} ${nfc.passportData.surname}")
-                                            appendLine("    • Document: ${nfc.passportData.documentNumber}")
-                                            appendLine("    • Country: ${nfc.passportData.issuingCountry}")
-                                            appendLine()
-                                        }
-                                        
-                                        appendLine("🎯 VERIFICATION SUMMARY:")
-                                        appendLine("  Status: ${if (result.isSuccessful) "✅ PASSED" else "❌ FAILED"}")
-                                        appendLine("  Confidence: ${(result.overallScore * 100).toInt()}%")
-                                        appendLine("  All data processed and validated within SDK!")
-                                    }
-                                    resultText = summary
-                                }
-                                
-                                override fun onError(error: SDKError) {
-                                    isProcessing = false
-                                    resultText = buildString {
-                                        appendLine("❌ VERIFICATION FAILED")
-                                        appendLine("Error Code: ${error.code}")
-                                        appendLine("Message: ${error.message}")
-                                        appendLine("Details: ${error.details ?: "None"}")
-                                        appendLine("Recoverable: ${error.recoverable}")
-                                        appendLine("Timestamp: ${error.timestamp}")
-                                    }
-                                }
-                                
-                                override fun onCancelled() {
-                                    isProcessing = false
-                                    resultText = "⚠️ Verification cancelled by user"
-                                }
-                                
-                                override fun onProgress(step: VerificationStep, progress: Int) {
-                                    resultText = "�� Progress: $step - $progress%\n\nAll processing happening inside SDK..."
-                                }
-                            }
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isProcessing
-                ) {
-                    if (isProcessing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text("Start Complete Verification")
-                }
-            }
-        }
-        
-        // Individual Components (for testing)
-        Text(
-            text = "Individual Components:",
-            style = MaterialTheme.typography.headlineSmall
-        )
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Button(
-                onClick = {
-                    ArtiusIDSDK.startFaceLiveness(
-                        activity = context as ComponentActivity,
-                        callback = object : LivenessCallback {
-                            override fun onSuccess(result: LivenessResult) {
-                                resultText = "✅ Face Liveness: ${(result.livenessScore * 100).toInt()}% confidence"
-                            }
-                            override fun onError(error: SDKError) {
-                                resultText = "❌ Face Liveness failed: ${error.message}"
-                            }
-                            override fun onCancelled() {
-                                resultText = "⚠️ Face Liveness cancelled"
-                            }
-                        }
-                    )
-                },
-                modifier = Modifier.weight(1f),
-                enabled = !isProcessing
-            ) {
-                Text("Face Only")
-            }
-            
-            Button(
-                onClick = {
-                    ArtiusIDSDK.startDocumentScan(
-                        activity = context as ComponentActivity,
-                        documentType = DocumentType.ID_CARD,
-                        callback = object : DocumentScanCallback {
-                            override fun onSuccess(result: DocumentScanResult) {
-                                resultText = "✅ Document Scan: ${result.documentType} - ${(result.qualityScore * 100).toInt()}% quality"
-                            }
-                            override fun onError(error: SDKError) {
-                                resultText = "❌ Document Scan failed: ${error.message}"
-                            }
-                            override fun onCancelled() {
-                                resultText = "⚠️ Document Scan cancelled"
-                            }
-                        }
-                    )
-                },
-                modifier = Modifier.weight(1f),
-                enabled = !isProcessing
-            ) {
-                Text("Doc Only")
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // SDK Info
+        // Launch Complete Authentication Flow
+        Button(
+            onClick = {
+                isLoading = true
+                launchCompleteAuthenticationFlow { result ->
+                    lastResult = result
+                    isLoading = false
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            enabled = !isLoading,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF4CAF50)
+            )
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = Color.White
+                )
+            } else {
+                Text(
+                    text = "🔐 Start Complete Authentication Flow",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // SDK Information
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
+                containerColor = Color(0xFFF5F5F5)
             )
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "SDK Information",
-                    style = MaterialTheme.typography.titleMedium
+                    text = "💡 How This Works:",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color(0xFF1976D2)
                 )
-                
                 Spacer(modifier = Modifier.height(8.dp))
-                
                 Text(
-                    text = "Version: ${ArtiusIDSDK.getVersionInfo()}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                
-                Text(
-                    text = "Initialized: ${ArtiusIDSDK.isInitialized()}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                
-                Text(
-                    text = "Features: Face Liveness, Document Scan, NFC Reading",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                
-                Text(
-                    text = "All processing contained within SDK",
-                    style = MaterialTheme.typography.bodySmall
+                    text = "• SDK contains COMPLETE standalone app UI/UX\n" +
+                          "• Host app provides only configuration & branding\n" +
+                          "• SDK handles entire verification/auth process\n" +
+                          "• Results returned via callbacks",
+                    fontSize = 12.sp,
+                    color = Color(0xFF424242),
+                    lineHeight = 16.sp
                 )
             }
         }
+        
+        // Show last result
+        lastResult?.let { result ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (result.contains("Success")) Color(0xFFE8F5E8) else Color(0xFFFFEBEE)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "📋 Last Result:",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = if (result.contains("Success")) Color(0xFF2E7D32) else Color(0xFFD32F2F)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = result,
+                        fontSize = 12.sp,
+                        color = Color(0xFF424242)
+                    )
+                }
+            }
+        }
     }
+}
+
+/**
+ * Launch COMPLETE verification flow - SDK handles everything
+ * Host app just calls this and receives result
+ */
+fun launchCompleteVerificationFlow(onResult: (String) -> Unit) {
+    android.util.Log.d("SampleApp", "🚀 Launching COMPLETE verification flow...")
+    android.util.Log.d("SampleApp", "📱 SDK will show complete standalone app UI/UX")
+    
+    // Get current activity context
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val activity = context as ComponentActivity
+    
+    // Launch complete verification flow - SDK handles EVERYTHING
+    ArtiusIDSDK.startVerificationFlow(
+        activity = activity,
+        callback = object : VerificationCallback {
+            override fun onVerificationComplete(result: VerificationResult) {
+                android.util.Log.d("SampleApp", "✅ Verification completed successfully!")
+                onResult("✅ Verification Success!\n" +
+                        "Confidence: ${result.confidence}\n" +
+                        "Face Match: ${result.faceMatch}\n" +
+                        "Document Valid: ${result.documentValid}\n" +
+                        "Completed: ${formatTimestamp(result.timestamp)}")
+            }
+            
+            override fun onVerificationError(error: SDKError) {
+                android.util.Log.e("SampleApp", "❌ Verification failed: ${error.message}")
+                onResult("❌ Verification Failed\n" +
+                        "Error: ${error.message}\n" +
+                        "Code: ${error.code}\n" +
+                        "Time: ${formatTimestamp(System.currentTimeMillis())}")
+            }
+            
+            override fun onVerificationCancelled() {
+                android.util.Log.d("SampleApp", "🚫 Verification cancelled by user")
+                onResult("🚫 Verification Cancelled\n" +
+                        "User cancelled the verification process\n" +
+                        "Time: ${formatTimestamp(System.currentTimeMillis())}")
+            }
+        }
+    )
+}
+
+/**
+ * Launch COMPLETE authentication flow - SDK handles everything
+ * Host app just calls this and receives result
+ */
+fun launchCompleteAuthenticationFlow(onResult: (String) -> Unit) {
+    android.util.Log.d("SampleApp", "🚀 Launching COMPLETE authentication flow...")
+    android.util.Log.d("SampleApp", "🔐 SDK will show complete standalone app UI/UX")
+    
+    // Get current activity context
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val activity = context as ComponentActivity
+    
+    // Launch complete authentication flow - SDK handles EVERYTHING
+    ArtiusIDSDK.startAuthenticationFlow(
+        activity = activity,
+        callback = object : AuthenticationCallback {
+            override fun onAuthenticationComplete(result: AuthenticationResult) {
+                android.util.Log.d("SampleApp", "✅ Authentication completed successfully!")
+                onResult("✅ Authentication Success!\n" +
+                        "Token: ${result.token?.take(20)}...\n" +
+                        "User ID: ${result.userId}\n" +
+                        "Completed: ${formatTimestamp(result.timestamp)}")
+            }
+            
+            override fun onAuthenticationError(error: SDKError) {
+                android.util.Log.e("SampleApp", "❌ Authentication failed: ${error.message}")
+                onResult("❌ Authentication Failed\n" +
+                        "Error: ${error.message}\n" +
+                        "Code: ${error.code}\n" +
+                        "Time: ${formatTimestamp(System.currentTimeMillis())}")
+            }
+            
+            override fun onAuthenticationCancelled() {
+                android.util.Log.d("SampleApp", "🚫 Authentication cancelled by user")
+                onResult("🚫 Authentication Cancelled\n" +
+                        "User cancelled the authentication process\n" +
+                        "Time: ${formatTimestamp(System.currentTimeMillis())}")
+            }
+        }
+    )
+}
+
+/**
+ * Helper function to format timestamps
+ */
+fun formatTimestamp(timestamp: Long): String {
+    val sdf = SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+    return sdf.format(Date(timestamp))
 }

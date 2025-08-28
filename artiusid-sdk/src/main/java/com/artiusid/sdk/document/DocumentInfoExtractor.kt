@@ -1,4 +1,4 @@
-package com.artiusid.sdk.presentation.screens.document
+package com.artiusid.sdk.document
 
 import android.graphics.Bitmap
 import android.util.Log
@@ -13,6 +13,7 @@ import java.util.regex.Pattern
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+import com.artiusid.sdk.sdk.models.DocumentType
 class DocumentInfoExtractor {
     private val textRecognizer: TextRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private val TAG = "DocumentInfoExtractor"

@@ -1,251 +1,269 @@
-package com.artiusid.sdk.sdk
+package com.artiusid.sdk
 
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import com.artiusid.sdk.sdk.callbacks.*
-import com.artiusid.sdk.sdk.config.*
-import com.artiusid.sdk.sdk.models.*
-import com.artiusid.sdk.sdk.ui.activities.*
+import com.artiusid.sdk.callbacks.*
+import com.artiusid.sdk.config.*
+import com.artiusid.sdk.managers.SDKConfigManager
+import com.artiusid.sdk.managers.AnalyticsManager
+import com.artiusid.sdk.models.*
+import com.artiusid.sdk.ui.activities.SDKMainActivity
 
 /**
  * Main entry point for the ArtiusID Android SDK
  * 
- * This class provides the primary interface for integrating identity verification
- * capabilities into your Android application.
+ * This SDK provides complete identity verification and authentication flows
+ * by wrapping the entire standalone application experience. When the host app
+ * calls the SDK, it launches the complete standalone app UI/UX internally.
+ * 
+ * The SDK acts as a wrapper around the sophisticated standalone application,
+ * providing the exact same user experience while allowing host apps to 
+ * integrate with just a few method calls.
  * 
  * @author ArtiusID Team
- * @version 1.0.0
+ * @version 2.0.0
  */
 object ArtiusIDSDK {
     
-    private var isInitialized = false
-    private var config: ArtiusSDKConfig? = null
+    // Callback storage for returning results to host app
+    var verificationCallback: VerificationCallback? = null
+    var authenticationCallback: AuthenticationCallback? = null
+    
     private const val TAG = "ArtiusIDSDK"
     
-    // Callback storage
-    private var verificationCallback: VerificationCallback? = null
-    private var livenessCallback: LivenessCallback? = null
-    private var documentScanCallback: DocumentScanCallback? = null
-    private var nfcCallback: NFCCallback? = null
-    private var authenticationCallback: AuthenticationCallback? = null
-    
     /**
-     * Initialize the SDK with configuration
+     * Initialize the SDK with comprehensive configuration
+     * 
+     * This sets up the SDK to use the host app's branding, theme, and configuration
+     * while providing the complete standalone application experience.
      * 
      * @param context Application context
-     * @param config SDK configuration
+     * @param config Complete SDK configuration including theme, security, and API settings
      */
     fun initialize(context: Context, config: ArtiusSDKConfig) {
-        if (isInitialized) {
-            android.util.Log.w(TAG, "SDK already initialized")
-            return
-        }
-        
         try {
-            this.config = config
+            android.util.Log.i(TAG, "Initializing ArtiusID SDK v2.0.0...")
             
-            // Initialize SDK components here
-            // - Configuration managers
-            // - Firebase if provided
-            // - Device capability checks
+            // Initialize configuration manager with host app settings
+            SDKConfigManager.initialize(context, config)
             
-            isInitialized = true
             android.util.Log.i(TAG, "ArtiusID SDK initialized successfully")
+            android.util.Log.i(TAG, "SDK will provide complete standalone app experience")
             
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "Failed to initialize SDK", e)
-            throw RuntimeException("SDK initialization failed: ${e.message}", e)
+            android.util.Log.e(TAG, "Failed to initialize ArtiusID SDK", e)
+            throw e
         }
     }
     
     /**
-     * Initialize the SDK with simple API key (for basic usage)
+     * Start complete verification flow with standalone app UI/UX
      * 
-     * @param context Application context
-     * @param apiKey Your API key
-     */
-    fun initialize(context: Context, apiKey: String) {
-        val config = ArtiusSDKConfig.Builder()
-            .setApiKey(apiKey)
-            .setEnvironment(Environment.PRODUCTION)
-            .build()
-        
-        initialize(context, config)
-    }
-    
-    /**
-     * Start complete verification flow (Face + Document + NFC)
+     * This launches the COMPLETE standalone application verification experience:
+     * - All the sophisticated UI screens from standalone app
+     * - Face liveness detection with advanced ML Kit integration
+     * - Document type selection with beautiful UI
+     * - Document capture with real camera, OCR, barcode scanning
+     * - NFC passport reading with chip authentication
+     * - Complete verification processing and results
+     * - All themed with host app's branding
+     * 
+     * The host app will see the SDK launch and then receive results when complete.
      * 
      * @param activity Calling activity
-     * @param config Verification configuration
-     * @param callback Result callback
+     * @param callback Result callback for verification completion
      */
     fun startVerificationFlow(
         activity: Activity,
-        config: VerificationConfig? = null,
         callback: VerificationCallback
     ) {
-        ensureInitialized()
-        
-        verificationCallback = callback
-        
-        val intent = Intent(activity, VerificationFlowActivity::class.java).apply {
-            config?.let { putExtra("verification_config", it) }
+        try {
+            android.util.Log.d(TAG, "Starting COMPLETE verification flow with standalone UI/UX...")
+            
+            if (!SDKConfigManager.isInitialized()) {
+                callback.onVerificationError(SDKError(
+                    code = SDKErrorCode.INVALID_CONFIG,
+                    message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
+                ))
+                return
+            }
+            
+            // Track analytics
+            AnalyticsManager.trackVerificationStarted()
+            
+            // Store callback for when standalone app completes
+            verificationCallback = callback
+            
+            // Launch the COMPLETE standalone app experience
+            val intent = Intent(activity, SDKMainActivity::class.java).apply {
+                putExtra(SDKMainActivity.EXTRA_FLOW_TYPE, SDKMainActivity.FLOW_TYPE_VERIFICATION)
+                putExtra("start_time", System.currentTimeMillis())
+            }
+            
+            activity.startActivity(intent)
+            android.util.Log.d(TAG, "Launched complete standalone verification experience")
+            
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Failed to start verification flow", e)
+            callback.onVerificationError(SDKError(
+                code = SDKErrorCode.UNKNOWN_ERROR,
+                message = "Failed to start verification: ${e.message}",
+                cause = e
+            ))
         }
-        
-        activity.startActivity(intent)
     }
     
     /**
-     * Start face liveness detection only
+     * Start complete authentication flow with standalone app UI/UX
+     * 
+     * This launches the COMPLETE standalone application authentication experience:
+     * - All the sophisticated UI screens from standalone app
+     * - Biometric authentication with advanced face recognition
+     * - Device binding and security checks
+     * - Secure token exchange with mTLS
+     * - Complete authentication processing and results
+     * - All themed with host app's branding
+     * 
+     * The host app will see the SDK launch and then receive results when complete.
      * 
      * @param activity Calling activity
-     * @param config Liveness configuration
-     * @param callback Result callback
+     * @param callback Result callback for authentication completion
      */
-    fun startFaceLiveness(
+    fun startAuthenticationFlow(
         activity: Activity,
-        config: LivenessConfig? = null,
-        callback: LivenessCallback
+        callback: AuthenticationCallback
     ) {
-        ensureInitialized()
-        
-        livenessCallback = callback
-        
-        val intent = Intent(activity, FaceLivenessActivity::class.java).apply {
-            config?.let { putExtra("liveness_config", it) }
+        try {
+            android.util.Log.d(TAG, "Starting COMPLETE authentication flow with standalone UI/UX...")
+            
+            if (!SDKConfigManager.isInitialized()) {
+                callback.onAuthenticationError(SDKError(
+                    code = SDKErrorCode.INVALID_CONFIG,
+                    message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
+                ))
+                return
+            }
+            
+            // Track analytics
+            AnalyticsManager.trackAuthenticationStarted()
+            
+            // Store callback for when standalone app completes
+            authenticationCallback = callback
+            
+            // Launch the COMPLETE standalone app experience
+            val intent = Intent(activity, SDKMainActivity::class.java).apply {
+                putExtra(SDKMainActivity.EXTRA_FLOW_TYPE, SDKMainActivity.FLOW_TYPE_AUTHENTICATION)
+                putExtra("start_time", System.currentTimeMillis())
+            }
+            
+            activity.startActivity(intent)
+            android.util.Log.d(TAG, "Launched complete standalone authentication experience")
+            
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Failed to start authentication flow", e)
+            callback.onAuthenticationError(SDKError(
+                code = SDKErrorCode.UNKNOWN_ERROR,
+                message = "Failed to start authentication: ${e.message}",
+                cause = e
+            ))
         }
-        
-        activity.startActivity(intent)
-    }
-    
-    /**
-     * Start face liveness detection (simple version)
-     * 
-     * @param activity Calling activity
-     */
-    fun startFaceLiveness(activity: Activity) {
-        startFaceLiveness(activity, null, object : LivenessCallback {
-            override fun onSuccess(result: LivenessResult) {
-                android.util.Log.d(TAG, "Face liveness completed successfully")
-            }
-            
-            override fun onError(error: SDKError) {
-                android.util.Log.e(TAG, "Face liveness failed: ${error.message}")
-            }
-            
-            override fun onCancelled() {
-                android.util.Log.d(TAG, "Face liveness cancelled")
-            }
-        })
-    }
-    
-    /**
-     * Start document scanning only
-     * 
-     * @param activity Calling activity
-     * @param documentType Type of document to scan
-     * @param config Document configuration
-     * @param callback Result callback
-     */
-    fun startDocumentScan(
-        activity: Activity,
-        documentType: DocumentType = DocumentType.ID_CARD,
-        config: DocumentConfig? = null,
-        callback: DocumentScanCallback
-    ) {
-        ensureInitialized()
-        
-        documentScanCallback = callback
-        
-        val intent = Intent(activity, DocumentScanActivity::class.java).apply {
-            putExtra("document_type", documentType.name)
-            config?.let { putExtra("document_config", it) }
-        }
-        
-        activity.startActivity(intent)
-    }
-    
-    /**
-     * Start document scanning (simple version)
-     * 
-     * @param activity Calling activity
-     */
-    fun startDocumentScan(activity: Activity) {
-        startDocumentScan(activity, DocumentType.ID_CARD, null, object : DocumentScanCallback {
-            override fun onSuccess(result: DocumentScanResult) {
-                android.util.Log.d(TAG, "Document scan completed successfully")
-            }
-            
-            override fun onError(error: SDKError) {
-                android.util.Log.e(TAG, "Document scan failed: ${error.message}")
-            }
-            
-            override fun onCancelled() {
-                android.util.Log.d(TAG, "Document scan cancelled")
-            }
-        })
     }
     
     /**
      * Get SDK version information
      */
-    fun getVersionInfo(): String {
-        return "1.0.0"
+    fun getVersion(): String = "2.0.0"
+    
+    /**
+     * Get SDK build information
+     */
+    fun getBuildInfo(): Map<String, String> = mapOf(
+        "version" to "2.0.0",
+        "buildDate" to "2024-01-01",
+        "platform" to "Android",
+        "type" to "Complete Standalone Wrapper",
+        "minSdkVersion" to "24",
+        "targetSdkVersion" to "34"
+    )
+    
+    /**
+     * Check if SDK is properly initialized
+     */
+    fun isInitialized(): Boolean = SDKConfigManager.isInitialized()
+    
+    /**
+     * Get current SDK configuration (for debugging)
+     */
+    fun getConfiguration(): ArtiusSDKConfig? = try {
+        SDKConfigManager.getConfig()
+    } catch (e: Exception) {
+        null
+    }
+    
+    // Internal methods for the standalone app to call back to host app
+    
+    /**
+     * Internal method called by standalone app when verification completes
+     * This should only be called by the SDK's internal navigation system
+     */
+    internal fun notifyVerificationComplete(result: VerificationResult) {
+        android.util.Log.d(TAG, "Verification completed - notifying host app")
+        AnalyticsManager.trackVerificationCompleted(result.success, result.confidence)
+        verificationCallback?.onVerificationComplete(result)
+        verificationCallback = null
     }
     
     /**
-     * Get detailed SDK version information
+     * Internal method called by standalone app when verification fails
+     * This should only be called by the SDK's internal navigation system
      */
-    fun getDetailedVersionInfo(): SDKVersionInfo {
-        return SDKVersionInfo(
-            version = "1.0.0",
-            buildNumber = "1",
-            buildDate = "2024-08-26",
-            features = listOf("FaceLiveness", "DocumentScan", "NFCReading", "Authentication")
-        )
+    internal fun notifyVerificationError(error: SDKError) {
+        android.util.Log.d(TAG, "Verification failed - notifying host app")
+        AnalyticsManager.trackVerificationCompleted(false, 0.0f)
+        verificationCallback?.onVerificationError(error)
+        verificationCallback = null
     }
     
     /**
-     * Check if SDK is initialized
+     * Internal method called by standalone app when verification is cancelled
+     * This should only be called by the SDK's internal navigation system
      */
-    fun isInitialized(): Boolean = isInitialized
-    
-    /**
-     * Get current SDK configuration
-     */
-    fun getConfiguration(): ArtiusSDKConfig? = config
-    
-    /**
-     * Clear all cached data
-     */
-    fun clearCache() {
-        ensureInitialized()
-        
-        // Clear image storage
-        com.artiusid.sdk.utils.ImageStorage.clearAll()
-        
-        android.util.Log.i(TAG, "SDK cache cleared")
+    internal fun notifyVerificationCancelled() {
+        android.util.Log.d(TAG, "Verification cancelled - notifying host app")
+        verificationCallback?.onVerificationCancelled()
+        verificationCallback = null
     }
     
-    // Internal callback getters for activities
-    internal fun getVerificationCallback(): VerificationCallback? = verificationCallback
-    internal fun getLivenessCallback(): LivenessCallback? = livenessCallback
-    internal fun getDocumentScanCallback(): DocumentScanCallback? = documentScanCallback
-    internal fun getNFCCallback(): NFCCallback? = nfcCallback
-    internal fun getAuthenticationCallback(): AuthenticationCallback? = authenticationCallback
+    /**
+     * Internal method called by standalone app when authentication completes
+     * This should only be called by the SDK's internal navigation system
+     */
+    internal fun notifyAuthenticationComplete(result: AuthenticationResult) {
+        android.util.Log.d(TAG, "Authentication completed - notifying host app")
+        AnalyticsManager.trackAuthenticationCompleted(result.success)
+        authenticationCallback?.onAuthenticationComplete(result)
+        authenticationCallback = null
+    }
     
-    // Internal callback clearers
-    internal fun clearVerificationCallback() { verificationCallback = null }
-    internal fun clearLivenessCallback() { livenessCallback = null }
-    internal fun clearDocumentScanCallback() { documentScanCallback = null }
-    internal fun clearNFCCallback() { nfcCallback = null }
-    internal fun clearAuthenticationCallback() { authenticationCallback = null }
+    /**
+     * Internal method called by standalone app when authentication fails
+     * This should only be called by the SDK's internal navigation system
+     */
+    internal fun notifyAuthenticationError(error: SDKError) {
+        android.util.Log.d(TAG, "Authentication failed - notifying host app")
+        AnalyticsManager.trackAuthenticationCompleted(false)
+        authenticationCallback?.onAuthenticationError(error)
+        authenticationCallback = null
+    }
     
-    private fun ensureInitialized() {
-        if (!isInitialized) {
-            throw IllegalStateException("SDK not initialized. Call ArtiusIDSDK.initialize() first.")
-        }
+    /**
+     * Internal method called by standalone app when authentication is cancelled
+     * This should only be called by the SDK's internal navigation system
+     */
+    internal fun notifyAuthenticationCancelled() {
+        android.util.Log.d(TAG, "Authentication cancelled - notifying host app")
+        authenticationCallback?.onAuthenticationCancelled()
+        authenticationCallback = null
     }
 }

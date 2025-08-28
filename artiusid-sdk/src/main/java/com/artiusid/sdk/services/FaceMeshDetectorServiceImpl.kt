@@ -5,7 +5,7 @@
  * Enhanced ML Kit Face Detection with Advanced 3D Estimation Algorithms
  * Provides iOS ARKit-level accuracy using sophisticated mathematical models
  */
-package com.artiusid.sdk.sdk.services
+package com.artiusid.services
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -29,7 +29,7 @@ import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.math.*
-import com.artiusid.sdk.sdk.utils.ImageStorage
+import com.artiusid.sdk.utils.ImageStorage
 
 // Data class for positioning guidance results
 data class PositioningResult(

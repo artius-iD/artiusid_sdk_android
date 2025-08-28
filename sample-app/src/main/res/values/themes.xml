@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ArtiusIDSample" parent="Theme.Material3.DayNight">
-        <item name="colorPrimary">@color/artiusid_orange</item>
-        <item name="colorPrimaryVariant">@color/artiusid_orange_dark</item>
-        <item name="colorOnPrimary">@android:color/white</item>
-        <item name="colorSecondary">@color/artiusid_blue</item>
-        <item name="colorSecondaryVariant">@color/artiusid_blue_dark</item>
-        <item name="colorOnSecondary">@android:color/white</item>
+    <style name="Theme.ArtiusIDSample" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">#6200EE</item>
+        <item name="colorPrimaryDark">#3700B3</item>
+        <item name="colorAccent">#03DAC5</item>
     </style>
 </resources>

@@ -1,85 +1,45 @@
-package com.artiusid.sdk.sdk.callbacks
+package com.artiusid.sdk.callbacks
 
-import com.artiusid.sdk.sdk.models.*
+import com.artiusid.sdk.models.*
 
 /**
- * Callback interface for complete verification flow
+ * Callback for verification flow completion
  */
 interface VerificationCallback {
-    fun onSuccess(result: VerificationResult)
-    fun onError(error: SDKError)
-    fun onCancelled()
-    fun onProgress(step: VerificationStep, progress: Int) {}
+    fun onVerificationComplete(result: VerificationResult)
+    fun onVerificationError(error: SDKError)
+    fun onVerificationCancelled()
 }
 
 /**
- * Callback interface for face liveness detection
+ * Callback for liveness detection completion
  */
 interface LivenessCallback {
-    fun onSuccess(result: LivenessResult)
-    fun onError(error: SDKError)
-    fun onCancelled()
-    fun onProgress(segmentsCompleted: Int, totalSegments: Int, currentInstruction: String) {}
+    fun onLivenessComplete(result: LivenessResult)
+    fun onLivenessError(error: SDKError)
 }
 
 /**
- * Callback interface for document scanning
+ * Callback for document scanning completion
  */
 interface DocumentScanCallback {
-    fun onSuccess(result: DocumentScanResult)
-    fun onError(error: SDKError)
-    fun onCancelled()
-    fun onProgress(isDocumentDetected: Boolean, qualityScore: Float) {}
+    fun onDocumentScanComplete(result: DocumentScanResult)
+    fun onDocumentScanError(error: SDKError)
 }
 
 /**
- * Callback interface for NFC passport reading
+ * Callback for NFC reading completion
  */
-interface NFCCallback {
-    fun onSuccess(result: NFCPassportResult)
-    fun onError(error: SDKError)
-    fun onCancelled()
-    fun onProgress(status: NFCReadingStatus, progress: Int) {}
+interface NFCReadingCallback {
+    fun onNFCReadingComplete(result: NFCPassportResult)
+    fun onNFCReadingError(error: SDKError)
 }
 
 /**
- * Callback interface for authentication
+ * Callback for authentication completion
  */
 interface AuthenticationCallback {
-    fun onSuccess(result: AuthenticationResult)
-    fun onError(error: SDKError)
-    fun onCancelled()
-    fun onProgress(step: AuthenticationStep, progress: Int) {}
-}
-
-/**
- * Verification flow steps
- */
-enum class VerificationStep {
-    FACE_LIVENESS,
-    DOCUMENT_SCAN,
-    NFC_READING,
-    PROCESSING,
-    COMPLETED
-}
-
-/**
- * Authentication steps
- */
-enum class AuthenticationStep {
-    FACE_CAPTURE,
-    FACE_MATCHING,
-    LIVENESS_CHECK,
-    COMPLETED
-}
-
-/**
- * NFC reading status
- */
-enum class NFCReadingStatus {
-    INITIALIZING,
-    WAITING_FOR_CARD,
-    READING_DATA,
-    VALIDATING,
-    COMPLETED
+    fun onAuthenticationComplete(result: AuthenticationResult)
+    fun onAuthenticationError(error: SDKError)
+    fun onAuthenticationCancelled()
 }

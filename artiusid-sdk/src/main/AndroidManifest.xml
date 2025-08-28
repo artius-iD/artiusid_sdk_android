@@ -1,46 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Required permissions for SDK functionality -->
+    <!-- Camera permissions for face detection and document scanning -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.NFC" />
+    
+    <!-- Internet permission for API calls -->
     <uses-permission android:name="android.permission.INTERNET" />
     
-    <!-- Camera features -->
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="true" />
-    <uses-feature
-        android:name="android.hardware.camera.front"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.camera.autofocus"
-        android:required="false" />
+    <!-- NFC permissions for passport reading -->
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
     
-    <!-- NFC feature -->
-    <uses-feature
-        android:name="android.hardware.nfc"
-        android:required="false" />
+    <!-- Camera feature requirements -->
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <application>
-        <!-- SDK Activities -->
+        
+        <!-- Main SDK Activity - Entry point for complete standalone app experience -->
         <activity
-            android:name=".ui.activities.FaceLivenessActivity"
+            android:name=".ui.activities.SDKMainActivity"
             android:exported="false"
-            android:theme="@style/Theme.Material3.DayNight.NoActionBar"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
             android:screenOrientation="portrait" />
-            
-        <activity
-            android:name=".ui.activities.DocumentScanActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Material3.DayNight.NoActionBar"
-            android:screenOrientation="portrait" />
-            
+        
+        <!-- Verification Flow Activity - Orchestrates the complete verification process -->
         <activity
             android:name=".ui.activities.VerificationFlowActivity"
             android:exported="false"
-            android:theme="@style/Theme.Material3.DayNight.NoActionBar"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
             android:screenOrientation="portrait" />
+            
+        <!-- Face Liveness Activity - ML Kit face detection and liveness -->
+        <activity
+            android:name=".ui.activities.FaceLivenessActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+            
+        <!-- Document Scan Activity - OCR and MRZ parsing -->
+        <activity
+            android:name=".ui.activities.DocumentScanActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+            
+        <!-- NFC Reading Activity - Passport NFC reading -->
+        <activity
+            android:name=".ui.activities.NFCReadingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+            
+        <!-- Authentication Activity - User authentication -->
+        <activity
+            android:name=".ui.activities.AuthenticationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+            
+        <!-- Document Type Selection Activity - Choose between ID and Passport -->
+        <activity
+            android:name=".ui.activities.DocumentTypeSelectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+            
+        <!-- Government ID Capture Activity - Front and back ID capture -->
+        <activity
+            android:name=".ui.activities.GovernmentIDCaptureActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+            
+        <!-- Passport Capture Activity - Passport photo, MRZ, and NFC -->
+        <activity
+            android:name=".ui.activities.PassportCaptureActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+
     </application>
 
 </manifest>

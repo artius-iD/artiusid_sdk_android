@@ -1,83 +1,108 @@
 package com.artiusid.sdk.utils
 
 import android.graphics.Bitmap
-import com.artiusid.sdk.domain.model.CapturedImages
-import com.artiusid.sdk.data.models.passport.PassportMRZData
+import java.io.ByteArrayOutputStream
+import android.util.Base64
 
+/**
+ * Utility class for storing captured images during verification flow
+ * This replicates the functionality from the standalone app
+ */
 object ImageStorage {
-    private var frontImage: Bitmap? = null
-    private var backImage: Bitmap? = null
-    private var faceImage: Bitmap? = null
-    private var passportImage: Bitmap? = null // Add passport image
     
-    // Add OCR data storage
-    private var frontOcrData: Map<String, String>? = null
+    private var faceLivenessImage: String? = null
+    private var documentFrontImage: String? = null
+    private var documentBackImage: String? = null
+    private var passportImage: String? = null
     
-    // Add passport MRZ data storage
-    private var passportMRZData: PassportMRZData? = null
-
-    fun setFrontImage(bitmap: Bitmap) {
-        frontImage = bitmap
-        android.util.Log.d("ImageStorage", "Front image set: ${bitmap.width}x${bitmap.height}")
-    }
-
-    fun setBackImage(bitmap: Bitmap) {
-        backImage = bitmap
-        android.util.Log.d("ImageStorage", "Back image set: ${bitmap.width}x${bitmap.height}")
-    }
-
-    fun setFaceImage(bitmap: Bitmap) {
-        faceImage = bitmap
-        android.util.Log.d("ImageStorage", "Face image set: ${bitmap.width}x${bitmap.height}")
+    /**
+     * Store face liveness image
+     */
+    fun storeFaceLivenessImage(bitmap: Bitmap) {
+        faceLivenessImage = bitmapToBase64(bitmap)
     }
     
-    // Add OCR data storage methods
-    fun setFrontOcrData(ocrData: Map<String, String>) {
-        frontOcrData = ocrData
-        android.util.Log.d("ImageStorage", "Front OCR data stored: ${ocrData.keys}")
+    /**
+     * Store document front image
+     */
+    fun storeDocumentFrontImage(bitmap: Bitmap) {
+        documentFrontImage = bitmapToBase64(bitmap)
     }
     
-    fun getFrontOcrData(): Map<String, String>? {
-        return frontOcrData
-    }
-
-    fun setPassportImage(bitmap: Bitmap) {
-        passportImage = bitmap
-        android.util.Log.d("ImageStorage", "Passport image set: ${bitmap.width}x${bitmap.height}")
+    /**
+     * Store document back image
+     */
+    fun storeDocumentBackImage(bitmap: Bitmap) {
+        documentBackImage = bitmapToBase64(bitmap)
     }
     
-    fun getPassportImage(): Bitmap? {
-        return passportImage
+    /**
+     * Store passport image
+     */
+    fun storePassportImage(bitmap: Bitmap) {
+        passportImage = bitmapToBase64(bitmap)
     }
     
-    fun setPassportMRZData(mrzData: PassportMRZData) {
-        passportMRZData = mrzData
-        android.util.Log.d("ImageStorage", "Passport MRZ data set: ${mrzData.passportNumber}")
+    /**
+     * Get face liveness image
+     */
+    fun getFaceLivenessImage(): String? = faceLivenessImage
+    
+    /**
+     * Get document front image
+     */
+    fun getDocumentFrontImage(): String? = documentFrontImage
+    
+    /**
+     * Get document back image
+     */
+    fun getDocumentBackImage(): String? = documentBackImage
+    
+    /**
+     * Get passport image
+     */
+    fun getPassportImage(): String? = passportImage
+    
+    /**
+     * Clear all images
+     */
+    fun clearAll() {
+        faceLivenessImage = null
+        documentFrontImage = null
+        documentBackImage = null
+        passportImage = null
     }
     
-    fun getPassportMRZData(): PassportMRZData? = passportMRZData
-    
+    /**
+     * Clear passport image only
+     */
     fun clearPassportImage() {
         passportImage = null
-        passportMRZData = null
-        android.util.Log.d("ImageStorage", "Passport image and MRZ data cleared for recapture")
     }
-
-    fun getCapturedImages(): CapturedImages {
-        return CapturedImages(
-            frontImage = frontImage,
-            backImage = backImage,
-            faceImage = faceImage,
-            passportImage = passportImage
-        )
+    
+    /**
+     * Clear document images only
+     */
+    fun clearDocumentImages() {
+        documentFrontImage = null
+        documentBackImage = null
     }
-
-    fun clearAll() {
-        frontImage = null
-        backImage = null
-        faceImage = null
-        passportImage = null
-        frontOcrData = null
-        passportMRZData = null
+    
+    /**
+     * Convert bitmap to base64 string
+     */
+    private fun bitmapToBase64(bitmap: Bitmap): String {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+        return Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
-} 
+    
+    /**
+     * Check if all required images are captured
+     */
+    fun hasAllRequiredImages(): Boolean {
+        return faceLivenessImage != null && 
+               (documentFrontImage != null || passportImage != null)
+    }
+}

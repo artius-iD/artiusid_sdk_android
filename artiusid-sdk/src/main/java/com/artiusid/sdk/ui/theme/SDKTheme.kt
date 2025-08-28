@@ -1,51 +1,13 @@
-package com.artiusid.sdk.sdk.ui.theme
+package com.artiusid.sdk.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFF58220),
-    secondary = Color(0xFF4FC6FF),
-    tertiary = Color(0xFF03DAC6),
-    background = Color(0xFF18202A),
-    surface = Color(0xFF2D2C31),
-    onPrimary = Color.White,
-    onSecondary = Color.Black,
-    onTertiary = Color.Black,
-    onBackground = Color(0xFFE6E1E5),
-    onSurface = Color(0xFFE6E1E5),
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFFF58220),
-    secondary = Color(0xFF1976D2),
-    tertiary = Color(0xFF03DAC6),
-    background = Color(0xFFFFFFFF),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.Black,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-)
 
 @Composable
-fun SDKTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+fun ArtiusIDSDKTheme(
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
         content = content
     )
 }
