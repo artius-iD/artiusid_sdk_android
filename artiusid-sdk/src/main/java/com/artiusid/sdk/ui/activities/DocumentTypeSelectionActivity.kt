@@ -9,8 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.artiusid.sdk.sdk.models.DocumentType
-import com.artiusid.sdk.sdk.ui.theme.ArtiusIDSDKTheme
+import com.artiusid.sdk.models.DocumentType
+import com.artiusid.sdk.ui.theme.ArtiusIDSDKTheme
 
 /**
  * Activity for selecting document type (Government ID vs Passport)

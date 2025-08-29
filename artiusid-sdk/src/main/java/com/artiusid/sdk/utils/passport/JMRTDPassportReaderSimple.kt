@@ -6,7 +6,9 @@
 // Company: artius.iD
 //
 
-package com.artiusid.utils.passport
+package com.artiusid.sdk.utils.passport
+
+import com.artiusid.sdk.models.*
 
 import android.content.Context
 import android.nfc.Tag
@@ -18,7 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
-import javax.inject.Inject
+
 import javax.inject.Singleton
 
 /**
@@ -27,7 +29,7 @@ import javax.inject.Singleton
  * Will be enhanced in subsequent phases with full JMRTD integration
  */
 @Singleton
-class JMRTDPassportReaderSimple @Inject constructor(
+class JMRTDPassportReaderSimple constructor(
     private val context: Context,
     private val securityProvider: NFCSecurityProvider
 ) {

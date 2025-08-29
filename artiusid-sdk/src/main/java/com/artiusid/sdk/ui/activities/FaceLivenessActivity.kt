@@ -11,9 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.artiusid.sdk.sdk.ArtiusIDSDK
-import com.artiusid.sdk.sdk.models.*
-import com.artiusid.sdk.sdk.ui.theme.ArtiusIDSDKTheme
+import com.artiusid.sdk.ArtiusIDSDK
+import com.artiusid.sdk.models.*
+import com.artiusid.sdk.ui.theme.ArtiusIDSDKTheme
 
 /**
  * Activity for face liveness detection

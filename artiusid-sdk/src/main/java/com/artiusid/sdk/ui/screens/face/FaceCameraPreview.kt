@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.face
+package com.artiusid.sdk.ui.screens.face
+
+import com.artiusid.sdk.services.*
 
 import android.graphics.Bitmap
 import android.graphics.Rect

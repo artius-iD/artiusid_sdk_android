@@ -6,7 +6,7 @@ import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
 import android.util.Log
-import com.artiusid.sdk.sdk.models.NFCPassportResult
+import com.artiusid.sdk.models.NFCPassportResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException

@@ -22,8 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.artiusid.sdk.sdk.ui.theme.AppColors
-import com.artiusid.sdk.sdk.ui.theme.AppFaceColors
+import com.artiusid.sdk.ui.theme.AppColors
+import com.artiusid.sdk.ui.theme.AppFaceColors
 import kotlin.math.*
 import kotlinx.coroutines.delay
 
@@ -38,10 +38,10 @@ fun ProgressCircleView(
     val isCompleted = completedCount == 8
     
     // Get colors outside Canvas scope
-    val segmentCompleteColor = AppFaceColors.segmentComplete
-    val segmentIncompleteColor = AppFaceColors.segmentIncomplete
-    val textPrimaryColor = AppColors.textPrimary
-    val textSecondaryColor = AppColors.textSecondary
+    val segmentCompleteColor = Color.Green
+    val segmentIncompleteColor = Color.LightGray
+    val textPrimaryColor = Color.Black
+    val textSecondaryColor = Color.Gray
     
     // Animate rotation for completion indicator
     LaunchedEffect(isCompleted) {

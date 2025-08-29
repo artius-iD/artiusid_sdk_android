@@ -1,4 +1,4 @@
-package com.artiusid.data.model
+package com.artiusid.sdk.data.model
 
 import com.google.gson.annotations.SerializedName
 

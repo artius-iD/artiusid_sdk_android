@@ -1,4 +1,4 @@
-package com.artiusid.utils
+package com.artiusid.sdk.utils
 
 import java.nio.charset.StandardCharsets
 import java.security.PrivateKey

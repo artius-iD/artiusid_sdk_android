@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.document
+package com.artiusid.sdk.ui.screens.document
+
+import com.artiusid.sdk.ui.components.*
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -11,7 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
-import com.artiusid.sdk.ui.theme.GradientBackground
+import com.artiusid.sdk.ui.components.GradientBackground
 
 @Composable
 fun DocumentPreviewScreen(

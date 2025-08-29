@@ -1,4 +1,4 @@
-package com.artiusid.data.repository
+package com.artiusid.sdk.data.repository
 
 import android.content.Context
 import android.os.Build
@@ -6,13 +6,13 @@ import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import com.artiusid.sdk.data.api.ApiService
-import com.artiusid.sdk.data.model.AuthenticationRequest
-import com.artiusid.sdk.domain.repository.AuthRepository
+import com.artiusid.sdk.models.AuthenticationRequest
+import com.artiusid.sdk.data.repository.AuthRepository
 import com.artiusid.sdk.util.DeviceUtils
 import com.artiusid.sdk.utils.FirebaseTokenManager
-import javax.inject.Inject
 
-class AuthRepositoryImpl @Inject constructor(
+
+class AuthRepositoryImpl constructor(
     private val apiService: ApiService,
     private val context: Context
 ) : AuthRepository {
@@ -23,17 +23,26 @@ class AuthRepositoryImpl @Inject constructor(
         private const val VERIFICATION_KEY = "verification"
     }
 
-    override suspend fun login(email: String, password: String): Boolean {
-        // TODO: Implement actual login logic
-        // For now, just simulate a network delay and return true
-        kotlinx.coroutines.delay(1000)
-        return true
+    override suspend fun login(email: String, password: String): Result<Unit> {
+        return try {
+            // TODO: Implement actual login logic
+            // For now, just simulate a network delay and return success
+            kotlinx.coroutines.delay(1000)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
-    override suspend fun logout() {
-        // TODO: Implement actual logout logic
-        // For now, just simulate a network delay
-        kotlinx.coroutines.delay(1000)
+    override suspend fun logout(): Result<Unit> {
+        return try {
+            // TODO: Implement actual logout logic
+            // For now, just simulate a network delay
+            kotlinx.coroutines.delay(1000)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override fun isUserLoggedIn(): Boolean {
@@ -42,47 +51,7 @@ class AuthRepositoryImpl @Inject constructor(
         return false
     }
 
-    override suspend fun authenticate(): Boolean {
-        return try {
-            val deviceId = DeviceUtils.getDeviceId(context)
-            val deviceModel = "${Build.MODEL}; Android: ${Build.VERSION.RELEASE}"
-            
-            // Get account number from secure storage (similar to iOS keychain)
-            val accountNumber = getAccountNumber() ?: "DEFAULT"
-            
-            // Get FCM token using FirebaseTokenManager
-            val tokenManager = FirebaseTokenManager.getInstance(context)
-            val fcmToken = tokenManager.getFCMTokenAsync()
-            
-            Log.d(TAG, "Authenticating with deviceId: $deviceId, deviceModel: $deviceModel, fcmToken: $fcmToken")
-            
-            val request = AuthenticationRequest(
-                deviceId = deviceId,
-                deviceModel = deviceModel
-            )
-            
-            val response = apiService.authenticate(
-                clientId = 1, // Match iOS AppConstants.clientId
-                clientGroupId = 1, // Match iOS AppConstants.clientGroupId
-                accountNumber = accountNumber,
-                request = request
-            )
-            
-            // Check status code similar to iOS
-            if (response.authenticationData.statusCode == 200) {
-                Log.i(TAG, "Authentication successful")
-                true
-            } else {
-                Log.i(TAG, "Authentication failed with status: ${response.authenticationData.statusCode}")
-                // Clear verification on failure (similar to iOS)
-                clearAccountNumber()
-                false
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Authentication error: ${e.message}", e)
-            false
-        }
-    }
+
     
     private fun getAccountNumber(): String? {
         return try {

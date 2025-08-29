@@ -1,4 +1,4 @@
-package com.artiusid.presentation.screens.face
+package com.artiusid.sdk.ui.screens.face
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

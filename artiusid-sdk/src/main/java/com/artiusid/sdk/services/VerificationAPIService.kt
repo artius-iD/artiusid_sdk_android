@@ -1,6 +1,6 @@
 package com.artiusid.sdk.services
 
-import com.artiusid.sdk.sdk.models.*
+import com.artiusid.sdk.models.*
 import kotlinx.coroutines.delay
 
 /**

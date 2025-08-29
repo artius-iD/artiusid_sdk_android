@@ -1,11 +1,11 @@
-package com.artiusid.services
+package com.artiusid.sdk.services
 
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import com.artiusid.sdk.data.model.FaceVerificationResult
+import com.artiusid.sdk.models.FaceVerificationResult
 
 class FaceVerificationServiceImpl(private val context: Context) : FaceVerificationService {
     companion object {

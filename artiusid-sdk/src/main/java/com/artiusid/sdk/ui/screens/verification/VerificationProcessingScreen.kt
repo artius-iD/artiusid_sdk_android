@@ -1,4 +1,8 @@
-package com.artiusid.presentation.screens.verification
+package com.artiusid.sdk.ui.screens.verification
+
+import com.artiusid.sdk.models.*
+
+import com.artiusid.sdk.ui.components.*
 
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -12,15 +16,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.artiusid.sdk.R
-import com.artiusid.sdk.presentation.components.AppTopBar
-import com.artiusid.sdk.ui.theme.GradientBackground
+import com.artiusid.sdk.ui.components.AppTopBar
+import com.artiusid.sdk.ui.components.GradientBackground
 import com.artiusid.sdk.ui.theme.Yellow900
 import com.artiusid.sdk.utils.ImageStorage
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
-import com.artiusid.sdk.presentation.components.DocumentRecaptureNotificationView
+import com.artiusid.sdk.ui.components.DocumentRecaptureNotificationView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +35,7 @@ fun VerificationProcessingScreen(
     onNavigateToStateIdFrontCapture: () -> Unit = {},
     onNavigateToStateIdBackCapture: () -> Unit = {},
     onNavigateToFailure: (com.artiusid.data.model.VerificationFailureType, String) -> Unit = { _, _ -> },
-    viewModel: VerificationProcessingViewModel = hiltViewModel()
+    viewModel: VerificationProcessingViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()

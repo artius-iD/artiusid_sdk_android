@@ -18,13 +18,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.artiusid.sdk.sdk.ArtiusIDSDK
-import com.artiusid.sdk.sdk.managers.SDKConfigManager
-import com.artiusid.sdk.sdk.managers.AnalyticsManager
-import com.artiusid.sdk.sdk.models.*
-import com.artiusid.sdk.sdk.services.*
-import com.artiusid.sdk.sdk.ui.theme.SDKThemeProvider
-import com.artiusid.sdk.sdk.ui.theme.*
+import com.artiusid.sdk.ArtiusIDSDK
+import com.artiusid.sdk.managers.SDKConfigManager
+import com.artiusid.sdk.managers.AnalyticsManager
+import com.artiusid.sdk.models.*
+import com.artiusid.sdk.services.*
+import com.artiusid.sdk.ui.theme.SDKThemeProvider
+import com.artiusid.sdk.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -458,7 +458,7 @@ class VerificationFlowActivity : BaseSDKActivity() {
             progress = 0.7f
             
             // Get MRZ data from document scan for NFC
-            val mrzData = documentResult?.extractedData ?: emptyMap()
+            val mrzData = documentResult?.ocrData ?: emptyMap()
             
             // Use real NFC service
             nfcResult = nfcPassportService.readPassportData(null, mrzData)

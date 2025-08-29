@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.document
+package com.artiusid.sdk.ui.screens.document
+
+import com.artiusid.sdk.ui.components.*
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,7 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.R
-import com.artiusid.sdk.presentation.components.AppTopBar
+import com.artiusid.sdk.ui.components.AppTopBar
 import com.artiusid.sdk.ui.theme.*
 
 @Composable

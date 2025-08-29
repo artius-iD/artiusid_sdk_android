@@ -9,6 +9,7 @@ interface VerificationCallback {
     fun onVerificationComplete(result: VerificationResult)
     fun onVerificationError(error: SDKError)
     fun onVerificationCancelled()
+    fun onVerificationBackled() // User pressed back/cancelled
 }
 
 /**
@@ -42,4 +43,5 @@ interface AuthenticationCallback {
     fun onAuthenticationComplete(result: AuthenticationResult)
     fun onAuthenticationError(error: SDKError)
     fun onAuthenticationCancelled()
+    fun onAuthenticationBackled() // User pressed back/cancelled
 }

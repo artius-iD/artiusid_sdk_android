@@ -1,4 +1,4 @@
-package com.artiusid.data.model
+package com.artiusid.sdk.data.model
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.document
+package com.artiusid.sdk.ui.screens.document
+
+import com.artiusid.sdk.ui.components.*
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,8 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.artiusid.sdk.R
-import com.artiusid.sdk.presentation.components.AppTopBar
-import com.artiusid.sdk.ui.theme.GradientBackground
+import com.artiusid.sdk.ui.components.AppTopBar
+import com.artiusid.sdk.ui.components.GradientBackground
 import com.artiusid.sdk.ui.theme.Yellow900
 
 @OptIn(ExperimentalMaterial3Api::class)

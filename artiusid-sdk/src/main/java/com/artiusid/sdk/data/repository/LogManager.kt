@@ -1,4 +1,6 @@
-package com.artiusid.data.repository
+package com.artiusid.sdk.data.repository
+
+import com.artiusid.sdk.utils.*
 
 import android.util.Log
 import java.text.SimpleDateFormat

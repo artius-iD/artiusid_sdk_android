@@ -1,4 +1,4 @@
-package com.artiusid.utils.passport
+package com.artiusid.sdk.utils.passport
 
 import android.graphics.Bitmap
 import android.graphics.Rect

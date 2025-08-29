@@ -1,9 +1,12 @@
 package com.artiusid.sdk.utils
 
+import com.artiusid.sdk.utils.*
+
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.util.Base64
+import android.util.Log
 import java.io.ByteArrayOutputStream
 
 /**
@@ -22,13 +25,40 @@ object ImageUtils {
     }
     
     /**
+     * Convert bitmap to base64 string optimized for documents
+     */
+    fun bitmapToDocumentBase64(bitmap: Bitmap): String {
+        return bitmapToBase64(bitmap, 80) // Lower quality for documents to reduce size
+    }
+    
+    /**
+     * Convert bitmap to base64 string optimized for face images
+     */
+    fun bitmapToFaceBase64(bitmap: Bitmap): String {
+        return bitmapToBase64(bitmap, 90) // Higher quality for face images
+    }
+    
+    /**
+     * Get estimated payload size in KB for a base64 string
+     */
+    fun getEstimatedPayloadSizeKB(base64String: String): Int {
+        // Each base64 character represents 6 bits of data.
+        // So, 4 base64 characters represent 3 bytes of original data.
+        // Size in bytes = (base64String.length() / 4) * 3
+        // Size in KB = (size in bytes) / 1024
+        return (base64String.length / 4 * 3) / 1024
+    }
+    
+    /**
      * Convert base64 string to bitmap
      */
-    fun base64ToBitmap(base64String: String): Bitmap? {
+    fun base64ToBitmap(base64String: String?): Bitmap? {
         return try {
+            if (base64String.isNullOrEmpty()) return null
             val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
             BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
         } catch (e: Exception) {
+            Log.e("ImageUtils", "Error converting base64 to bitmap", e)
             null
         }
     }

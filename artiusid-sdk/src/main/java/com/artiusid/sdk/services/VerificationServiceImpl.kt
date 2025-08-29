@@ -2,7 +2,7 @@
  * Author: Todd Bryant
  * Company: artius.iD
  */
-package com.artiusid.services
+package com.artiusid.sdk.services
 
 import android.content.Context
 import android.util.Log
@@ -10,9 +10,9 @@ import com.artiusid.sdk.utils.CertificateManager
 import com.artiusid.sdk.utils.TLSSessionManager
 import com.artiusid.sdk.utils.EnvironmentManager
 import com.artiusid.sdk.utils.UrlBuilder
-import com.artiusid.sdk.data.model.VerificationRequest
-import com.artiusid.sdk.data.model.VerificationResponse
-import com.artiusid.sdk.data.model.VerificationData
+import com.artiusid.sdk.models.VerificationRequest
+import com.artiusid.sdk.models.VerificationResponse
+import com.artiusid.sdk.models.VerificationData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*

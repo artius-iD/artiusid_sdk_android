@@ -1,4 +1,4 @@
-package com.artiusid.utils
+package com.artiusid.sdk.utils
 
 // Data classes to hold document information
 data class PhotoIdData(

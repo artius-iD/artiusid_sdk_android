@@ -1,4 +1,7 @@
-package com.artiusid.utils
+package com.artiusid.sdk.utils
+
+import com.artiusid.sdk.utils.*
+import com.artiusid.sdk.models.AAMVAData
 
 import android.util.Log
 import java.util.*

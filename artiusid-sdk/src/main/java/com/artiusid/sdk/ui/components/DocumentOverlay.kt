@@ -1,4 +1,4 @@
-package com.artiusid.presentation.components
+package com.artiusid.sdk.presentation.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -21,12 +21,12 @@ fun DocumentOverlay(
     isAligned: Boolean = true
 ) {
     val rectColor = if (isAligned) {
-        AppDocumentColors.aligned
+        Color.Green
     } else {
-        AppDocumentColors.misaligned
+        Color.Red
     }
     
-    val overlayColor = AppOverlayColors.overlay
+    val overlayColor = Color.Black.copy(alpha = 0.5f)
     
     Box(modifier = modifier.fillMaxSize()) {
         Canvas(modifier = Modifier.fillMaxSize()) {

@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.face
+package com.artiusid.sdk.ui.screens.face
+
+import com.artiusid.sdk.models.*
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -176,8 +178,8 @@ fun FaceScanScreen(
                 contentAlignment = Alignment.BottomCenter
             ) {
                 CustomInfoButton(
-                    buttonLabel = currentInstruction.ifBlank { "Move your head to fill all segments, then blink" },
-                    isSecondary = false,
+                    text = currentInstruction.ifBlank { "Move your head to fill all segments, then blink" },
+                    onClick = { /* No action needed for info display */ },
                     modifier = Modifier
                         .padding(horizontal = 15.dp)
                 )

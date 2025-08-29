@@ -1,6 +1,6 @@
 package com.artiusid.sdk.utils
 
-import com.artiusid.sdk.sdk.models.*
+import com.artiusid.sdk.models.*
 
 /**
  * Utility class to hold verification data during the SDK flow
@@ -69,6 +69,42 @@ object VerificationDataHolder {
             confidence = confidence,
             sessionId = "sdk_${System.currentTimeMillis()}"
         )
+    }
+    
+    /**
+     * Set liveness result
+     */
+    fun setLivenessResult(result: LivenessResult) {
+        updateLivenessResult(result)
+    }
+    
+    /**
+     * Set document scan result
+     */
+    fun setDocumentScanResult(result: DocumentScanResult) {
+        updateDocumentScanResult(result)
+    }
+    
+    /**
+     * Set document back scan result
+     */
+    fun setDocumentBackScanResult(result: DocumentScanResult) {
+        // For now, we'll treat back scan as another document scan result
+        updateDocumentScanResult(result)
+    }
+    
+    /**
+     * Set passport scan result
+     */
+    fun setPassportScanResult(result: DocumentScanResult) {
+        updateDocumentScanResult(result)
+    }
+    
+    /**
+     * Set NFC passport result
+     */
+    fun setNfcPassportResult(result: NFCPassportResult) {
+        updateNFCPassportResult(result)
     }
 }
 

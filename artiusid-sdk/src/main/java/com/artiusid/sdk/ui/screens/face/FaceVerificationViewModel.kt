@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.face
+package com.artiusid.sdk.ui.screens.face
+
+import com.artiusid.sdk.models.*
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

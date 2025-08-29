@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.document
+package com.artiusid.sdk.ui.screens.document
+
+import com.artiusid.sdk.ui.components.*
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -40,14 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.artiusid.sdk.ui.theme.*
 
 @Composable
 fun PassportScanScreen(
     onPassportScanComplete: () -> Unit,
     onNavigateBack: () -> Unit,
-    viewModel: PassportScanViewModel = hiltViewModel()
+    viewModel: PassportScanViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -144,8 +146,8 @@ fun PassportScanScreen(
                 }
                 
                 CustomInfoButton(
-                    buttonLabel = statusText,
-                    isSecondary = false,
+                    text = statusText,
+                    onClick = { /* No action needed for info display */ },
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .rotate(90f)

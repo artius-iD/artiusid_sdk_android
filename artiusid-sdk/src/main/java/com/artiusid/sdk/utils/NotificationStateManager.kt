@@ -1,4 +1,4 @@
-package com.artiusid.utils
+package com.artiusid.sdk.utils
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue

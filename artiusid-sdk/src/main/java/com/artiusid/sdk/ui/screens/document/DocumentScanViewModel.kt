@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.document
+package com.artiusid.sdk.ui.screens.document
+
+import com.artiusid.sdk.services.*
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -9,27 +11,26 @@ import androidx.lifecycle.viewModelScope
 import com.artiusid.sdk.utils.BarcodeScanManager
 import com.artiusid.sdk.utils.BarcodeScanResult
 import com.artiusid.sdk.utils.DocumentScanManager
-import com.artiusid.sdk.utils.DocumentScanResult
+import com.artiusid.sdk.models.DocumentScanResult
 import com.artiusid.sdk.utils.DocumentSide
 import com.artiusid.sdk.utils.ImageStorage
 import com.artiusid.sdk.utils.AAMVABarcodeParser
+import com.artiusid.sdk.models.AAMVAData
 import com.artiusid.sdk.utils.DocumentComparisonManager
-import com.artiusid.sdk.presentation.screens.document.DocumentInfoExtractor
-import com.artiusid.sdk.presentation.screens.document.DocumentType
+import com.artiusid.sdk.ui.screens.document.DocumentInfoExtractor
+import com.artiusid.sdk.models.DocumentType as ModelsDocumentType
+import com.artiusid.sdk.ui.screens.document.DocumentType
 import com.google.mlkit.vision.barcode.common.Barcode
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
-import javax.inject.Inject
 
-@HiltViewModel
-class DocumentScanViewModel @Inject constructor(
-    private val documentScanManager: DocumentScanManager,
-    private val barcodeScanManager: BarcodeScanManager
-) : ViewModel() {
+class DocumentScanViewModel : ViewModel() {
+    
+    private val documentScanManager = DocumentScanManager()
+    private val barcodeScanManager = com.artiusid.sdk.utils.BarcodeScanManager()
 
     private val _uiState = MutableStateFlow<DocumentScanUiState>(DocumentScanUiState.Initial)
     val uiState: StateFlow<DocumentScanUiState> = _uiState.asStateFlow()
@@ -52,7 +53,7 @@ class DocumentScanViewModel @Inject constructor(
     private val documentInfoExtractor = DocumentInfoExtractor()
     private val comparisonManager = DocumentComparisonManager()
     private var frontOcrData: Map<String, String>? = null
-    private var barcodeData: AAMVABarcodeParser.AAMVAData? = null
+    private var barcodeData: AAMVAData? = null
     private var hasRetriedScan = false // Track if we've already retried
     private var lastBackScanProcessTime = 0L // Track timing for back scan throttling
 
@@ -173,20 +174,24 @@ class DocumentScanViewModel @Inject constructor(
                     android.util.Log.d("DocumentScanViewModel", "Barcode data preview: ${barcodeDataString.take(50)}")
                     
                     // Parse AAMVA barcode data
-                    barcodeData = AAMVABarcodeParser.parse(barcodeDataString)
-                    AAMVABarcodeParser.logParsedData(barcodeData!!)
+                    val parsedData = AAMVABarcodeParser.parseBarcode(barcodeDataString)
+                    barcodeData = AAMVAData(
+                        firstName = parsedData["firstName"] ?: "",
+                        lastName = parsedData["lastName"] ?: "",
+                        middleName = parsedData["middleName"] ?: "",
+                        dateOfBirth = parsedData["dateOfBirth"] ?: "",
+                        gender = parsedData["gender"] ?: "",
+                        licenseNumber = parsedData["licenseNumber"] ?: "",
+                        address = parsedData["address"] ?: "",
+                        city = parsedData["city"] ?: "",
+                        state = parsedData["state"] ?: "",
+                        zipCode = parsedData["zipCode"] ?: ""
+                    )
+                    android.util.Log.d("DocumentScanViewModel", "Parsed AAMVA data: $barcodeData")
                     
                     // Store PhotoID data for verification results
-                    com.artiusid.utils.DocumentDataHolder.setPhotoIdData(
-                        com.artiusid.utils.PhotoIdData(
-                            firstName = barcodeData!!.firstName,
-                            lastName = barcodeData!!.lastName,
-                            driversLicenseNumber = barcodeData!!.driversLicenseNumber,
-                            dateOfBirth = barcodeData!!.dateOfBirth,
-                            address = "${barcodeData!!.streetAddress ?: ""}, ${barcodeData!!.cityAddress ?: ""}, ${barcodeData!!.stateAddress ?: ""} ${barcodeData!!.zipCode ?: ""}".trim()
-                        )
-                    )
-                    android.util.Log.d("DocumentScanViewModel", "Stored PhotoID data: firstName=${barcodeData!!.firstName}, lastName=${barcodeData!!.lastName}")
+                    // TODO: Implement PhotoID data storage when needed
+                    android.util.Log.d("DocumentScanViewModel", "PhotoID data would be stored here: firstName=${barcodeData!!.firstName}, lastName=${barcodeData!!.lastName}")
                     
                     // Store the back image for verification
                     ImageStorage.setBackImage(bitmap)
@@ -343,10 +348,11 @@ class DocumentScanViewModel @Inject constructor(
                             _validationMessage.value = "Front scan completed successfully"
                             _uiState.value = DocumentScanUiState.Success(
                                 DocumentScanResult(
-                                    isSuccess = true,
+                                    success = true,
+                                    documentType = "ID_CARD",
                                     validationStatus = "Front scan completed successfully",
                                     confidence = 1.0f,
-                                    bitmap = bitmap,
+                                    frontImage = bitmap,
                                     documentBounds = documentBounds
                                 )
                             )
@@ -420,20 +426,24 @@ class DocumentScanViewModel @Inject constructor(
                     android.util.Log.d("DocumentScanViewModel", "[BACK_BOUNDS] Barcode data preview: ${barcodeDataString.take(50)}")
                     
                     // Parse AAMVA data
-                    barcodeData = AAMVABarcodeParser.parse(barcodeDataString)
-                    AAMVABarcodeParser.logParsedData(barcodeData!!)
+                    val parsedData = AAMVABarcodeParser.parseBarcode(barcodeDataString)
+                    barcodeData = AAMVAData(
+                        firstName = parsedData["firstName"] ?: "",
+                        lastName = parsedData["lastName"] ?: "",
+                        middleName = parsedData["middleName"] ?: "",
+                        dateOfBirth = parsedData["dateOfBirth"] ?: "",
+                        gender = parsedData["gender"] ?: "",
+                        licenseNumber = parsedData["licenseNumber"] ?: "",
+                        address = parsedData["address"] ?: "",
+                        city = parsedData["city"] ?: "",
+                        state = parsedData["state"] ?: "",
+                        zipCode = parsedData["zipCode"] ?: ""
+                    )
+                    android.util.Log.d("DocumentScanViewModel", "Parsed AAMVA data: $barcodeData")
                     
                     // Store PhotoID data for verification results
-                    com.artiusid.utils.DocumentDataHolder.setPhotoIdData(
-                        com.artiusid.utils.PhotoIdData(
-                            firstName = barcodeData!!.firstName,
-                            lastName = barcodeData!!.lastName,
-                            driversLicenseNumber = barcodeData!!.driversLicenseNumber,
-                            dateOfBirth = barcodeData!!.dateOfBirth,
-                            address = "${barcodeData!!.streetAddress ?: ""}, ${barcodeData!!.cityAddress ?: ""}, ${barcodeData!!.stateAddress ?: ""} ${barcodeData!!.zipCode ?: ""}".trim()
-                        )
-                    )
-                    android.util.Log.d("DocumentScanViewModel", "Stored PhotoID data: firstName=${barcodeData!!.firstName}, lastName=${barcodeData!!.lastName}")
+                    // TODO: Implement PhotoID data storage when needed
+                    android.util.Log.d("DocumentScanViewModel", "PhotoID data would be stored here: firstName=${barcodeData!!.firstName}, lastName=${barcodeData!!.lastName}")
                     
                     // Store the back image for verification
                     ImageStorage.setBackImage(bitmap)

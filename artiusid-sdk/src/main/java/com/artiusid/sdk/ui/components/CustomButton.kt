@@ -1,4 +1,4 @@
-package com.artiusid.presentation.components
+package com.artiusid.sdk.presentation.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.*

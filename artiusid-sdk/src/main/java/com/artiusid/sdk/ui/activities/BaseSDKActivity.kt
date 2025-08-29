@@ -6,8 +6,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import com.artiusid.sdk.sdk.models.SDKError
-import com.artiusid.sdk.sdk.ui.theme.ArtiusIDSDKTheme
+import com.artiusid.sdk.models.SDKError
+import com.artiusid.sdk.ui.theme.ArtiusIDSDKTheme
 
 /**
  * Base activity for all SDK activities

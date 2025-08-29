@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.document
+package com.artiusid.sdk.ui.screens.document
+
+import com.artiusid.sdk.models.*
 
 import android.graphics.Bitmap
 import android.util.Log
@@ -10,19 +12,19 @@ import com.artiusid.sdk.data.models.passport.PassportScanningState
 import com.artiusid.sdk.data.models.passport.ScannedPassportImage
 import com.artiusid.sdk.utils.passport.MRZParser
 import com.artiusid.sdk.utils.ImageStorage
-import dagger.hilt.android.lifecycle.HiltViewModel
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+
 
 /**
  * ViewModel for passport scanning functionality
  * Manages MRZ detection, image capture, and validation
  */
-@HiltViewModel
-class PassportScanViewModel @Inject constructor() : ViewModel() {
+
+class PassportScanViewModel constructor() : ViewModel() {
     
     companion object {
         private const val TAG = "PassportScanViewModel"

@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.face
+package com.artiusid.sdk.ui.screens.face
+
+import com.artiusid.sdk.services.*
 
 import android.graphics.Bitmap
 import androidx.camera.core.Preview
@@ -7,15 +9,15 @@ import androidx.lifecycle.viewModelScope
 import com.artiusid.sdk.utils.FaceDetectionManager
 import com.artiusid.sdk.utils.ImageStorage
 import com.google.mlkit.vision.face.Face
-import dagger.hilt.android.lifecycle.HiltViewModel
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class FaceScanViewModel @Inject constructor(
+
+
+class FaceScanViewModel constructor(
     private val faceDetectionManager: FaceDetectionManager
 ) : ViewModel() {
 

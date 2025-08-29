@@ -1,5 +1,6 @@
-package com.artiusid.presentation.components
+package com.artiusid.sdk.presentation.components
 
+import com.artiusid.sdk.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,6 +29,11 @@ fun ColorSchemeSelector(
     onSchemeSelected: (ColorSchemeType) -> Unit = {}
 ) {
     var selectedScheme by remember { mutableStateOf(ColorManager.getCurrentSchemeType()) }
+    val currentScheme = when (selectedScheme) {
+        ColorSchemeType.DARK -> DarkColorScheme()
+        ColorSchemeType.LIGHT -> LightColorScheme()
+        ColorSchemeType.ALTERNATIVE -> AlternativeColorScheme()
+    }
     
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -41,7 +47,7 @@ fun ColorSchemeSelector(
                 text = "Color Theme",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = AppColors.textPrimary,
+                color = currentScheme.textPrimary,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             
@@ -93,7 +99,7 @@ private fun ColorSchemePreview(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier
                 .background(
-                    color = if (isSelected) AppColors.borderFocus else AppColors.border,
+                    color = if (isSelected) scheme.borderFocus else scheme.border,
                     shape = RoundedCornerShape(8.dp)
                 )
                 .padding(8.dp)
@@ -128,7 +134,7 @@ private fun ColorSchemePreview(
         Text(
             text = schemeName,
             fontSize = 12.sp,
-            color = if (isSelected) AppColors.primary else AppColors.textSecondary,
+            color = if (isSelected) scheme.primary else scheme.textSecondary,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
         )
     }
@@ -154,33 +160,33 @@ fun ColorSchemeSettings(
                 text = "Current Color Scheme",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = AppColors.textPrimary,
+                color = Color.Black,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             
             // Color categories
             ColorCategory("Primary Colors", listOf(
-                "Primary" to AppColors.primary,
-                "Secondary" to AppColors.secondary,
-                "Background" to AppColors.background,
-                "Surface" to AppColors.surface
+                "Primary" to Color.Blue,
+                "Secondary" to Color.Cyan,
+                "Background" to Color.White,
+                "Surface" to Color.LightGray
             ))
             
             Spacer(modifier = Modifier.height(12.dp))
             
             ColorCategory("Text Colors", listOf(
-                "Primary Text" to AppColors.textPrimary,
-                "Secondary Text" to AppColors.textSecondary,
-                "Disabled Text" to AppColors.textDisabled
+                "Primary Text" to Color.Black,
+                "Secondary Text" to Color.Gray,
+                "Disabled Text" to Color.LightGray
             ))
             
             Spacer(modifier = Modifier.height(12.dp))
             
             ColorCategory("Status Colors", listOf(
-                "Success" to AppColors.success,
-                "Error" to AppColors.error,
-                "Warning" to AppColors.warning,
-                "Info" to AppColors.info
+                "Success" to Color.Green,
+                "Error" to Color.Red,
+                "Warning" to Color.Yellow,
+                "Info" to Color.Blue
             ))
         }
     }
@@ -196,7 +202,7 @@ private fun ColorCategory(
             text = title,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium,
-            color = AppColors.textSecondary,
+            color = Color.Gray,
             modifier = Modifier.padding(bottom = 8.dp)
         )
         
@@ -217,7 +223,7 @@ private fun ColorCategory(
                 Text(
                     text = name,
                     fontSize = 12.sp,
-                    color = AppColors.textPrimary
+                    color = Color.Black
                 )
             }
         }

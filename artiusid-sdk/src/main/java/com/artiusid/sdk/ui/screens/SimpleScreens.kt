@@ -8,9 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.artiusid.sdk.sdk.ui.components.GradientBackground
-import com.artiusid.sdk.sdk.ui.theme.SDKColors
-import com.artiusid.sdk.sdk.models.*
+import com.artiusid.sdk.ui.components.GradientBackground
+import com.artiusid.sdk.ui.theme.SDKColors
+import com.artiusid.sdk.models.*
 
 /**
  * Simplified screens for SDK navigation
@@ -577,12 +577,12 @@ fun DocumentScanScreen(
                         DocumentScanResult(
                             success = true,
                             documentType = when(documentType) {
-                                "passport" -> DocumentType.PASSPORT
-                                "id" -> DocumentType.ID_CARD
-                                "back" -> DocumentType.ID_CARD
-                                else -> DocumentType.OTHER
+                                "passport" -> "PASSPORT"
+                                "id" -> "ID_CARD"
+                                "back" -> "ID_CARD"
+                                else -> "OTHER"
                             },
-                            extractedData = mapOf("name" to "John Doe"),
+                            ocrData = mapOf("name" to "John Doe"),
                             confidence = 0.88f,
                             processingTime = 1500L,
                             sessionId = "doc_${System.currentTimeMillis()}"

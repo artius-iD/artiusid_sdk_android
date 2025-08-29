@@ -1,4 +1,4 @@
-package com.artiusid.presentation.components
+package com.artiusid.sdk.presentation.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.artiusid.sdk.presentation.screens.document.DocumentType
+import com.artiusid.sdk.models.DocumentType
 
 @Composable
 fun DocumentScanFrame(
@@ -66,6 +66,9 @@ fun DocumentScanFrame(
             text = when (documentType) {
                 DocumentType.ID_CARD -> "Position your ID card within the frame"
                 DocumentType.PASSPORT -> "Position your passport within the frame"
+                DocumentType.DRIVERS_LICENSE -> "Position your driver's license within the frame"
+                DocumentType.VISA -> "Position your visa within the frame"
+                DocumentType.OTHER -> "Position your document within the frame"
             },
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White,

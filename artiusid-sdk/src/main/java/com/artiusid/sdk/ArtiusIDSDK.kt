@@ -3,11 +3,21 @@ package com.artiusid.sdk
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import com.artiusid.sdk.callbacks.*
-import com.artiusid.sdk.config.*
+import com.artiusid.sdk.callbacks.VerificationCallback
+import com.artiusid.sdk.callbacks.AuthenticationCallback
+import com.artiusid.sdk.callbacks.LivenessCallback
+import com.artiusid.sdk.callbacks.DocumentScanCallback
+import com.artiusid.sdk.callbacks.NFCReadingCallback
+import com.artiusid.sdk.config.ArtiusSDKConfig
 import com.artiusid.sdk.managers.SDKConfigManager
 import com.artiusid.sdk.managers.AnalyticsManager
-import com.artiusid.sdk.models.*
+import com.artiusid.sdk.models.SDKError
+import com.artiusid.sdk.models.SDKErrorCode
+import com.artiusid.sdk.models.VerificationResult
+import com.artiusid.sdk.models.AuthenticationResult
+import com.artiusid.sdk.models.LivenessResult
+import com.artiusid.sdk.models.DocumentScanResult
+import com.artiusid.sdk.models.NFCPassportResult
 import com.artiusid.sdk.ui.activities.SDKMainActivity
 
 /**
@@ -29,6 +39,9 @@ object ArtiusIDSDK {
     // Callback storage for returning results to host app
     var verificationCallback: VerificationCallback? = null
     var authenticationCallback: AuthenticationCallback? = null
+    var livenessCallback: LivenessCallback? = null
+    var documentScanCallback: DocumentScanCallback? = null
+    var nfcReadingCallback: NFCReadingCallback? = null
     
     private const val TAG = "ArtiusIDSDK"
     

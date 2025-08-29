@@ -8,9 +8,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.artiusid.sdk.sdk.navigation.SDKNavigation
-import com.artiusid.sdk.sdk.ui.theme.SDKThemeProvider
-import com.artiusid.sdk.sdk.ArtiusIDSDK
+import com.artiusid.sdk.navigation.SimpleSDKNavigation
+import com.artiusid.sdk.ui.theme.SDKThemeProvider
+import com.artiusid.sdk.ArtiusIDSDK
 
 /**
  * Main SDK Activity that hosts the complete standalone app experience
@@ -53,7 +53,7 @@ class SDKMainActivity : ComponentActivity() {
                     // Use the complete navigation system from standalone app
                     val navController = rememberNavController()
                     
-                    SDKNavigation(
+                    SimpleSDKNavigation(
                         navController = navController,
                         flowType = flowType ?: "verification"
                     )

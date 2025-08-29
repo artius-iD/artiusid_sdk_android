@@ -1,4 +1,6 @@
-package com.artiusid.services
+package com.artiusid.sdk.services
+
+import com.artiusid.sdk.models.*
 
 import android.graphics.Bitmap
 import androidx.camera.core.ImageAnalysis

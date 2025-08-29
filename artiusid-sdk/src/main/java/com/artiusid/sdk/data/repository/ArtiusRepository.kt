@@ -1,11 +1,11 @@
-package com.artiusid.data.repository
+package com.artiusid.sdk.data.repository
 
 import com.artiusid.sdk.data.api.ApiService
-import javax.inject.Inject
+
 import javax.inject.Singleton
 
 @Singleton
-class ArtiusRepository @Inject constructor(
+class ArtiusRepository constructor(
     private val apiService: ApiService
 ) {
     // Add repository methods here

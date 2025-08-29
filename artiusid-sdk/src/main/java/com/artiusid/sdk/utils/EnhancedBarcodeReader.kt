@@ -7,7 +7,9 @@
 // Created by Todd Bryant on 12/28/24.
 //
 
-package com.artiusid.utils
+package com.artiusid.sdk.utils
+
+import com.artiusid.sdk.utils.*
 
 import android.graphics.*
 import android.util.Log

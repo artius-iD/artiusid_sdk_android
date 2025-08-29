@@ -1,5 +1,7 @@
 package com.artiusid.sdk.utils
 
+import com.artiusid.sdk.utils.*
+
 /**
  * Parser for AAMVA (American Association of Motor Vehicle Administrators) barcodes
  * Used for parsing driver's license barcodes (PDF417)

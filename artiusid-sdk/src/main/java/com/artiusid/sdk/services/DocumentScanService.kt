@@ -7,8 +7,9 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-import com.artiusid.sdk.sdk.models.*
-import com.artiusid.sdk.sdk.utils.AAMVABarcodeParser
+import com.artiusid.sdk.models.*
+import com.artiusid.sdk.models.DocumentScanResult as ModelsDocumentScanResult
+import com.artiusid.sdk.utils.AAMVABarcodeParser
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import java.util.regex.Pattern
@@ -44,7 +45,7 @@ class DocumentScanService(private val context: Context) {
     suspend fun scanDocument(
         bitmap: Bitmap,
         documentType: DocumentType
-    ): DocumentScanResult {
+    ): ModelsDocumentScanResult {
         return try {
             Log.d(TAG, "Starting document scan for type: $documentType")
             
@@ -55,15 +56,31 @@ class DocumentScanService(private val context: Context) {
                 
                 if (barcodeResult.success && barcodeResult.aamvaData != null) {
                     Log.d(TAG, "Barcode scan successful, using AAMVA data")
-                    val aamvaMap = with(AAMVABarcodeParser) { barcodeResult.aamvaData.toMap() }
+                    val aamvaMap = mapOf(
+                        "firstName" to (barcodeResult.aamvaData?.firstName ?: ""),
+                        "lastName" to (barcodeResult.aamvaData?.lastName ?: ""),
+                        "middleName" to (barcodeResult.aamvaData?.middleName ?: ""),
+                        "dateOfBirth" to (barcodeResult.aamvaData?.dateOfBirth ?: ""),
+                        "gender" to (barcodeResult.aamvaData?.gender ?: ""),
+                        "licenseNumber" to (barcodeResult.aamvaData?.licenseNumber ?: ""),
+                        "address" to (barcodeResult.aamvaData?.address ?: ""),
+                        "city" to (barcodeResult.aamvaData?.city ?: ""),
+                        "state" to (barcodeResult.aamvaData?.state ?: ""),
+                        "zipCode" to (barcodeResult.aamvaData?.zipCode ?: ""),
+                        "issueDate" to (barcodeResult.aamvaData?.issueDate ?: ""),
+                        "expirationDate" to (barcodeResult.aamvaData?.expirationDate ?: "")
+                    )
                     
-                    return DocumentScanResult(
+                    return ModelsDocumentScanResult(
                         success = true,
-                        documentType = documentType,
-                        extractedData = aamvaMap,
-                        confidence = barcodeResult.confidence,
-                        processingTime = System.currentTimeMillis(),
-                        sessionId = "barcode-scan-${System.currentTimeMillis()}"
+                        documentType = documentType.name,
+                        frontImage = null,
+                        backImage = null,
+                        ocrData = aamvaMap,
+                        mrzData = null,
+                        aamvaData = barcodeResult.aamvaData,
+                        message = "Barcode scan successful",
+                        error = null
                     )
                 } else {
                     Log.d(TAG, "Barcode scan failed, falling back to OCR")
@@ -84,24 +101,30 @@ class DocumentScanService(private val context: Context) {
             
             val confidence = calculateConfidence(extractedData, visionText)
             
-            DocumentScanResult(
+            ModelsDocumentScanResult(
                 success = extractedData.isNotEmpty(),
-                documentType = documentType,
-                extractedData = extractedData,
-                confidence = confidence,
-                processingTime = System.currentTimeMillis(),
-                sessionId = "doc-scan-${System.currentTimeMillis()}"
+                documentType = documentType.name,
+                frontImage = null,
+                backImage = null,
+                ocrData = extractedData,
+                mrzData = null,
+                aamvaData = null,
+                message = if (extractedData.isNotEmpty()) "Document scan successful" else "No data extracted",
+                error = if (extractedData.isEmpty()) SDKError(SDKErrorCode.DOCUMENT_SCAN_FAILED, "No data extracted") else null
             )
             
         } catch (e: Exception) {
             Log.e(TAG, "Document scan failed", e)
-            DocumentScanResult(
+            ModelsDocumentScanResult(
                 success = false,
-                documentType = documentType,
-                extractedData = emptyMap(),
-                confidence = 0.0f,
-                processingTime = System.currentTimeMillis(),
-                sessionId = "doc-scan-${System.currentTimeMillis()}"
+                documentType = documentType.name,
+                frontImage = null,
+                backImage = null,
+                ocrData = emptyMap(),
+                mrzData = null,
+                aamvaData = null,
+                message = "Document scan failed: ${e.message}",
+                error = SDKError(SDKErrorCode.DOCUMENT_SCAN_FAILED, e.message ?: "Unknown error")
             )
         }
     }

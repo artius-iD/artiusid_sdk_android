@@ -4,7 +4,7 @@
  * 
  * Verification failure screen matching iOS DocumentRecaptureNotificationView
  */
-package com.artiusid.presentation.screens.verification
+package com.artiusid.sdk.ui.screens.verification
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -26,7 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.artiusid.sdk.data.model.VerificationFailureType
+import com.artiusid.sdk.models.VerificationFailureType
 import com.artiusid.sdk.ui.theme.*
 
 @Composable
@@ -77,7 +77,7 @@ fun VerificationFailureScreen(
             
             // Main Title (matching iOS)
             Text(
-                text = failureType.getTitle(context),
+                text = failureType.getTitle(),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -89,7 +89,7 @@ fun VerificationFailureScreen(
             
             // Error Explanation (matching iOS)
             Text(
-                text = failureType.getMessage(context),
+                text = failureType.getMessage(),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.White.copy(alpha = 0.8f),
@@ -114,7 +114,7 @@ fun VerificationFailureScreen(
                 shape = RoundedCornerShape(25.dp)
             ) {
                 Text(
-                    text = failureType.getButtonText(context),
+                    text = failureType.getButtonText(),
                     color = Color.Black,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp

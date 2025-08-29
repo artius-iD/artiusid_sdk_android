@@ -1,4 +1,4 @@
-package com.artiusid.presentation.screens.face
+package com.artiusid.sdk.ui.screens.face
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

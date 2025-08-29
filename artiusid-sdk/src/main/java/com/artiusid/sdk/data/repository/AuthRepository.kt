@@ -1,4 +1,4 @@
-package com.artiusid.data.repository
+package com.artiusid.sdk.data.repository
 
 interface AuthRepository {
     suspend fun login(email: String, password: String): Result<Unit>

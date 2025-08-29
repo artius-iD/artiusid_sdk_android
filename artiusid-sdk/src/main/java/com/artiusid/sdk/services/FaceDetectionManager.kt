@@ -1,5 +1,7 @@
 package com.artiusid.sdk.services
 
+import com.artiusid.sdk.services.*
+
 import android.graphics.Bitmap
 import android.graphics.Rect
 import com.google.mlkit.vision.face.Face

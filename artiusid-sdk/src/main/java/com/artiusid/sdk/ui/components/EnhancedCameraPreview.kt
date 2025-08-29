@@ -1,4 +1,4 @@
-package com.artiusid.presentation.components
+package com.artiusid.sdk.presentation.components
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.LifecycleOwner
-import com.artiusid.sdk.presentation.screens.document.DocumentScanViewModel
+import com.artiusid.sdk.ui.screens.document.DocumentScanViewModel
 import com.artiusid.sdk.utils.DocumentSide
 import com.artiusid.sdk.utils.EnhancedCameraManager
 import kotlinx.coroutines.launch

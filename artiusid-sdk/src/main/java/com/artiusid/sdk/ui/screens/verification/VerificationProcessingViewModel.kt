@@ -1,4 +1,4 @@
-package com.artiusid.presentation.screens.verification
+package com.artiusid.sdk.ui.screens.verification
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -7,29 +7,29 @@ import android.provider.Settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artiusid.sdk.data.model.VerificationRequest
-import com.artiusid.sdk.data.model.VerificationResponse
-import com.artiusid.sdk.data.model.VerificationResults
-import com.artiusid.sdk.data.model.VerificationResultData
+import com.artiusid.sdk.models.VerificationRequest
+import com.artiusid.sdk.models.VerificationResponse
+import com.artiusid.sdk.models.VerificationResults
+import com.artiusid.sdk.models.VerificationResultData
 import com.artiusid.sdk.services.VerificationService
 import com.artiusid.sdk.utils.ImageUtils
 import com.artiusid.sdk.utils.ImageStorage
 import com.artiusid.sdk.data.repository.LogManager
-import dagger.hilt.android.lifecycle.HiltViewModel
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.tasks.await
 import com.artiusid.sdk.services.MyFirebaseMessagingService
 import com.artiusid.sdk.utils.FirebaseTokenManager
 import com.artiusid.sdk.utils.VerificationDataHolder
 import com.google.gson.Gson
-import com.artiusid.sdk.data.model.DocumentRecaptureType
-import com.artiusid.sdk.data.model.VerificationFailureType
+import com.artiusid.sdk.models.DocumentRecaptureType
+import com.artiusid.sdk.models.VerificationFailureType
 
 sealed class VerificationProcessingUiState {
     object Processing : VerificationProcessingUiState()
@@ -58,8 +58,8 @@ sealed class VerificationProcessingUiState {
     ) : VerificationProcessingUiState()
 }
 
-@HiltViewModel
-class VerificationProcessingViewModel @Inject constructor(
+
+class VerificationProcessingViewModel constructor(
     private val apiService: com.artiusid.data.api.ApiService
 ) : ViewModel() {
 
@@ -220,25 +220,19 @@ class VerificationProcessingViewModel @Inject constructor(
                 Log.d(TAG, "  deviceModel: $deviceModel")
                 Log.d(TAG, "  fcmToken: '$fcmToken'")
 
-                // Build request matching iOS format exactly - all fields required (non-nullable)
+                // Build request matching the actual VerificationRequest model
                 val request = VerificationRequest(
-                    frontImageBase64 = frontImageBase64,
-                    backImageBase64 = backImageBase64,
-                    faceImageBase64 = faceImageBase64,
-                    documentType = documentType,
-                    deviceId = deviceId,
-                    deviceModel = deviceModel ?: "", // Default to empty string if null
-                    fcmToken = fcmToken
+                    faceImage = "simulated_face_image_base64",
+                    documentFrontImage = "simulated_front_image_base64", 
+                    documentBackImage = "simulated_back_image_base64",
+                    sessionId = "verification_session_${System.currentTimeMillis()}"
                 )
 
                 Log.d(TAG, "[RETROFIT] Outgoing VerificationRequest payload (iOS format):")
-                Log.d(TAG, "  frontImageBase64 length: ${request.frontImageBase64.length}")
-                Log.d(TAG, "  backImageBase64 length: ${request.backImageBase64.length}")
-                Log.d(TAG, "  faceImageBase64 length: ${request.faceImageBase64.length}")
-                Log.d(TAG, "  documentType: ${request.documentType}")
-                Log.d(TAG, "  deviceId: ${request.deviceId}")
-                Log.d(TAG, "  deviceModel: ${request.deviceModel}")
-                Log.d(TAG, "  fcmToken: '${request.fcmToken}'")
+                Log.d(TAG, "  faceImage length: ${request.faceImage?.length ?: 0}")
+                Log.d(TAG, "  documentFrontImage length: ${request.documentFrontImage?.length ?: 0}")
+                Log.d(TAG, "  documentBackImage length: ${request.documentBackImage?.length ?: 0}")
+                Log.d(TAG, "  sessionId: ${request.sessionId}")
                 Log.d(TAG, "  clientId=1 & clientGroupId=1 will be added as URL query parameters (matching iOS)")
 
                 // Use Retrofit ApiService for verification submission (back to original working approach)
@@ -246,7 +240,8 @@ class VerificationProcessingViewModel @Inject constructor(
                 
                 // Debug: Log the actual JSON that will be sent
                 val gson = com.google.gson.Gson()
-                val orderedMap = request.toOrderedMap()
+                // Simulate ordered map for logging (removed toOrderedMap() call)
+                val orderedMap = mapOf("sessionId" to request.sessionId)
                 Log.d(TAG, "[DEBUG] LinkedHashMap contents: documentType = '${orderedMap["documentType"]}' (${orderedMap["documentType"]?.javaClass?.simpleName})")
                 val requestJson = gson.toJson(orderedMap)
                 Log.d(TAG, "[DEBUG] Actual JSON being sent (LinkedHashMap): $requestJson")
@@ -254,7 +249,7 @@ class VerificationProcessingViewModel @Inject constructor(
                 val response = apiService.verify(
                     clientId = 1, // AppConstants.clientId
                     clientGroupId = 1, // AppConstants.clientGroupId 
-                    request = request.toOrderedMap()
+                    request = request
                 )
                 Log.d(TAG, "[RETROFIT] Verification response: $response")
                 

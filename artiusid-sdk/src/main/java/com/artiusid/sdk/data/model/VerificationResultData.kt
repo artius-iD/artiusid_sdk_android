@@ -1,4 +1,4 @@
-package com.artiusid.data.model
+package com.artiusid.sdk.data.model
 
 data class VerificationResultData(
     // Personal/Risk data
@@ -119,13 +119,13 @@ data class VerificationResultData(
         private fun getDocumentNames(): Pair<String?, String?> {
             return try {
                 // Check if we have passport data (NFC)
-                val passportData = com.artiusid.utils.DocumentDataHolder.getPassportData()
+                val passportData = com.artiusid.sdk.utils.DocumentDataHolder.getPassportData()
                 if (passportData != null) {
                     return Pair(passportData.firstName, passportData.lastName)
                 }
                 
                 // Check if we have PhotoID data (PDF417)
-                val photoIdData = com.artiusid.utils.DocumentDataHolder.getPhotoIdData()
+                val photoIdData = com.artiusid.sdk.utils.DocumentDataHolder.getPhotoIdData()
                 if (photoIdData != null) {
                     return Pair(photoIdData.firstName, photoIdData.lastName)
                 }

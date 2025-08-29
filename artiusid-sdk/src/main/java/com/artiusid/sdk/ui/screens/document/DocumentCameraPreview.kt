@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.document
+package com.artiusid.sdk.ui.screens.document
+
+import com.artiusid.sdk.ui.components.*
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -19,7 +21,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.artiusid.sdk.ui.theme.GradientBackground
+import com.artiusid.sdk.ui.components.GradientBackground
 import com.artiusid.sdk.utils.DocumentSide
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors

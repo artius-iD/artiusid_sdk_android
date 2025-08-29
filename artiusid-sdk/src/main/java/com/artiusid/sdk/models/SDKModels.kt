@@ -12,6 +12,7 @@ enum class SDKErrorCode {
     INVALID_CONFIG,
     PROCESSING_ERROR,
     FACE_DETECTION_FAILED,
+    FACE_LIVENESS_FAILED,
     DOCUMENT_SCAN_FAILED,
     NFC_FAILED,
     PROCESSING_FAILED,
@@ -47,6 +48,7 @@ data class LivenessResult(
     val success: Boolean,
     val confidence: Float,
     val livenessScore: Float,
+    val faceImage: android.graphics.Bitmap? = null,
     val processingTime: Long,
     val sessionId: String
 )
@@ -56,11 +58,19 @@ data class LivenessResult(
  */
 data class DocumentScanResult(
     val success: Boolean,
-    val documentType: DocumentType,
-    val extractedData: Map<String, String>,
-    val confidence: Float,
-    val processingTime: Long,
-    val sessionId: String
+    val documentType: String,
+    val frontImage: android.graphics.Bitmap? = null,
+    val backImage: android.graphics.Bitmap? = null,
+    val ocrData: Map<String, String> = emptyMap(),
+    val mrzData: MRZData? = null,
+    val aamvaData: AAMVAData? = null,
+    val confidence: Float = 0f,
+    val processingTime: Long = 0L,
+    val sessionId: String = "",
+    val message: String? = null,
+    val error: SDKError? = null,
+    val validationStatus: String = "",
+    val documentBounds: android.graphics.Rect? = null
 )
 
 /**
@@ -101,3 +111,14 @@ data class MRZData(
     val checkDigits: Map<String, Int> = emptyMap(),
     val isValid: Boolean = false
 )
+
+/**
+ * Processing result for verification flow
+ */
+data class ProcessingResult(
+    val success: Boolean,
+    val verificationResultData: VerificationResultData? = null,
+    val error: SDKError? = null
+)
+
+// VerificationResultData is defined in VerificationModels.kt

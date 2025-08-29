@@ -1,15 +1,15 @@
-package com.artiusid.data.api
+package com.artiusid.sdk.data.api
 
-import com.artiusid.sdk.data.model.ApprovalRequest
-import com.artiusid.sdk.data.model.ApprovalRequestTestingRequest
-import com.artiusid.sdk.data.model.ApprovalRequestTestingResponse
-import com.artiusid.sdk.data.model.ApprovalResponse
-import com.artiusid.sdk.data.model.AuthenticationRequest
-import com.artiusid.sdk.data.model.AuthenticationResponse
-import com.artiusid.sdk.data.model.LoadCertificateRequest
-import com.artiusid.sdk.data.model.LoadCertificateResponse
-import com.artiusid.sdk.data.model.VerificationRequest
-import com.artiusid.sdk.data.model.VerificationResponse
+import com.artiusid.sdk.models.ApprovalRequest
+import com.artiusid.sdk.models.ApprovalRequestTestingRequest
+import com.artiusid.sdk.models.ApprovalRequestTestingResponse
+import com.artiusid.sdk.models.ApprovalResponse
+import com.artiusid.sdk.models.AuthenticationRequest
+import com.artiusid.sdk.models.AuthenticationResponse
+import com.artiusid.sdk.models.LoadCertificateRequest
+import com.artiusid.sdk.models.LoadCertificateResponse
+import com.artiusid.sdk.models.VerificationRequest
+import com.artiusid.sdk.models.VerificationResponse
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Body

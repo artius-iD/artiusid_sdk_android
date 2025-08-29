@@ -7,7 +7,8 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
-import com.artiusid.sdk.sdk.utils.AAMVABarcodeParser
+import com.artiusid.sdk.utils.AAMVABarcodeParser
+import com.artiusid.sdk.models.AAMVAData
 import kotlinx.coroutines.tasks.await
 import kotlin.math.max
 import kotlin.math.min
@@ -121,7 +122,24 @@ class EnhancedBarcodeService(private val context: Context) {
                 barcodeFormat = "PDF417",
                 confidence = 0.95f, // PDF417 is highly reliable when detected
                 processingTime = System.currentTimeMillis(),
-                aamvaData = if (rawValue.isNotEmpty()) AAMVABarcodeParser.parse(rawValue) else null
+                aamvaData = if (rawValue.isNotEmpty()) {
+                    val parsedData = AAMVABarcodeParser.parseBarcode(rawValue)
+                    AAMVAData(
+                        firstName = parsedData["firstName"] ?: "",
+                        lastName = parsedData["lastName"] ?: "",
+                        middleName = parsedData["middleName"] ?: "",
+                        dateOfBirth = parsedData["dateOfBirth"] ?: "",
+                        gender = parsedData["gender"] ?: "",
+                        licenseNumber = parsedData["licenseNumber"] ?: "",
+                        address = parsedData["address1"] ?: "",
+                        city = parsedData["city"] ?: "",
+                        state = parsedData["state"] ?: "",
+                        zipCode = parsedData["zipCode"] ?: "",
+                        issueDate = parsedData["issueDate"] ?: "",
+                        expirationDate = parsedData["expirationDate"] ?: "",
+                        rawData = rawValue
+                    )
+                } else null
             )
         } else {
             BarcodeResult(
@@ -162,7 +180,22 @@ class EnhancedBarcodeService(private val context: Context) {
                 confidence = 0.85f,
                 processingTime = System.currentTimeMillis(),
                 aamvaData = if (format == "PDF417" && rawValue.isNotEmpty()) {
-                    AAMVABarcodeParser.parse(rawValue)
+                    val parsedData = AAMVABarcodeParser.parseBarcode(rawValue)
+                    AAMVAData(
+                        firstName = parsedData["firstName"] ?: "",
+                        lastName = parsedData["lastName"] ?: "",
+                        middleName = parsedData["middleName"] ?: "",
+                        dateOfBirth = parsedData["dateOfBirth"] ?: "",
+                        gender = parsedData["gender"] ?: "",
+                        licenseNumber = parsedData["licenseNumber"] ?: "",
+                        address = parsedData["address1"] ?: "",
+                        city = parsedData["city"] ?: "",
+                        state = parsedData["state"] ?: "",
+                        zipCode = parsedData["zipCode"] ?: "",
+                        issueDate = parsedData["issueDate"] ?: "",
+                        expirationDate = parsedData["expirationDate"] ?: "",
+                        rawData = rawValue
+                    )
                 } else null
             )
         } else {
@@ -350,6 +383,6 @@ data class BarcodeResult(
     val barcodeFormat: String?,
     val confidence: Float,
     val processingTime: Long,
-    val aamvaData: AAMVABarcodeParser.AAMVAData? = null,
+    val aamvaData: AAMVAData? = null,
     val error: String? = null
 )

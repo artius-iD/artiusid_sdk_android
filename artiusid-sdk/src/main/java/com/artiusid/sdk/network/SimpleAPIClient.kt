@@ -2,8 +2,8 @@ package com.artiusid.sdk.network
 
 import android.content.Context
 import android.util.Log
-import com.artiusid.sdk.sdk.config.ArtiusSDKConfig
-import com.artiusid.sdk.sdk.models.*
+import com.artiusid.sdk.config.ArtiusSDKConfig
+import com.artiusid.sdk.models.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -210,8 +210,8 @@ class SimpleAPIClient(
             "documentData": ${if (documentResult != null) """
                 {
                     "success": ${documentResult.success},
-                    "documentType": "${documentResult.documentType.name}",
-                    "extractedFields": ${mapToJson(documentResult.extractedData)},
+                    "documentType": "${documentResult.documentType}",
+                    "extractedFields": ${mapToJson(documentResult.ocrData)},
                     "confidence": ${documentResult.confidence},
                     "processingTime": ${documentResult.processingTime}
                 }

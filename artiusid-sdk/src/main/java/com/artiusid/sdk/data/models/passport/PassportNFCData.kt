@@ -1,4 +1,6 @@
-package com.artiusid.data.models.passport
+package com.artiusid.sdk.data.models.passport
+
+import com.artiusid.sdk.models.*
 
 import android.graphics.Bitmap
 import java.util.*

@@ -1,4 +1,4 @@
-package com.artiusid.data.model
+package com.artiusid.sdk.data.model
 
 data class FaceVerificationResult(
     val success: Boolean,

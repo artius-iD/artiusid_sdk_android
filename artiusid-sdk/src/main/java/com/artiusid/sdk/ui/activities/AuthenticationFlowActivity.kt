@@ -11,13 +11,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import com.artiusid.sdk.sdk.ArtiusIDSDK
-import com.artiusid.sdk.sdk.managers.SDKConfigManager
-import com.artiusid.sdk.sdk.managers.AnalyticsManager
-import com.artiusid.sdk.sdk.models.*
-import com.artiusid.sdk.sdk.network.BiometricData
-import com.artiusid.sdk.sdk.ui.theme.SDKThemeProvider
-import com.artiusid.sdk.sdk.ui.theme.*
+import com.artiusid.sdk.ArtiusIDSDK
+import com.artiusid.sdk.managers.SDKConfigManager
+import com.artiusid.sdk.managers.AnalyticsManager
+import com.artiusid.sdk.models.*
+import com.artiusid.sdk.network.BiometricData
+import com.artiusid.sdk.ui.theme.SDKThemeProvider
+import com.artiusid.sdk.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.verification
+package com.artiusid.sdk.ui.screens.verification
+
+import com.artiusid.sdk.ui.components.*
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,10 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.artiusid.sdk.R
-import com.artiusid.sdk.data.model.VerificationResultData
-import com.artiusid.sdk.presentation.components.AppTopBar
+import com.artiusid.sdk.models.VerificationResultData
+import com.artiusid.sdk.ui.components.AppTopBar
 import com.artiusid.sdk.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,7 +31,7 @@ import com.artiusid.sdk.ui.theme.*
 fun VerificationResultsScreen(
     onNavigateHome: () -> Unit,
     verificationData: VerificationResultData,
-    viewModel: VerificationProcessingViewModel = hiltViewModel()
+    viewModel: VerificationProcessingViewModel = viewModel()
 ) {
     Box(
         modifier = Modifier

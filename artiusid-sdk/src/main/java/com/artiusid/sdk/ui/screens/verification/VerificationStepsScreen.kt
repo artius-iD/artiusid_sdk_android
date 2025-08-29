@@ -8,8 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.artiusid.sdk.sdk.ui.components.GradientBackground
-import com.artiusid.sdk.sdk.ui.theme.SDKColors
+import com.artiusid.sdk.ui.components.GradientBackground
+import com.artiusid.sdk.ui.theme.SDKColors
 
 /**
  * Verification Steps Screen - Starting point for verification flow

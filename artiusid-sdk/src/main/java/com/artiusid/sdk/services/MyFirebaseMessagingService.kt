@@ -2,7 +2,7 @@
  * Author: Todd Bryant
  * Company: artius.iD
  */
-package com.artiusid.services
+package com.artiusid.sdk.services
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -20,7 +20,7 @@ import com.google.firebase.messaging.RemoteMessage
 import com.artiusid.sdk.ui.activities.SDKMainActivity
 import com.artiusid.sdk.utils.FirebaseTokenManager
 import com.artiusid.sdk.utils.NotificationStateManager
-import com.artiusid.sdk.data.model.AppNotificationState
+import com.artiusid.sdk.models.AppNotificationState
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     companion object {
@@ -67,7 +67,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             
             // Handle the approval message like iOS AppDelegate.handleNotification
             // Update AppNotificationState to trigger automatic navigation
-            AppNotificationState.handleApprovalNotification(requestId, approvalTitle, approvalDescription)
+            AppNotificationState.handleApprovalNotification(requestId ?: 0, approvalTitle, approvalDescription)
             
             Log.d(TAG, "AppNotificationState updated to APPROVAL - will trigger navigation")
         } else {
@@ -121,7 +121,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             )
             notificationManager.createNotificationChannel(channel)
         }
-        val intent = Intent(this, MainActivity::class.java)
+        // Create a generic intent since this is an SDK - the host app will handle the activity
+        val intent = packageManager.getLaunchIntentForPackage(packageName) ?: Intent()
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)

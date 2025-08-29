@@ -1,15 +1,15 @@
-package com.artiusid.utils
+package com.artiusid.sdk.utils
 
 import android.app.Activity
 import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
-import javax.inject.Inject
+
 import javax.inject.Singleton
 
 @Singleton
-class NfcHandler @Inject constructor() {
+class NfcHandler constructor() {
     private var nfcAdapter: NfcAdapter? = null
 
     fun initialize(activity: Activity) {

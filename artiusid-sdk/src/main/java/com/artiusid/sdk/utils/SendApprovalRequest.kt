@@ -1,21 +1,20 @@
-package com.artiusid.utils
+package com.artiusid.sdk.utils
 
 import android.content.Context
 import android.util.Log
 import com.artiusid.sdk.data.api.ApiService
-import com.artiusid.sdk.data.model.ApprovalRequestTestingRequest
+import com.artiusid.sdk.models.ApprovalRequestTestingRequest
 import com.artiusid.sdk.utils.VerificationStateManager
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Named
+// Removed Dagger imports
 
 /**
  * Matches iOS SendApprovalRequest.swift exactly
  * Sends test approval requests to the server
  */
-class SendApprovalRequest @Inject constructor(
-    @Named("approvalRequest") private val apiService: ApiService,
-    @ApplicationContext private val context: Context
+class SendApprovalRequest constructor(
+    // @Named annotation removed - using manual initialization
+    private val apiService: ApiService?,
+     private val context: Context
 ) {
     
     companion object {

@@ -1,5 +1,7 @@
 package com.artiusid.sdk.utils
 
+import com.artiusid.sdk.utils.*
+
 import android.util.Log
 
 /**

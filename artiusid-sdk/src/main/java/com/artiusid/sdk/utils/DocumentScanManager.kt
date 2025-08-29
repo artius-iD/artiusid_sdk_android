@@ -1,4 +1,9 @@
-package com.artiusid.utils
+package com.artiusid.sdk.utils
+
+import com.artiusid.sdk.services.*
+import com.artiusid.sdk.models.DocumentScanResult
+import com.artiusid.sdk.models.AAMVAData
+import com.artiusid.sdk.utils.DocumentSide
 
 import android.graphics.Bitmap
 import android.graphics.Point
@@ -38,18 +43,8 @@ import kotlin.math.sqrt
 import kotlin.math.min
 import kotlin.math.max
 
-enum class DocumentSide {
-    FRONT, BACK
-}
-
-data class DocumentScanResult(
-    val validationStatus: String,
-    val confidence: Float,
-    val barcodeData: String? = null,
-    val isSuccess: Boolean = false,
-    val bitmap: Bitmap? = null,
-    val documentBounds: Rect? = null
-)
+// DocumentSide enum moved to com.artiusid.sdk.utils.DocumentSide.kt
+// DocumentScanResult moved to com.artiusid.sdk.models package
 
 class DocumentScanManager {
     private val textRecognizer by lazy {
@@ -325,24 +320,69 @@ class DocumentScanManager {
                     // For front scan, just validate document presence
                     val faces = detectFaces(bitmap)
                     if (faces.isNotEmpty()) {
-                        DocumentScanResult("Valid", 0.9f, null)
+                        DocumentScanResult(
+                            success = true,
+                            documentType = "ID_CARD",
+                            validationStatus = "Valid",
+                            confidence = 0.9f
+                        )
                     } else {
-                        DocumentScanResult("No face detected on ID", 0.0f, null)
+                        DocumentScanResult(
+                            success = false,
+                            documentType = "ID_CARD",
+                            validationStatus = "No face detected on ID",
+                            confidence = 0.0f
+                        )
                     }
                 }
                 DocumentSide.BACK -> {
                     // For back scan, try barcode detection
                     val barcodeData = scanDocumentForBarcode(bitmap, side)
                     if (barcodeData != null) {
-                        DocumentScanResult("PDF417 barcode detected", 0.9f, barcodeData)
+                        // Parse the barcode data into AAMVAData if it's a valid AAMVA barcode
+                        val aamvaData = try {
+                            val parsedData = AAMVABarcodeParser.parseBarcode(barcodeData)
+                            AAMVAData(
+                                firstName = parsedData["firstName"] ?: "",
+                                lastName = parsedData["lastName"] ?: "",
+                                middleName = parsedData["middleName"] ?: "",
+                                dateOfBirth = parsedData["dateOfBirth"] ?: "",
+                                gender = parsedData["gender"] ?: "",
+                                licenseNumber = parsedData["licenseNumber"] ?: "",
+                                address = parsedData["address"] ?: "",
+                                city = parsedData["city"] ?: "",
+                                state = parsedData["state"] ?: "",
+                                zipCode = parsedData["zipCode"] ?: ""
+                            )
+                        } catch (e: Exception) {
+                            null
+                        }
+                        
+                        DocumentScanResult(
+                            success = true,
+                            documentType = "ID_CARD",
+                            validationStatus = "PDF417 barcode detected",
+                            confidence = 0.9f,
+                            aamvaData = aamvaData
+                        )
                     } else {
-                        DocumentScanResult("No barcode detected", 0.0f, null)
+                        DocumentScanResult(
+                            success = false,
+                            documentType = "ID_CARD",
+                            validationStatus = "No barcode detected",
+                            confidence = 0.0f
+                        )
                     }
                 }
             }
         } catch (e: Exception) {
             Log.e("DocumentScanManager", "Error in legacy scanDocument: ${e.message}")
-            DocumentScanResult("Error: ${e.message}", 0.0f, null)
+            DocumentScanResult(
+                success = false,
+                documentType = "UNKNOWN",
+                validationStatus = "Error: ${e.message}",
+                confidence = 0.0f
+            )
         }
     }
 

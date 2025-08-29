@@ -1,5 +1,7 @@
 package com.artiusid.sdk.models
 
+import com.artiusid.sdk.models.*
+
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
@@ -50,7 +52,8 @@ data class VerificationResultData(
     val sessionId: String,
     val timestamp: Long = System.currentTimeMillis(),
     val processingTime: Long = 0L,
-    val errors: List<String> = emptyList()
+    val errors: List<String> = emptyList(),
+    val documentRecaptureType: DocumentRecaptureType? = null
 ) : Parcelable
 
 /**

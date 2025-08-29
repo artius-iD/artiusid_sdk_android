@@ -4,7 +4,7 @@
  * GIF Animation Component for Face Positioning Guidance
  */
 
-package com.artiusid.presentation.components
+package com.artiusid.sdk.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -13,6 +13,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import com.artiusid.sdk.R
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
@@ -45,10 +46,10 @@ fun FacePositioningAnimationView(
     
     // Map direction to GIF resource
     val gifResourceId = when (direction) {
-        "Phone Up" -> com.artiusid.R.raw.phone_up
-        "Phone Down" -> com.artiusid.R.raw.phone_down
-        "Face Up" -> com.artiusid.R.raw.face_up
-        "Face Down" -> com.artiusid.R.raw.face_down
+        "Phone Up" -> R.raw.phone_up
+        "Phone Down" -> R.raw.phone_down
+        "Face Up" -> R.raw.face_up
+        "Face Down" -> R.raw.face_down
         else -> null
     }
     

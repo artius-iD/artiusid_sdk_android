@@ -2,7 +2,7 @@
  * Author: Todd Bryant
  * Company: artius.iD
  */
-package com.artiusid.services
+package com.artiusid.sdk.services
 
 import android.content.Context
 import android.util.Log
@@ -36,7 +36,11 @@ class APIManager(private val context: Context) {
         if (certManager.loadCertificatePem() == null) {
             Log.d(TAG, "No certificate PEM found, generating Keystore keypair and CSR...")
             val csr = certManager.generateCSR(deviceId)
-            val response = loadCertificate(serviceUrl, LoadCertificateRequest(deviceId, csr))
+            val response = loadCertificate(serviceUrl, LoadCertificateRequest(
+                certificateType = "device",
+                environment = "production", 
+                clientId = deviceId
+            ))
             certManager.storeCertificatePem(response.certificate)
             Log.d(TAG, "Certificate registration and PEM storage complete")
         } else {
@@ -65,8 +69,9 @@ class APIManager(private val context: Context) {
                     .build()
 
                 val jsonBody = JSONObject().apply {
-                    put("deviceId", request.deviceId)
-                    put("csr", request.csr)
+                    put("certificateType", request.certificateType)
+                    put("environment", request.environment)
+                    put("clientId", request.clientId)
                 }.toString()
                 val body = jsonBody.toRequestBody("application/json".toMediaTypeOrNull())
 
@@ -106,7 +111,10 @@ class APIManager(private val context: Context) {
                 if (certificate.isEmpty()) {
                     throw IOException("Invalid certificate response: missing certificate")
                 }
-                return@withContext LoadCertificateResponse(certificate = certificate)
+                return@withContext LoadCertificateResponse(
+                    success = true,
+                    certificate = certificate
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Error in loadCertificate", e)
                 throw e

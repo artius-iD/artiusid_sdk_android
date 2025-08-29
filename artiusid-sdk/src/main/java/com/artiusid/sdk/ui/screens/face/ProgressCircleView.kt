@@ -4,7 +4,7 @@
  * Enhanced ProgressCircleView with iOS-like segmented circle animation
  */
 
-package com.artiusid.presentation.screens.face
+package com.artiusid.sdk.ui.screens.face
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
@@ -38,10 +38,10 @@ fun ProgressCircleView(
     val isCompleted = completedCount == 8
     
     // Get colors outside Canvas scope
-    val segmentCompleteColor = AppFaceColors.segmentComplete
-    val segmentIncompleteColor = AppFaceColors.segmentIncomplete
-    val textPrimaryColor = AppColors.textPrimary
-    val textSecondaryColor = AppColors.textSecondary
+    val segmentCompleteColor = Color.Green
+    val segmentIncompleteColor = Color.LightGray
+    val textPrimaryColor = Color.Black
+    val textSecondaryColor = Color.Gray
     
     // Animate rotation for completion indicator
     LaunchedEffect(isCompleted) {

@@ -14,8 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
-import com.artiusid.sdk.sdk.config.SDKTheme
-import com.artiusid.sdk.sdk.managers.SDKConfigManager
+import com.artiusid.sdk.config.SDKTheme
+import com.artiusid.sdk.managers.SDKConfigManager
 
 /**
  * Themeable UI system for the SDK

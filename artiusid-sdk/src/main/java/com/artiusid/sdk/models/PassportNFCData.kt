@@ -1,5 +1,7 @@
 package com.artiusid.sdk.models
 
+import com.artiusid.sdk.models.*
+
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 

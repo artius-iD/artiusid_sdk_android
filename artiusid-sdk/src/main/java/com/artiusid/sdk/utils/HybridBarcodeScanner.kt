@@ -6,7 +6,9 @@
 // Company: artius.iD
 //
 
-package com.artiusid.utils
+package com.artiusid.sdk.utils
+
+import com.artiusid.sdk.utils.*
 
 import android.graphics.Bitmap
 import android.graphics.Matrix

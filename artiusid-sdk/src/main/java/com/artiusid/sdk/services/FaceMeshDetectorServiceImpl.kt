@@ -5,7 +5,9 @@
  * Enhanced ML Kit Face Detection with Advanced 3D Estimation Algorithms
  * Provides iOS ARKit-level accuracy using sophisticated mathematical models
  */
-package com.artiusid.services
+package com.artiusid.sdk.services
+
+import com.artiusid.sdk.models.*
 
 import android.content.Context
 import android.graphics.Bitmap

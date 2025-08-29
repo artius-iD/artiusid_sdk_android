@@ -5,7 +5,9 @@
  * Android equivalent of iOS DocumentRecaptureType enum
  * Represents different types of document recapture scenarios
  */
-package com.artiusid.data.model
+package com.artiusid.sdk.data.model
+
+import com.artiusid.sdk.models.*
 
 /**
  * Represents different reasons why a document needs to be recaptured

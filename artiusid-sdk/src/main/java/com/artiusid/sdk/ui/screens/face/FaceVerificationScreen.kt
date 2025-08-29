@@ -1,4 +1,8 @@
-package com.artiusid.presentation.screens.face
+package com.artiusid.sdk.ui.screens.face
+
+import com.artiusid.sdk.services.*
+
+import com.artiusid.sdk.ui.components.*
 
 import android.Manifest
 import android.content.Context
@@ -29,7 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.artiusid.sdk.presentation.components.*
+import com.artiusid.sdk.ui.components.*
 import com.artiusid.sdk.ui.theme.*
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.Face
@@ -44,11 +48,11 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import com.artiusid.sdk.ui.theme.GradientBackground
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.artiusid.sdk.ui.components.GradientBackground
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.artiusid.sdk.presentation.components.LoadingIndicator
+import com.artiusid.sdk.ui.components.LoadingIndicator
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberPermissionState
@@ -60,7 +64,7 @@ private const val TAG = "FaceVerification"
 fun FaceVerificationScreen(
     onNavigateBack: () -> Unit,
     onVerificationComplete: (Boolean) -> Unit,
-    viewModel: FaceVerificationViewModel = hiltViewModel()
+    viewModel: FaceVerificationViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current

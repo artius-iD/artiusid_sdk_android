@@ -13,7 +13,7 @@ import java.util.regex.Pattern
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-import com.artiusid.sdk.sdk.models.DocumentType
+import com.artiusid.sdk.models.DocumentType
 class DocumentInfoExtractor {
     private val textRecognizer: TextRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private val TAG = "DocumentInfoExtractor"

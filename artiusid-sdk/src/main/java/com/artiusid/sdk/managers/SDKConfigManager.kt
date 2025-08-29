@@ -2,8 +2,8 @@ package com.artiusid.sdk.managers
 
 import android.content.Context
 import android.util.Log
-import com.artiusid.sdk.sdk.config.*
-import com.artiusid.sdk.sdk.network.SimpleAPIClient
+import com.artiusid.sdk.config.*
+import com.artiusid.sdk.network.SimpleAPIClient
 
 /**
  * Centralized SDK configuration manager

@@ -1,4 +1,6 @@
-package com.artiusid.data.model
+package com.artiusid.sdk.data.model
+
+import com.artiusid.sdk.models.*
 
 import android.content.Context
 import com.artiusid.sdk.R

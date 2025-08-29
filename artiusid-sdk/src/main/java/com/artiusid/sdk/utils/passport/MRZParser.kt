@@ -1,4 +1,4 @@
-package com.artiusid.utils.passport
+package com.artiusid.sdk.utils.passport
 
 import com.artiusid.sdk.data.models.passport.PassportMRZData
 import java.util.regex.Pattern

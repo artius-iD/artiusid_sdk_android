@@ -8,7 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.artiusid.sdk.sdk.ui.theme.ArtiusIDSDKTheme
+import com.artiusid.sdk.ui.theme.ArtiusIDSDKTheme
 
 class PassportCaptureActivity : BaseSDKActivity() {
     

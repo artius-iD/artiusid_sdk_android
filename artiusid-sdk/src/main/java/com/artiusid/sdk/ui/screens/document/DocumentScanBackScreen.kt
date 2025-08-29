@@ -1,4 +1,4 @@
-package com.artiusid.presentation.screens.document
+package com.artiusid.sdk.ui.screens.document
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -31,16 +31,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.artiusid.sdk.ui.theme.*
 import com.artiusid.sdk.utils.DocumentSide
-import com.artiusid.sdk.presentation.components.DocumentCameraPreview
+import com.artiusid.sdk.ui.screens.document.DocumentCameraPreview
 
 @Composable
 fun DocumentScanBackScreen(
     onDocumentScanComplete: () -> Unit,
     onNavigateBack: () -> Unit,
-    viewModel: DocumentScanViewModel = hiltViewModel()
+    viewModel: DocumentScanViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current

@@ -112,6 +112,18 @@ private fun getRecaptureTitle(type: DocumentRecaptureType): String {
         DocumentRecaptureType.FACE_IMAGE -> "Retake Face Photo"
         DocumentRecaptureType.GENERAL_ERROR -> "Capture Error"
         DocumentRecaptureType.NONE -> "Unknown Error"
+        DocumentRecaptureType.FACE_TOO_BLURRY -> "Face Too Blurry"
+        DocumentRecaptureType.FACE_NOT_DETECTED -> "Face Not Detected"
+        DocumentRecaptureType.FACE_TOO_DARK -> "Face Too Dark"
+        DocumentRecaptureType.FACE_TOO_BRIGHT -> "Face Too Bright"
+        DocumentRecaptureType.FACE_TOO_FAR -> "Face Too Far"
+        DocumentRecaptureType.FACE_TOO_CLOSE -> "Face Too Close"
+        DocumentRecaptureType.FACE_ANGLE_INCORRECT -> "Face Angle Incorrect"
+        DocumentRecaptureType.DOCUMENT_TOO_BLURRY -> "Document Too Blurry"
+        DocumentRecaptureType.DOCUMENT_NOT_DETECTED -> "Document Not Detected"
+        DocumentRecaptureType.DOCUMENT_GLARE -> "Document Glare Detected"
+        DocumentRecaptureType.DOCUMENT_CROPPED -> "Document Partially Visible"
+        DocumentRecaptureType.DOCUMENT_ANGLE_INCORRECT -> "Document Angle Incorrect"
     }
 }
 
@@ -132,5 +144,29 @@ private fun getRecaptureMessage(type: DocumentRecaptureType): String {
             "There was an error processing your capture. Please try again."
         DocumentRecaptureType.NONE -> 
             "An unknown error occurred. Please try again."
+        DocumentRecaptureType.FACE_TOO_BLURRY -> 
+            "Your face appears too blurry. Please ensure good lighting and hold the device steady."
+        DocumentRecaptureType.FACE_NOT_DETECTED -> 
+            "We couldn't detect your face. Please position your face clearly in the camera view."
+        DocumentRecaptureType.FACE_TOO_DARK -> 
+            "Your face appears too dark. Please move to better lighting."
+        DocumentRecaptureType.FACE_TOO_BRIGHT -> 
+            "Your face appears too bright. Please avoid direct lighting."
+        DocumentRecaptureType.FACE_TOO_FAR -> 
+            "Your face is too far from the camera. Please move closer."
+        DocumentRecaptureType.FACE_TOO_CLOSE -> 
+            "Your face is too close to the camera. Please move back slightly."
+        DocumentRecaptureType.FACE_ANGLE_INCORRECT -> 
+            "Please look directly at the camera with your face straight."
+        DocumentRecaptureType.DOCUMENT_TOO_BLURRY -> 
+            "Your document appears too blurry. Please hold the device steady and ensure good focus."
+        DocumentRecaptureType.DOCUMENT_NOT_DETECTED -> 
+            "We couldn't detect your document. Please position it clearly in the camera view."
+        DocumentRecaptureType.DOCUMENT_GLARE -> 
+            "Glare detected on your document. Please adjust the angle to avoid reflections."
+        DocumentRecaptureType.DOCUMENT_CROPPED -> 
+            "Your document is only partially visible. Please ensure the entire document is in the frame."
+        DocumentRecaptureType.DOCUMENT_ANGLE_INCORRECT -> 
+            "Please hold your document straight and parallel to the camera."
     }
 }

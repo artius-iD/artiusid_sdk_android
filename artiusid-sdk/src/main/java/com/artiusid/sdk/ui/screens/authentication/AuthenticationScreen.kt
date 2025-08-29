@@ -1,4 +1,6 @@
-package com.artiusid.presentation.screens.authentication
+package com.artiusid.sdk.ui.screens.authentication
+
+import com.artiusid.sdk.ui.components.*
 
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
@@ -17,10 +19,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.artiusid.sdk.R
-import com.artiusid.sdk.presentation.components.AppTopBar
-import com.artiusid.sdk.ui.theme.GradientBackground
+import com.artiusid.sdk.ui.components.AppTopBar
+import com.artiusid.sdk.ui.components.GradientBackground
 import com.artiusid.sdk.ui.theme.Yellow900
 import kotlinx.coroutines.delay
 
@@ -28,7 +30,7 @@ import kotlinx.coroutines.delay
 fun AuthenticationScreen(
     onNavigateToApproval: () -> Unit,
     onNavigateBack: () -> Unit,
-    viewModel: AuthenticationViewModel = hiltViewModel()
+    viewModel: AuthenticationViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
@@ -37,7 +39,7 @@ fun AuthenticationScreen(
     
     // Start authentication when screen loads
     LaunchedEffect(Unit) {
-        viewModel.startAuthentication(context)
+        viewModel.startAuthentication()
     }
     
     // Handle biometric authentication (like iOS LAContext)
@@ -224,7 +226,7 @@ fun AuthenticationScreen(
                         
                         // Retry button
                         Button(
-                            onClick = { viewModel.startAuthentication(context) },
+                            onClick = { viewModel.startAuthentication() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),

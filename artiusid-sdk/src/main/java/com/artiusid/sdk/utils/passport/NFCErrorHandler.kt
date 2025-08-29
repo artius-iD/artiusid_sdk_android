@@ -6,7 +6,7 @@
 // Company: artius.iD
 //
 
-package com.artiusid.utils.passport
+package com.artiusid.sdk.utils.passport
 
 import android.content.Context
 import android.nfc.NfcAdapter

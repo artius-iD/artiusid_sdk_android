@@ -6,13 +6,13 @@
 // Company: artius.iD
 //
 
-package com.artiusid.utils.passport
+package com.artiusid.sdk.utils.passport
 
 import android.util.Log
 import org.spongycastle.jce.provider.BouncyCastleProvider
 import java.security.Provider
 import java.security.Security
-import javax.inject.Inject
+
 import javax.inject.Singleton
 
 /**
@@ -20,7 +20,7 @@ import javax.inject.Singleton
  * Ensures SpongyCastle (Android-compatible BouncyCastle) is properly configured for JMRTD
  */
 @Singleton
-class NFCSecurityProvider @Inject constructor() {
+class NFCSecurityProvider constructor() {
     
     companion object {
         private const val TAG = "NFCSecurityProvider"

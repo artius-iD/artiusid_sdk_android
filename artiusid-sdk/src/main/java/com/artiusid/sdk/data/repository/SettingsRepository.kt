@@ -1,4 +1,4 @@
-package com.artiusid.data.repository
+package com.artiusid.sdk.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences

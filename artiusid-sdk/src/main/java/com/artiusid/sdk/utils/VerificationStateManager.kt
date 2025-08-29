@@ -1,4 +1,4 @@
-package com.artiusid.utils
+package com.artiusid.sdk.utils
 
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences

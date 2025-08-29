@@ -1,4 +1,4 @@
-package com.artiusid.utils
+package com.artiusid.sdk.utils
 
 object Constants {
     object X509NameOID {

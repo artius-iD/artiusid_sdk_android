@@ -1,4 +1,4 @@
-package com.artiusid.presentation.components
+package com.artiusid.sdk.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,9 +11,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.artiusid.sdk.domain.service.PassportData
 import com.artiusid.sdk.ui.theme.*
 import com.artiusid.sdk.R
+
+// Using local PassportData definition
+data class PassportData(
+    val passportNumber: String = "",
+    val documentNumber: String = "",
+    val issuingCountry: String = "",
+    val nationality: String = "",
+    val dateOfBirth: String = "",
+    val surname: String = "",
+    val givenNames: String = ""
+)
 
 @Composable
 fun DocumentVerificationResult(
@@ -94,7 +104,7 @@ fun VerificationResultCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Surface)
+            .background(Color.White)
             .padding(16.dp)
     ) {
         Text(

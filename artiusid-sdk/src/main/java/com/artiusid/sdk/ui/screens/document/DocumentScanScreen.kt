@@ -1,4 +1,8 @@
-package com.artiusid.presentation.screens.document
+package com.artiusid.sdk.ui.screens.document
+
+import com.artiusid.sdk.ui.components.*
+
+import com.artiusid.sdk.ui.utils.*
 
 import android.Manifest
 import androidx.compose.foundation.Image
@@ -21,20 +25,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
-import com.artiusid.sdk.presentation.components.DocumentCameraPreview
-import com.artiusid.sdk.presentation.components.EnhancedDocumentCameraPreview
-import com.artiusid.sdk.presentation.components.AppTopBar
-import com.artiusid.sdk.ui.theme.GradientBackground
+import com.artiusid.sdk.ui.screens.document.DocumentCameraPreview
+import com.artiusid.sdk.ui.components.EnhancedDocumentCameraPreview
+import com.artiusid.sdk.ui.components.AppTopBar
+import com.artiusid.sdk.ui.components.GradientBackground
 import com.artiusid.sdk.utils.DocumentSide
 import com.artiusid.sdk.R
-import com.artiusid.sdk.presentation.screens.document.DocumentType
+import com.artiusid.sdk.models.DocumentType
 import com.artiusid.sdk.ui.theme.*
-import com.artiusid.sdk.ui.theme.getRelativeWidthDp
-import com.artiusid.sdk.ui.theme.getRelativeHeightDp
-import com.artiusid.sdk.ui.theme.CustomInfoButton
+import com.artiusid.sdk.ui.utils.getRelativeWidthDp
+import com.artiusid.sdk.ui.utils.getRelativeHeightDp
+import com.artiusid.sdk.ui.components.CustomInfoButton
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +47,7 @@ fun DocumentScanScreen(
     onNavigateBack: () -> Unit,
     onNavigateToFrontScan: (() -> Unit)? = null, // New callback for returning to front scan on comparison failure
     documentSide: DocumentSide = DocumentSide.FRONT,
-    viewModel: DocumentScanViewModel = hiltViewModel()
+    viewModel: DocumentScanViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -126,7 +130,7 @@ fun DocumentScanScreen(
                     }
                     else -> {
                         // Enhanced Camera Preview with Advanced Autofocus
-                        EnhancedDocumentCameraPreview(
+                        DocumentCameraPreview(
                             modifier = Modifier.fillMaxSize(),
                             viewModel = viewModel
                         )
@@ -163,7 +167,8 @@ fun DocumentScanScreen(
                                 )
                         ) {
                             CustomInfoButton(
-                                buttonLabel = validationMessage,
+                                text = validationMessage,
+                                onClick = { /* No action needed for info display */ },
                                 modifier = Modifier
                                     .align(Alignment.CenterEnd)
                                     .rotate(90f)
@@ -181,10 +186,11 @@ fun DocumentScanScreen(
                                 )
                         ) {
                             CustomInfoButton(
-                                buttonLabel = when (currentDocumentSide) {
+                                text = when (currentDocumentSide) {
                                     DocumentSide.FRONT -> "Position your ID card in the frame"
                                     DocumentSide.BACK -> "Position the back of your ID card in the frame"
                                 },
+                                onClick = { /* No action needed for info display */ },
                                 modifier = Modifier
                                     .align(Alignment.BottomEnd)
                                     .rotate(90f)
