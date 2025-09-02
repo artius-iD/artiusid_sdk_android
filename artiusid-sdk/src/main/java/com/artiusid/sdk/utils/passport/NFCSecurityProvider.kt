@@ -9,17 +9,17 @@
 package com.artiusid.sdk.utils.passport
 
 import android.util.Log
-import org.spongycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.Provider
 import java.security.Security
 
-import javax.inject.Singleton
+// import javax.inject.Singleton // Temporarily disabled
 
 /**
  * Manages cryptographic security providers for NFC passport reading
- * Ensures SpongyCastle (Android-compatible BouncyCastle) is properly configured for JMRTD
+ * Ensures BouncyCastle is properly configured for JMRTD
  */
-@Singleton
+// @Singleton // Temporarily disabled
 class NFCSecurityProvider constructor() {
     
     companion object {

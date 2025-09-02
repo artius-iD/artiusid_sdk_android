@@ -178,8 +178,8 @@ object ImageStorage {
     fun getCapturedImages(): CapturedImages {
         return CapturedImages(
             faceImage = ImageUtils.base64ToBitmap(faceLivenessImage),
-            documentFrontImage = ImageUtils.base64ToBitmap(documentFrontImage),
-            documentBackImage = ImageUtils.base64ToBitmap(documentBackImage),
+            frontImage = ImageUtils.base64ToBitmap(documentFrontImage),
+            backImage = ImageUtils.base64ToBitmap(documentBackImage),
             passportImage = ImageUtils.base64ToBitmap(passportImage)
         )
     }
@@ -191,14 +191,15 @@ object ImageStorage {
         // Store MRZ data - in full implementation would store structured data
         android.util.Log.d("ImageStorage", "Storing passport MRZ data: $mrzData")
     }
-    
+
+
     /**
      * Data class to hold captured images
      */
     data class CapturedImages(
         val faceImage: Bitmap? = null,
-        val documentFrontImage: Bitmap? = null,
-        val documentBackImage: Bitmap? = null,
+        val frontImage: Bitmap? = null,
+        val backImage: Bitmap? = null,
         val passportImage: Bitmap? = null
     )
 }

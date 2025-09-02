@@ -34,7 +34,7 @@ fun VerificationProcessingScreen(
     onNavigateToPassportCapture: () -> Unit,
     onNavigateToStateIdFrontCapture: () -> Unit = {},
     onNavigateToStateIdBackCapture: () -> Unit = {},
-    onNavigateToFailure: (com.artiusid.data.model.VerificationFailureType, String) -> Unit = { _, _ -> },
+    onNavigateToFailure: (VerificationFailureType, String) -> Unit = { _, _ -> },
     viewModel: VerificationProcessingViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -253,8 +253,8 @@ fun VerificationProcessingScreen(
                         val state = uiState as VerificationProcessingUiState.PassportRecaptureRequired
                         DocumentRecaptureNotificationView(
                             recaptureType = state.recaptureType,
-                            onRecaptureAction = onNavigateToPassportCapture,
-                            onCancel = onNavigateBack
+                            onRetryClick = onNavigateToPassportCapture,
+                            onCancelClick = onNavigateBack
                         )
                     }
                     
@@ -262,8 +262,8 @@ fun VerificationProcessingScreen(
                         val state = uiState as VerificationProcessingUiState.StateIdFrontRecaptureRequired
                         DocumentRecaptureNotificationView(
                             recaptureType = state.recaptureType,
-                            onRecaptureAction = onNavigateToStateIdFrontCapture,
-                            onCancel = onNavigateBack
+                            onRetryClick = onNavigateToStateIdFrontCapture,
+                            onCancelClick = onNavigateBack
                         )
                     }
                     
@@ -271,8 +271,8 @@ fun VerificationProcessingScreen(
                         val state = uiState as VerificationProcessingUiState.StateIdBackRecaptureRequired
                         DocumentRecaptureNotificationView(
                             recaptureType = state.recaptureType,
-                            onRecaptureAction = onNavigateToStateIdBackCapture,
-                            onCancel = onNavigateBack
+                            onRetryClick = onNavigateToStateIdBackCapture,
+                            onCancelClick = onNavigateBack
                         )
                     }
                     
@@ -280,21 +280,21 @@ fun VerificationProcessingScreen(
                         val state = uiState as VerificationProcessingUiState.DocumentRecaptureRequired
                         DocumentRecaptureNotificationView(
                             recaptureType = state.recaptureType,
-                            onRecaptureAction = {
+                            onRetryClick = {
                                 // Route to appropriate capture based on recapture type
                                 when (state.recaptureType) {
-                                    com.artiusid.data.model.DocumentRecaptureType.PASSPORT_MRZ_ERROR,
-                                    com.artiusid.data.model.DocumentRecaptureType.PASSPORT_OCR_ERROR -> onNavigateToPassportCapture()
+                                    DocumentRecaptureType.PASSPORT_MRZ_ERROR,
+                                    DocumentRecaptureType.PASSPORT_OCR_ERROR -> onNavigateToPassportCapture()
                                     
-                                    com.artiusid.data.model.DocumentRecaptureType.STATE_ID_FRONT_ERROR -> onNavigateToStateIdFrontCapture()
+                                    DocumentRecaptureType.STATE_ID_FRONT_ERROR -> onNavigateToStateIdFrontCapture()
                                     
-                                    com.artiusid.data.model.DocumentRecaptureType.STATE_ID_BACK_ERROR,
-                                    com.artiusid.data.model.DocumentRecaptureType.STATE_ID_BARCODE_ERROR -> onNavigateToStateIdBackCapture()
+                                    DocumentRecaptureType.STATE_ID_BACK_ERROR,
+                                    DocumentRecaptureType.STATE_ID_BARCODE_ERROR -> onNavigateToStateIdBackCapture()
                                     
                                     else -> onNavigateBack() // Generic fallback
                                 }
                             },
-                            onCancel = onNavigateBack
+                            onCancelClick = onNavigateBack
                         )
                     }
                 }

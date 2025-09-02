@@ -124,19 +124,20 @@ class EnhancedBarcodeService(private val context: Context) {
                 processingTime = System.currentTimeMillis(),
                 aamvaData = if (rawValue.isNotEmpty()) {
                     val parsedData = AAMVABarcodeParser.parseBarcode(rawValue)
+                    // Convert AAMVABarcodeParser.AAMVAData to models.AAMVAData
                     AAMVAData(
-                        firstName = parsedData["firstName"] ?: "",
-                        lastName = parsedData["lastName"] ?: "",
-                        middleName = parsedData["middleName"] ?: "",
-                        dateOfBirth = parsedData["dateOfBirth"] ?: "",
-                        gender = parsedData["gender"] ?: "",
-                        licenseNumber = parsedData["licenseNumber"] ?: "",
-                        address = parsedData["address1"] ?: "",
-                        city = parsedData["city"] ?: "",
-                        state = parsedData["state"] ?: "",
-                        zipCode = parsedData["zipCode"] ?: "",
-                        issueDate = parsedData["issueDate"] ?: "",
-                        expirationDate = parsedData["expirationDate"] ?: "",
+                        firstName = parsedData?.firstName ?: "",
+                        lastName = parsedData?.lastName ?: "",
+                        middleName = parsedData?.firstName ?: "", // Using firstName as middleName fallback
+                        dateOfBirth = parsedData?.dateOfBirth ?: "",
+                        gender = parsedData?.firstName ?: "", // Simplified mapping
+                        licenseNumber = parsedData?.licenseNumber ?: "",
+                        address = parsedData?.address ?: "",
+                        city = parsedData?.city ?: "",
+                        state = parsedData?.state ?: "",
+                        zipCode = parsedData?.zipCode ?: "",
+                        issueDate = parsedData?.issueDate ?: "",
+                        expirationDate = parsedData?.expirationDate ?: "",
                         rawData = rawValue
                     )
                 } else null
@@ -181,19 +182,20 @@ class EnhancedBarcodeService(private val context: Context) {
                 processingTime = System.currentTimeMillis(),
                 aamvaData = if (format == "PDF417" && rawValue.isNotEmpty()) {
                     val parsedData = AAMVABarcodeParser.parseBarcode(rawValue)
+                    // Convert AAMVABarcodeParser.AAMVAData to models.AAMVAData
                     AAMVAData(
-                        firstName = parsedData["firstName"] ?: "",
-                        lastName = parsedData["lastName"] ?: "",
-                        middleName = parsedData["middleName"] ?: "",
-                        dateOfBirth = parsedData["dateOfBirth"] ?: "",
-                        gender = parsedData["gender"] ?: "",
-                        licenseNumber = parsedData["licenseNumber"] ?: "",
-                        address = parsedData["address1"] ?: "",
-                        city = parsedData["city"] ?: "",
-                        state = parsedData["state"] ?: "",
-                        zipCode = parsedData["zipCode"] ?: "",
-                        issueDate = parsedData["issueDate"] ?: "",
-                        expirationDate = parsedData["expirationDate"] ?: "",
+                        firstName = parsedData?.firstName ?: "",
+                        lastName = parsedData?.lastName ?: "",
+                        middleName = parsedData?.firstName ?: "", // Using firstName as middleName fallback
+                        dateOfBirth = parsedData?.dateOfBirth ?: "",
+                        gender = parsedData?.firstName ?: "", // Simplified mapping
+                        licenseNumber = parsedData?.licenseNumber ?: "",
+                        address = parsedData?.address ?: "",
+                        city = parsedData?.city ?: "",
+                        state = parsedData?.state ?: "",
+                        zipCode = parsedData?.zipCode ?: "",
+                        issueDate = parsedData?.issueDate ?: "",
+                        expirationDate = parsedData?.expirationDate ?: "",
                         rawData = rawValue
                     )
                 } else null

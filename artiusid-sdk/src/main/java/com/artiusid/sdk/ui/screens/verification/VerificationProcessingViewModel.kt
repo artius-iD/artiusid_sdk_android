@@ -10,7 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.artiusid.sdk.models.VerificationRequest
 import com.artiusid.sdk.models.VerificationResponse
 import com.artiusid.sdk.models.VerificationResults
-import com.artiusid.sdk.models.VerificationResultData
+import com.artiusid.sdk.data.model.VerificationResultData
 import com.artiusid.sdk.services.VerificationService
 import com.artiusid.sdk.utils.ImageUtils
 import com.artiusid.sdk.utils.ImageStorage
@@ -60,7 +60,7 @@ sealed class VerificationProcessingUiState {
 
 
 class VerificationProcessingViewModel constructor(
-    private val apiService: com.artiusid.data.api.ApiService
+    private val apiService: com.artiusid.sdk.services.ApiService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<VerificationProcessingUiState>(VerificationProcessingUiState.Processing)
@@ -267,22 +267,15 @@ class VerificationProcessingViewModel constructor(
                          LogManager.addLog("Verification completed successfully")
                          
                          // Parse and store verification result data like iOS
-                         val resultData = VerificationResultData.fromPayload(response.verificationData?.payload)
-                         _verificationResultData.value = resultData
-                         VerificationDataHolder.setVerificationData(resultData)
-                         Log.d(TAG, "Parsed verification result data: $resultData")
-                         
-                         // Store verification success in secure storage like iOS keychain
-                         if (!resultData.accountNumber.isNullOrEmpty()) {
-                             val verificationStateManager = com.artiusid.utils.VerificationStateManager(context)
-                             val fullName = "${resultData.firstName ?: ""} ${resultData.lastName ?: ""}".trim()
-                             verificationStateManager.storeVerificationSuccess(
-                                 accountNumber = resultData.accountNumber!!,
-                                 accountFullName = if (fullName.isNotEmpty()) fullName else null,
-                                 isAccountActive = true
-                             )
-                             Log.d(TAG, "Stored verification success with account: ${resultData.accountNumber}")
-                         }
+                                                 val resultData = VerificationResultData.fromPayload(response.verificationData?.payload)
+                        _verificationResultData.value = resultData
+                        Log.d(TAG, "Parsed verification result data: $resultData")
+                        
+                        // Store verification success - simplified for SDK
+                        if (!resultData.accountNumber.isNullOrEmpty()) {
+                            val fullName = "${resultData.firstName ?: ""} ${resultData.lastName ?: ""}".trim()
+                            Log.d(TAG, "Verification successful for account: ${resultData.accountNumber}, name: $fullName")
+                        }
                          
                          _currentStep.value = "Verification complete!"
                          _progress.value = 1.0f
@@ -290,12 +283,12 @@ class VerificationProcessingViewModel constructor(
                          _uiState.value = VerificationProcessingUiState.Success
                      }
                     else -> {
-                        Log.w(TAG, "Verification failed: ${verificationResult.localizedDescription}")
+                        Log.w(TAG, "Verification failed: ${verificationResult.toString()}")
                         LogManager.addLog("Verification failed: ${verificationResult.name}")
                         
                         // Determine failure type and error reason based on verification result (like iOS)
                         val failureType = getFailureTypeFromResult(verificationResult)
-                        val errorReason = verificationResult.localizedDescription
+                        val errorReason = verificationResult.toString()
                         
                         _uiState.value = VerificationProcessingUiState.Failure(
                             failureType = failureType,
@@ -326,9 +319,12 @@ class VerificationProcessingViewModel constructor(
                     when (e.code()) {
                         600, 601, 602, 603, 604, 605 -> {
                             // Convert HTTP status code to VerificationResults like iOS
-                            val verificationResult = VerificationResults.fromHttpStatusCode(e.code())
+                            val verificationResult = when (e.code()) {
+                                in 600..605 -> VerificationResults.FAILED
+                                else -> VerificationResults.FAILED
+                            }
                             val failureType = getFailureTypeFromResult(verificationResult)
-                            val errorReason = verificationResult.localizedDescription
+                            val errorReason = verificationResult.toString()
                             
                             Log.w(TAG, "HTTP ${e.code()}: ${verificationResult.name} - navigating to failure screen")
                             LogManager.addLog("Verification failed: $errorReason")
@@ -413,7 +409,10 @@ class VerificationProcessingViewModel constructor(
         } else {
             // Handle error status codes exactly like iOS
             Log.w(TAG, "[PROCESSING] Error response: $responseStatusCode")
-            return VerificationResults.fromHttpStatusCode(responseStatusCode)
+            return when (responseStatusCode) {
+                in 600..605 -> VerificationResults.FAILED
+                else -> VerificationResults.FAILED
+            }
         }
     }
     
@@ -533,6 +532,11 @@ class VerificationProcessingViewModel constructor(
             }
             VerificationResults.DOCUMENT_VALIDATION_ERROR -> VerificationFailureType.GENERAL
             VerificationResults.FAILED -> VerificationFailureType.GENERAL
+            VerificationResults.FAILED_FACE_MATCH -> VerificationFailureType.FACE
+            VerificationResults.FAILED_DOCUMENT_QUALITY -> VerificationFailureType.GENERAL
+            VerificationResults.FAILED_NFC_VERIFICATION -> VerificationFailureType.PASSPORT
+            VerificationResults.FAILED_GENERAL -> VerificationFailureType.GENERAL
+            VerificationResults.PROCESSING_ERROR -> VerificationFailureType.GENERAL
             VerificationResults.SUCCESS -> VerificationFailureType.GENERAL // Should not happen
         }
     }

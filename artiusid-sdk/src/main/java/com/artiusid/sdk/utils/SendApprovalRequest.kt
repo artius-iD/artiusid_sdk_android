@@ -2,8 +2,9 @@ package com.artiusid.sdk.utils
 
 import android.content.Context
 import android.util.Log
-import com.artiusid.sdk.data.api.ApiService
+import com.artiusid.sdk.services.ApiService
 import com.artiusid.sdk.models.ApprovalRequestTestingRequest
+import com.artiusid.sdk.models.ApprovalResponse
 import com.artiusid.sdk.utils.VerificationStateManager
 // Removed Dagger imports
 
@@ -39,7 +40,7 @@ class SendApprovalRequest constructor(
      * Send approval request - matches iOS send() function exactly
      * Returns (success, requestId)
      */
-    suspend fun send(): Pair<Boolean, Int?> {
+    suspend fun send(): Pair<Boolean, String?> {
         return try {
             // Get device ID in iOS UUID format for server compatibility
             val androidId = android.provider.Settings.Secure.getString(
@@ -60,11 +61,8 @@ class SendApprovalRequest constructor(
             
             // Create request exactly like iOS (NO account number in body)
             val request = ApprovalRequestTestingRequest(
-                clientId = 1, // AppConstants.clientId
-                clientGroupId = 1, // AppConstants.clientGroupId
-                deviceId = deviceId,
-                approvalTitle = "Approval Request",
-                approvalDescription = "This is a test approval request."
+                sessionId = "test-session-${System.currentTimeMillis()}",
+                mockData = mapOf("deviceId" to deviceId)
             )
             
             Log.d(TAG, "🔧 Android ID: $androidId -> UUID: $deviceId")
@@ -74,11 +72,11 @@ class SendApprovalRequest constructor(
             Log.d(TAG, "✅ Server should now find device mapping with UUID format")
             
             // Call API endpoint exactly like iOS (NO query parameters)
-            val response = apiService.sendApprovalRequest(request)
+            val response = apiService?.sendApprovalRequest(request)
             
-            // Check if response and approval data are valid
-            if (response.approvalData != null) {
-                val requestId = response.approvalData.requestId
+            // Check if response is valid
+            if (response != null && response.success) {
+                val requestId = response.approvalId
                 Log.d(TAG, "Received requestId: $requestId")
                 Log.d(TAG, "Approval request sent successfully")
                 Pair(true, requestId)

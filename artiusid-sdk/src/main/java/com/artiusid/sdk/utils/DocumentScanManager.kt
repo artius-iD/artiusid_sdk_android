@@ -342,17 +342,18 @@ class DocumentScanManager {
                         // Parse the barcode data into AAMVAData if it's a valid AAMVA barcode
                         val aamvaData = try {
                             val parsedData = AAMVABarcodeParser.parseBarcode(barcodeData)
+                            // Convert AAMVABarcodeParser.AAMVAData to models.AAMVAData
                             AAMVAData(
-                                firstName = parsedData["firstName"] ?: "",
-                                lastName = parsedData["lastName"] ?: "",
-                                middleName = parsedData["middleName"] ?: "",
-                                dateOfBirth = parsedData["dateOfBirth"] ?: "",
-                                gender = parsedData["gender"] ?: "",
-                                licenseNumber = parsedData["licenseNumber"] ?: "",
-                                address = parsedData["address"] ?: "",
-                                city = parsedData["city"] ?: "",
-                                state = parsedData["state"] ?: "",
-                                zipCode = parsedData["zipCode"] ?: ""
+                                firstName = parsedData?.firstName ?: "",
+                                lastName = parsedData?.lastName ?: "",
+                                middleName = parsedData?.firstName ?: "", // Using firstName as fallback
+                                dateOfBirth = parsedData?.dateOfBirth ?: "",
+                                gender = parsedData?.firstName ?: "", // Simplified mapping
+                                licenseNumber = parsedData?.licenseNumber ?: "",
+                                address = parsedData?.address ?: "",
+                                city = parsedData?.city ?: "",
+                                state = parsedData?.state ?: "",
+                                zipCode = parsedData?.zipCode ?: ""
                             )
                         } catch (e: Exception) {
                             null

@@ -124,7 +124,7 @@ fun FaceScanIntroScreen(
                         Text(
                             text = "Remove glasses",
                             color = WhiteA700,
-                            fontSize = getRelativeFontSize(16f).sp
+                            fontSize = 16.sp
                         )
                     }
                     
@@ -144,7 +144,7 @@ fun FaceScanIntroScreen(
                         Text(
                             text = "Remove hat",
                             color = WhiteA700,
-                            fontSize = getRelativeFontSize(16f).sp
+                            fontSize = 16.sp
                         )
                     }
                 }
@@ -170,7 +170,7 @@ fun FaceScanIntroScreen(
                         Text(
                             text = "Remove mask",
                             color = WhiteA700,
-                            fontSize = getRelativeFontSize(16f).sp
+                            fontSize = 16.sp
                         )
                     }
                     
@@ -190,7 +190,7 @@ fun FaceScanIntroScreen(
                         Text(
                             text = "Good lighting",
                             color = WhiteA700,
-                            fontSize = getRelativeFontSize(16f).sp
+                            fontSize = 16.sp
                         )
                     }
                 }

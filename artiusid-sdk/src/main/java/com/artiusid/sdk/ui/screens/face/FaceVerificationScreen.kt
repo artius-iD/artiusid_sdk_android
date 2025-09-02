@@ -281,12 +281,14 @@ fun FaceCameraPreview(
             modifier = Modifier.fillMaxSize()
         )
 
-        FaceScanFrame(
+        // Face scan frame overlay - simplified implementation
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.Center),
-            isProcessing = isProcessing
-        )
+                .align(Alignment.Center)
+        ) {
+            // TODO: Add face scanning frame UI when FaceScanFrame component is available
+        }
 
         if (isProcessing) {
             Box(

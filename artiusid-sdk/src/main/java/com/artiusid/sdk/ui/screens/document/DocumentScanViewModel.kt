@@ -176,16 +176,16 @@ class DocumentScanViewModel : ViewModel() {
                     // Parse AAMVA barcode data
                     val parsedData = AAMVABarcodeParser.parseBarcode(barcodeDataString)
                     barcodeData = AAMVAData(
-                        firstName = parsedData["firstName"] ?: "",
-                        lastName = parsedData["lastName"] ?: "",
-                        middleName = parsedData["middleName"] ?: "",
-                        dateOfBirth = parsedData["dateOfBirth"] ?: "",
-                        gender = parsedData["gender"] ?: "",
-                        licenseNumber = parsedData["licenseNumber"] ?: "",
-                        address = parsedData["address"] ?: "",
-                        city = parsedData["city"] ?: "",
-                        state = parsedData["state"] ?: "",
-                        zipCode = parsedData["zipCode"] ?: ""
+                        firstName = parsedData?.firstName ?: "",
+                        lastName = parsedData?.lastName ?: "",
+                        middleName = parsedData?.firstName ?: "",
+                        dateOfBirth = parsedData?.dateOfBirth ?: "",
+                        gender = parsedData?.firstName ?: "",
+                        licenseNumber = parsedData?.licenseNumber ?: "",
+                        address = parsedData?.address ?: "",
+                        city = parsedData?.city ?: "",
+                        state = parsedData?.state ?: "",
+                        zipCode = parsedData?.zipCode ?: ""
                     )
                     android.util.Log.d("DocumentScanViewModel", "Parsed AAMVA data: $barcodeData")
                     
@@ -428,16 +428,16 @@ class DocumentScanViewModel : ViewModel() {
                     // Parse AAMVA data
                     val parsedData = AAMVABarcodeParser.parseBarcode(barcodeDataString)
                     barcodeData = AAMVAData(
-                        firstName = parsedData["firstName"] ?: "",
-                        lastName = parsedData["lastName"] ?: "",
-                        middleName = parsedData["middleName"] ?: "",
-                        dateOfBirth = parsedData["dateOfBirth"] ?: "",
-                        gender = parsedData["gender"] ?: "",
-                        licenseNumber = parsedData["licenseNumber"] ?: "",
-                        address = parsedData["address"] ?: "",
-                        city = parsedData["city"] ?: "",
-                        state = parsedData["state"] ?: "",
-                        zipCode = parsedData["zipCode"] ?: ""
+                        firstName = parsedData?.firstName ?: "",
+                        lastName = parsedData?.lastName ?: "",
+                        middleName = parsedData?.firstName ?: "",
+                        dateOfBirth = parsedData?.dateOfBirth ?: "",
+                        gender = parsedData?.firstName ?: "",
+                        licenseNumber = parsedData?.licenseNumber ?: "",
+                        address = parsedData?.address ?: "",
+                        city = parsedData?.city ?: "",
+                        state = parsedData?.state ?: "",
+                        zipCode = parsedData?.zipCode ?: ""
                     )
                     android.util.Log.d("DocumentScanViewModel", "Parsed AAMVA data: $barcodeData")
                     

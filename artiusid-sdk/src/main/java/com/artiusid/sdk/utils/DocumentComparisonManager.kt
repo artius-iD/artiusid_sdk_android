@@ -22,7 +22,7 @@ class DocumentComparisonManager {
     
     fun compareOCRWithBarcode(
         ocrData: Map<String, String>,
-        barcodeData: AAMVABarcodeParser.AAMVAData
+        barcodeData: AAMVAData
     ): ComparisonResult {
         Log.d(TAG, "[COMPARE] Starting OCR vs Barcode comparison")
         Log.d(TAG, "[COMPARE] OCR data: $ocrData")
@@ -37,12 +37,12 @@ class DocumentComparisonManager {
         val fieldMappings = listOf(
             Triple("FIRST_NAME", barcodeData.firstName, "First Name"),
             Triple("LAST_NAME", barcodeData.lastName, "Last Name"),
-            Triple("ID_NUMBER", barcodeData.driversLicenseNumber, "ID Number"),
+            Triple("ID_NUMBER", barcodeData.licenseNumber, "ID Number"),
             Triple("DATE_OF_BIRTH", barcodeData.dateOfBirth, "Date of Birth"),
-            Triple("EXPIRY_DATE", barcodeData.dateOfExpiration, "Expiry Date"),
-            Triple("STREET_ADDRESS", barcodeData.streetAddress, "Street Address"),
-            Triple("CITY", barcodeData.cityAddress, "City"),
-            Triple("STATE", barcodeData.stateAddress, "State"),
+            Triple("EXPIRY_DATE", barcodeData.expirationDate, "Expiry Date"),
+            Triple("STREET_ADDRESS", barcodeData.address, "Street Address"),
+            Triple("CITY", barcodeData.city, "City"),
+            Triple("STATE", barcodeData.state, "State"),
             Triple("ZIP_CODE", barcodeData.zipCode?.take(5), "Zip Code")
         )
         for ((ocrKey, barcodeValue, label) in fieldMappings) {

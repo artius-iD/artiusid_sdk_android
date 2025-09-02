@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.artiusid.sdk.R
-import com.artiusid.sdk.models.VerificationResultData
+import com.artiusid.sdk.data.model.VerificationResultData
 import com.artiusid.sdk.ui.components.AppTopBar
 import com.artiusid.sdk.ui.theme.*
 

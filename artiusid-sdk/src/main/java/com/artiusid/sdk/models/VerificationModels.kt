@@ -26,7 +26,15 @@ data class VerificationResponse(
     val confidence: Float,
     val results: VerificationResults,
     val sessionId: String,
-    val processingTime: Long
+    val processingTime: Long,
+    val verificationData: VerificationData? = null
+) : Parcelable
+
+@Parcelize
+data class VerificationData(
+    val payload: String? = null,
+    val status: String? = null,
+    val statusCode: Int = 200
 ) : Parcelable
 
 /**
@@ -34,11 +42,18 @@ data class VerificationResponse(
  */
 enum class VerificationResults {
     SUCCESS,
+    FAILED,
     FAILED_FACE_MATCH,
     FAILED_DOCUMENT_QUALITY,
     FAILED_NFC_VERIFICATION,
     FAILED_GENERAL,
-    PROCESSING_ERROR
+    PROCESSING_ERROR,
+    FACE_IMAGE_VALIDATION_ERROR,
+    OCR_ERROR,
+    MRZ_OCR_ERROR,
+    PRD417_ERROR,
+    PRE_PROCESS_ERROR,
+    DOCUMENT_VALIDATION_ERROR
 }
 
 @Parcelize
@@ -54,6 +69,18 @@ data class VerificationResultData(
     val processingTime: Long = 0L,
     val errors: List<String> = emptyList(),
     val documentRecaptureType: DocumentRecaptureType? = null
+) : Parcelable
+
+/**
+ * UI state for passport scanning screen
+ */
+@Parcelize
+data class PassportScanUiState(
+    val isScanning: Boolean = false,
+    val scanningState: PassportScanningState = PassportScanningState.NOT_STARTED,
+    val mrzDetected: Boolean = false,
+    val errorMessage: String? = null,
+    val isProcessing: Boolean = false
 ) : Parcelable
 
 /**

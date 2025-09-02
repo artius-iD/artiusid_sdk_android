@@ -1,6 +1,6 @@
 package com.artiusid.sdk.utils.passport
 
-import com.artiusid.sdk.data.models.passport.PassportMRZData
+import com.artiusid.sdk.models.PassportMRZData
 import java.util.regex.Pattern
 
 /**
@@ -58,7 +58,7 @@ object MRZParser {
         
         return try {
             val data = parseValidMRZLines(line1, line2)
-            if (data.isValid) data else null
+            if (data.isValid()) data else null
         } catch (e: Exception) {
             null
         }
@@ -101,13 +101,11 @@ object MRZParser {
             passportNumber = passportNumber,
             nationality = nationality,
             dateOfBirth = dateOfBirth,
-            sex = sex,
+            gender = sex,
             dateOfExpiry = dateOfExpiry,
             personalNumber = personalNumber,
-            finalCheckDigit = finalCheckDigit,
-            line1 = line1,
-            line2 = line2,
-            line2CheckDigit = finalCheckDigit
+            compositeCheckDigit = finalCheckDigit,
+            rawMRZ = "$line1\n$line2"
         )
     }
     
@@ -174,7 +172,7 @@ object MRZParser {
     fun validateMRZData(mrzData: PassportMRZData): List<String> {
         val issues = mutableListOf<String>()
         
-        if (!mrzData.isValid) {
+        if (!mrzData.isValid()) {
             issues.add("Check digits validation failed")
         }
         

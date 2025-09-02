@@ -19,12 +19,12 @@ enum class ProcessingStage {
  * Enum representing passport scanning states
  */
 enum class PassportScanningState {
-    IDLE,
+    NOT_STARTED,
     SCANNING,
-    PROCESSING,
-    SUCCESS,
-    ERROR,
-    TIMEOUT
+    MRZ_DETECTED,
+    VALIDATING,
+    COMPLETED,
+    FAILED
 }
 
 /**
@@ -50,5 +50,11 @@ enum class DocumentRecaptureType {
     DOCUMENT_GLARE,
     DOCUMENT_CROPPED,
     DOCUMENT_NOT_DETECTED,
-    DOCUMENT_ANGLE_INCORRECT
+    DOCUMENT_ANGLE_INCORRECT,
+    // Specific error types for verification processing
+    PASSPORT_MRZ_ERROR,
+    PASSPORT_OCR_ERROR,
+    STATE_ID_FRONT_ERROR,
+    STATE_ID_BACK_ERROR,
+    STATE_ID_BARCODE_ERROR
 }

@@ -124,6 +124,11 @@ private fun getRecaptureTitle(type: DocumentRecaptureType): String {
         DocumentRecaptureType.DOCUMENT_GLARE -> "Document Glare Detected"
         DocumentRecaptureType.DOCUMENT_CROPPED -> "Document Partially Visible"
         DocumentRecaptureType.DOCUMENT_ANGLE_INCORRECT -> "Document Angle Incorrect"
+        DocumentRecaptureType.PASSPORT_MRZ_ERROR -> "Passport MRZ Error"
+        DocumentRecaptureType.PASSPORT_OCR_ERROR -> "Passport OCR Error"
+        DocumentRecaptureType.STATE_ID_FRONT_ERROR -> "State ID Front Error"
+        DocumentRecaptureType.STATE_ID_BACK_ERROR -> "State ID Back Error"
+        DocumentRecaptureType.STATE_ID_BARCODE_ERROR -> "State ID Barcode Error"
     }
 }
 
@@ -168,5 +173,15 @@ private fun getRecaptureMessage(type: DocumentRecaptureType): String {
             "Your document is only partially visible. Please ensure the entire document is in the frame."
         DocumentRecaptureType.DOCUMENT_ANGLE_INCORRECT -> 
             "Please hold your document straight and parallel to the camera."
+        DocumentRecaptureType.PASSPORT_MRZ_ERROR -> 
+            "The passport MRZ couldn't be read clearly. Please ensure good lighting and hold the passport steady."
+        DocumentRecaptureType.PASSPORT_OCR_ERROR -> 
+            "The passport text couldn't be read clearly. Please ensure good lighting and hold the passport steady."
+        DocumentRecaptureType.STATE_ID_FRONT_ERROR -> 
+            "The front of your state ID couldn't be processed clearly. Please ensure good lighting and hold the document steady."
+        DocumentRecaptureType.STATE_ID_BACK_ERROR -> 
+            "The back of your state ID couldn't be processed clearly. Please ensure good lighting and hold the document steady."
+        DocumentRecaptureType.STATE_ID_BARCODE_ERROR -> 
+            "The barcode on your state ID couldn't be read. Please ensure good lighting and hold the document steady."
     }
 }
