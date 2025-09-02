@@ -19,16 +19,33 @@ import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
 import coil.compose.AsyncImage
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import androidx.compose.ui.platform.LocalContext
 
+/**
+ * PassportScanIntroScreen - EXACT STANDALONE APPLICATION IMPLEMENTATION
+ * Matches the standalone app's passport scan intro screen exactly
+ */
 @Composable
 fun PassportScanIntroScreen(
     onNavigateToPassportScan: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    
+    // Configure Coil for GIF support - EXACT STANDALONE IMPLEMENTATION
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                add(GifDecoder.Factory())
+            }
+            .build()
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Gray900)
+            .background(Color(0xFF18202A)) // Gray900 - EXACT STANDALONE COLOR
     ) {
         Column(
             modifier = Modifier
@@ -36,7 +53,7 @@ fun PassportScanIntroScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Custom back button
+            // Custom back button - EXACT STANDALONE IMPLEMENTATION
             CustomBackButton(
                 onBackClick = onNavigateBack,
                 navTitle = "Passport"
@@ -44,7 +61,7 @@ fun PassportScanIntroScreen(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Passport Animation (GIF)
+            // Passport Animation (GIF) - EXACT STANDALONE IMPLEMENTATION
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -54,6 +71,7 @@ fun PassportScanIntroScreen(
                 AsyncImage(
                     model = R.drawable.passport_animation,
                     contentDescription = "Passport Animation",
+                    imageLoader = imageLoader,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
@@ -62,10 +80,10 @@ fun PassportScanIntroScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Title
+            // Title - EXACT STANDALONE IMPLEMENTATION
             Text(
                 text = "Scan Passport",
-                color = Yellow900,
+                color = Color(0xFFF58220), // Yellow900 - EXACT STANDALONE COLOR
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -73,10 +91,10 @@ fun PassportScanIntroScreen(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Description
+            // Description - EXACT STANDALONE IMPLEMENTATION
             Text(
                 text = "Continue your verification by scanning your passport. See animation above and when ready tap Scan My Passport",
-                color = WhiteA700,
+                color = Color(0xFFFFFFFF), // WhiteA700 - EXACT STANDALONE COLOR
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 lineHeight = 20.sp
@@ -84,20 +102,20 @@ fun PassportScanIntroScreen(
             
             Spacer(modifier = Modifier.weight(1f))
             
-            // Scan button
+            // Scan button - EXACT STANDALONE IMPLEMENTATION
             Button(
                 onClick = onNavigateToPassportScan,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow900
+                    containerColor = Color(0xFFF58220) // Yellow900 - EXACT STANDALONE COLOR
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Scan My Passport",
-                    color = Gray900,
+                    color = Color(0xFF18202A), // Gray900 - EXACT STANDALONE COLOR
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -108,6 +126,9 @@ fun PassportScanIntroScreen(
     }
 }
 
+/**
+ * CustomBackButton - EXACT STANDALONE APPLICATION IMPLEMENTATION
+ */
 @Composable
 private fun CustomBackButton(
     onBackClick: () -> Unit,
@@ -121,18 +142,18 @@ private fun CustomBackButton(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
-                tint = WhiteA700
+                tint = Color(0xFFFFFFFF) // WhiteA700 - EXACT STANDALONE COLOR
             )
         }
         
         if (navTitle.isNotEmpty()) {
             Text(
                 text = navTitle,
-                color = WhiteA700,
+                color = Color(0xFFFFFFFF), // WhiteA700 - EXACT STANDALONE COLOR
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
     }
-} 
+}

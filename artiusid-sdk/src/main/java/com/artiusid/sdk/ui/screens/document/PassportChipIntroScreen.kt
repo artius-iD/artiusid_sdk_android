@@ -20,15 +20,19 @@ import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
 import coil.compose.AsyncImage
 
+/**
+ * PassportChipIntroScreen - EXACT STANDALONE APPLICATION IMPLEMENTATION
+ * Matches the standalone app's passport chip intro screen exactly
+ */
 @Composable
-fun DocumentScanBackIntroScreen(
-    onNavigateToDocumentScanBack: () -> Unit,
+fun PassportChipIntroScreen(
+    onNavigateToPassportChip: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Gray900)
+            .background(Color(0xFF18202A)) // Gray900 - EXACT STANDALONE COLOR
     ) {
         Column(
             modifier = Modifier
@@ -36,15 +40,15 @@ fun DocumentScanBackIntroScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Custom back button
+            // Custom back button - EXACT STANDALONE IMPLEMENTATION
             CustomBackButton(
                 onBackClick = onNavigateBack,
-                navTitle = "Back ID"
+                navTitle = "Passport Chip"
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // State ID Back Animation (GIF)
+            // Passport Chip Animation (GIF) - EXACT STANDALONE IMPLEMENTATION
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -52,8 +56,8 @@ fun DocumentScanBackIntroScreen(
                 contentAlignment = Alignment.TopCenter
             ) {
                 AsyncImage(
-                    model = R.drawable.stateid_animation,
-                    contentDescription = "State ID Back Animation",
+                    model = R.drawable.passport_animation,
+                    contentDescription = "Passport Chip Animation",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
@@ -62,10 +66,10 @@ fun DocumentScanBackIntroScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Title
+            // Title - EXACT STANDALONE IMPLEMENTATION
             Text(
-                text = "Scan Back ID",
-                color = Yellow900,
+                text = "Scan Passport Chip",
+                color = Color(0xFFF58220), // Yellow900 - EXACT STANDALONE COLOR
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -73,10 +77,10 @@ fun DocumentScanBackIntroScreen(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Description
+            // Description - EXACT STANDALONE IMPLEMENTATION
             Text(
-                text = "Continue your verification by scanning the back of your document. See animation above and when ready tap Scan My ID",
-                color = WhiteA700,
+                text = "Continue your verification by scanning your passport chip. See animation above and when ready tap Scan My Passport Chip",
+                color = Color(0xFFFFFFFF), // WhiteA700 - EXACT STANDALONE COLOR
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 lineHeight = 20.sp
@@ -84,20 +88,20 @@ fun DocumentScanBackIntroScreen(
             
             Spacer(modifier = Modifier.weight(1f))
             
-            // Scan button
+            // Scan button - EXACT STANDALONE IMPLEMENTATION
             Button(
-                onClick = onNavigateToDocumentScanBack,
+                onClick = onNavigateToPassportChip,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow900
+                    containerColor = Color(0xFFF58220) // Yellow900 - EXACT STANDALONE COLOR
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Scan Back of My ID",
-                    color = Gray900,
+                    text = "Scan My Passport Chip",
+                    color = Color(0xFF18202A), // Gray900 - EXACT STANDALONE COLOR
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -108,6 +112,9 @@ fun DocumentScanBackIntroScreen(
     }
 }
 
+/**
+ * CustomBackButton - EXACT STANDALONE APPLICATION IMPLEMENTATION
+ */
 @Composable
 private fun CustomBackButton(
     onBackClick: () -> Unit,
@@ -121,16 +128,18 @@ private fun CustomBackButton(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
-                tint = WhiteA700
+                tint = Color(0xFFFFFFFF) // WhiteA700 - EXACT STANDALONE COLOR
             )
         }
         
-        Text(
-            text = navTitle,
-            color = WhiteA700,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(start = 8.dp)
-        )
+        if (navTitle.isNotEmpty()) {
+            Text(
+                text = navTitle,
+                color = Color(0xFFFFFFFF), // WhiteA700 - EXACT STANDALONE COLOR
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
     }
-} 
+}

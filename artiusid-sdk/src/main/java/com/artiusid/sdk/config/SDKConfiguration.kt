@@ -58,9 +58,11 @@ data class SDKTheme(
         
         fun setPrimaryColor(color: Color) = apply { this.primaryColor = color }
         fun setSecondaryColor(color: Color) = apply { this.secondaryColor = color }
+        fun setAccentColor(color: Color) = apply { this.primaryColor = color } // Alias for primary
         fun setBackgroundColor(color: Color) = apply { this.backgroundColor = color }
         fun setSurfaceColor(color: Color) = apply { this.surfaceColor = color }
         fun setTextColor(color: Color) = apply { this.textColor = color }
+        fun setTextPrimaryColor(color: Color) = apply { this.textColor = color } // Alias for textColor
         fun setTextSecondaryColor(color: Color) = apply { this.textSecondaryColor = color }
         fun setErrorColor(color: Color) = apply { this.errorColor = color }
         fun setSuccessColor(color: Color) = apply { this.successColor = color }
@@ -69,7 +71,9 @@ data class SDKTheme(
         fun setFontFamily(@FontRes fontFamily: Int?) = apply { this.fontFamily = fontFamily }
         fun setCornerRadius(radius: Dp) = apply { this.cornerRadius = radius }
         fun setButtonStyle(style: ButtonStyle) = apply { this.buttonStyle = style }
+        fun setProgressStyle(style: ProgressStyle) = apply { this.progressIndicatorStyle = style }
         fun setProgressIndicatorStyle(style: ProgressStyle) = apply { this.progressIndicatorStyle = style }
+        fun setLogoUrl(url: String) = apply { /* URL-based logos not supported, use setLogo() with drawable resource */ }
         fun setEnableAnimations(enable: Boolean) = apply { this.enableAnimations = enable }
         fun setDarkModeSupport(support: Boolean) = apply { this.darkModeSupport = support }
         
@@ -88,7 +92,8 @@ data class SDKTheme(
 enum class ButtonStyle {
     FILLED,
     OUTLINED,
-    TEXT
+    TEXT,
+    ROUNDED // Alias for FILLED with rounded corners
 }
 
 /**
@@ -124,11 +129,14 @@ data class SecurityConfig(
         private var obfuscationLevel: ObfuscationLevel = ObfuscationLevel.HIGH
         
         fun enableCertificatePinning(enable: Boolean) = apply { this.enableCertificatePinning = enable }
+        fun setEnableCertificatePinning(enable: Boolean) = apply { this.enableCertificatePinning = enable }
         fun setPinnedCertificates(certificates: List<String>) = apply { this.pinnedCertificates = certificates }
         fun setTLSVersion(version: String) = apply { this.tlsVersion = version }
         fun enableNetworkSecurityConfig(enable: Boolean) = apply { this.enableNetworkSecurityConfig = enable }
         fun enableAntiTampering(enable: Boolean) = apply { this.enableAntiTampering = enable }
+        fun setEnableAntiTampering(enable: Boolean) = apply { this.enableAntiTampering = enable }
         fun enableRootDetection(enable: Boolean) = apply { this.enableRootDetection = enable }
+        fun setEnableRootDetection(enable: Boolean) = apply { this.enableRootDetection = enable }
         fun enableDebugDetection(enable: Boolean) = apply { this.enableDebugDetection = enable }
         fun setObfuscationLevel(level: ObfuscationLevel) = apply { this.obfuscationLevel = level }
         
@@ -166,6 +174,8 @@ data class LocalizationConfig(
         private var enableRTL: Boolean = false
         
         fun setDefaultLanguage(language: String) = apply { this.defaultLanguage = language }
+        fun setLanguage(language: String) = apply { this.defaultLanguage = language } // Alias
+        fun setCountry(country: String) = apply { /* Country setting not implemented yet */ }
         fun setSupportedLanguages(languages: List<String>) = apply { this.supportedLanguages = languages }
         fun setCustomStrings(strings: Map<String, String>) = apply { this.customStrings = strings }
         fun enableRTL(enable: Boolean) = apply { this.enableRTL = enable }

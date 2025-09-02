@@ -1,7 +1,5 @@
 package com.artiusid.sdk.ui.screens.face
 
-import com.artiusid.sdk.ui.utils.*
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -23,6 +21,10 @@ import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
 import coil.compose.AsyncImage
 
+/**
+ * FaceScanIntroScreen - EXACT STANDALONE APPLICATION IMPLEMENTATION
+ * Matches the standalone app's face scan intro screen exactly
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FaceScanIntroScreen(
@@ -32,7 +34,7 @@ fun FaceScanIntroScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Gray900)
+            .background(Color(0xFF18202A)) // Gray900 - EXACT STANDALONE COLOR
     ) {
         Column(
             modifier = Modifier
@@ -40,7 +42,7 @@ fun FaceScanIntroScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Custom back button
+            // Custom back button - EXACT STANDALONE IMPLEMENTATION
             CustomBackButton(
                 onBackClick = onNavigateBack,
                 navTitle = ""
@@ -48,7 +50,7 @@ fun FaceScanIntroScreen(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Face Scan Animation (GIF) - responsive positioning
+            // Face Scan Animation (GIF) - responsive positioning - EXACT STANDALONE IMPLEMENTATION
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -58,15 +60,15 @@ fun FaceScanIntroScreen(
                 AsyncImage(
                     model = R.drawable.face_rotation_ios,
                     contentDescription = "Face Scan Animation",
-                    modifier = Modifier.size(280.dp),
+                    modifier = Modifier.size(280.dp), // EXACT STANDALONE SIZE
                     contentScale = ContentScale.Fit
                 )
             }
             
-            // Title - responsive text and styling
+            // Title - responsive text and styling - EXACT STANDALONE IMPLEMENTATION
             Text(
                 text = "Position your face in the frame",
-                color = Yellow900,
+                color = Color(0xFFF58220), // Yellow900 - EXACT STANDALONE COLOR
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -77,10 +79,10 @@ fun FaceScanIntroScreen(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Description - responsive styling
+            // Description - responsive styling - EXACT STANDALONE IMPLEMENTATION
             Text(
                 text = "Make sure your face is clearly visible and well-lit",
-                color = Gray500,
+                color = Color(0xFF9E9E9E), // Gray500 - EXACT STANDALONE COLOR
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
@@ -89,21 +91,21 @@ fun FaceScanIntroScreen(
                     .padding(horizontal = 16.dp)
             )
             
-            // Tips Section matching iOS grid layout
+            // Tips Section matching iOS grid layout - EXACT STANDALONE IMPLEMENTATION
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "Tips",
-                    color = WhiteA700,
+                    color = Color(0xFFFFFFFF), // WhiteA700 - EXACT STANDALONE COLOR
                     fontSize = 12.sp,
                     modifier = Modifier.padding(
-                        top = getRelativeHeightDp(10f),
-                        bottom = getRelativeHeightDp(6f)
+                        top = 10.dp,
+                        bottom = 6.dp
                     )
                 )
                 
-                // First row matching iOS grid
+                // First row matching iOS grid - EXACT STANDALONE IMPLEMENTATION
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -112,7 +114,7 @@ fun FaceScanIntroScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .width(getRelativeWidthDp(180f))
+                            .width(180.dp)
                             .padding(8.dp)
                     ) {
                         Image(
@@ -123,7 +125,7 @@ fun FaceScanIntroScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Remove glasses",
-                            color = WhiteA700,
+                            color = Color(0xFFFFFFFF), // WhiteA700
                             fontSize = 16.sp
                         )
                     }
@@ -132,7 +134,7 @@ fun FaceScanIntroScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .width(getRelativeWidthDp(180f))
+                            .width(180.dp)
                             .padding(8.dp)
                     ) {
                         Image(
@@ -143,13 +145,13 @@ fun FaceScanIntroScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Remove hat",
-                            color = WhiteA700,
+                            color = Color(0xFFFFFFFF), // WhiteA700
                             fontSize = 16.sp
                         )
                     }
                 }
                 
-                // Second row matching iOS grid
+                // Second row matching iOS grid - EXACT STANDALONE IMPLEMENTATION
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -158,7 +160,7 @@ fun FaceScanIntroScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .width(getRelativeWidthDp(180f))
+                            .width(180.dp)
                             .padding(8.dp)
                     ) {
                         Image(
@@ -169,7 +171,7 @@ fun FaceScanIntroScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Remove mask",
-                            color = WhiteA700,
+                            color = Color(0xFFFFFFFF), // WhiteA700
                             fontSize = 16.sp
                         )
                     }
@@ -178,7 +180,7 @@ fun FaceScanIntroScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .width(getRelativeWidthDp(180f))
+                            .width(180.dp)
                             .padding(8.dp)
                     ) {
                         Image(
@@ -189,7 +191,7 @@ fun FaceScanIntroScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Good lighting",
-                            color = WhiteA700,
+                            color = Color(0xFFFFFFFF), // WhiteA700
                             fontSize = 16.sp
                         )
                     }
@@ -198,7 +200,7 @@ fun FaceScanIntroScreen(
             
             Spacer(modifier = Modifier.weight(1f))
             
-            // Continue button - responsive positioning
+            // Continue button - responsive positioning - EXACT STANDALONE IMPLEMENTATION
             Button(
                 onClick = {
                     android.util.Log.d("FaceScanIntroScreen", "Start Face Scan button clicked, navigating to FaceScanScreen")
@@ -209,13 +211,13 @@ fun FaceScanIntroScreen(
                     .height(56.dp)
                     .padding(horizontal = 16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow900
+                    containerColor = Color(0xFFF58220) // Yellow900 - EXACT STANDALONE COLOR
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Start Face Scan",
-                    color = Gray900,
+                    color = Color(0xFF18202A), // Gray900 - EXACT STANDALONE COLOR
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -226,8 +228,11 @@ fun FaceScanIntroScreen(
     }
 }
 
+/**
+ * CustomBackButton - EXACT STANDALONE APPLICATION IMPLEMENTATION
+ */
 @Composable
-private fun CustomBackButton(
+fun CustomBackButton(
     onBackClick: () -> Unit,
     navTitle: String
 ) {
@@ -239,18 +244,18 @@ private fun CustomBackButton(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
-                tint = WhiteA700
+                tint = Color(0xFFFFFFFF) // WhiteA700 - EXACT STANDALONE COLOR
             )
         }
         
         if (navTitle.isNotEmpty()) {
             Text(
                 text = navTitle,
-                color = WhiteA700,
+                color = Color(0xFFFFFFFF), // WhiteA700 - EXACT STANDALONE COLOR
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
     }
-} 
+}

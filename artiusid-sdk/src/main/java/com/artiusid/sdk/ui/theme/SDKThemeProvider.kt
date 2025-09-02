@@ -240,6 +240,19 @@ fun SDKButton(
                 content = { content() }
             )
         }
+        com.artiusid.sdk.config.ButtonStyle.ROUNDED -> {
+            Button(
+                onClick = onClick,
+                modifier = modifier,
+                enabled = enabled,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = sdkTheme.primaryColor,
+                    contentColor = Color.White
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(sdkTheme.cornerRadius * 2f),
+                content = { content() }
+            )
+        }
     }
 }
 

@@ -4,7 +4,7 @@
  * Enhanced ProgressCircleView with iOS-like segmented circle animation
  */
 
-package com.artiusid.sdk.presentation.screens.face
+package com.artiusid.sdk.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.artiusid.sdk.ui.theme.AppColors
+import com.artiusid.sdk.ui.theme.SDKColors
 import com.artiusid.sdk.ui.theme.AppFaceColors
 import kotlin.math.*
 import kotlinx.coroutines.delay
@@ -37,11 +37,11 @@ fun ProgressCircleView(
     val completedCount = segmentStatus.count { it }
     val isCompleted = completedCount == 8
     
-    // Get colors outside Canvas scope
-    val segmentCompleteColor = Color.Green
-    val segmentIncompleteColor = Color.LightGray
-    val textPrimaryColor = Color.Black
-    val textSecondaryColor = Color.Gray
+    // Get colors outside Canvas scope - using standalone app colors
+    val segmentCompleteColor = SDKColors.Success // Green for completed segments
+    val segmentIncompleteColor = SDKColors.Gray500.copy(alpha = 0.3f) // Light gray for incomplete
+    val textPrimaryColor = SDKColors.WhiteA700 // White text for dark background
+    val textSecondaryColor = SDKColors.Gray500 // Gray for secondary text
     
     // Animate rotation for completion indicator
     LaunchedEffect(isCompleted) {
@@ -126,7 +126,7 @@ fun ProgressCircleView(
                 
                 drawPath(
                     path = path,
-                    color = Color.Green,
+                    color = SDKColors.Success, // Use standalone app success color
                     style = Stroke(
                         width = strokeWidth,
                         cap = StrokeCap.Round

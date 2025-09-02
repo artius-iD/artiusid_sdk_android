@@ -38,7 +38,11 @@ data class VerificationResult(
     val documentScanResult: DocumentScanResult?,
     val nfcResult: NFCPassportResult?,
     val processingTime: Long,
-    val sessionId: String
+    val sessionId: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    // Convenience properties for easier access
+    val faceMatch: Boolean = livenessResult?.success ?: false,
+    val documentValid: Boolean = documentScanResult?.success ?: false
 )
 
 /**
@@ -91,7 +95,9 @@ data class AuthenticationResult(
     val success: Boolean,
     val token: String?,
     val expiresAt: Long,
-    val sessionId: String
+    val sessionId: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    val userId: String? = null
 )
 
 /**

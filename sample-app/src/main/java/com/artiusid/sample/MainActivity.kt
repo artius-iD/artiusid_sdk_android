@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -108,9 +109,9 @@ class MainActivity : ComponentActivity() {
     
     private fun createSecurityConfig(): SecurityConfig {
         return SecurityConfig.Builder()
-            .setEnableCertificatePinning(true)
-            .setEnableRootDetection(true)
-            .setEnableAntiTampering(true)
+            .setEnableCertificatePinning(false) // Disable for demo - no certificates provided
+            .setEnableRootDetection(false) // Disable for demo to avoid issues on development devices
+            .setEnableAntiTampering(false) // Disable for demo to avoid issues on development devices
             .build()
     }
     
@@ -139,6 +140,8 @@ class MainActivity : ComponentActivity() {
 fun SampleAppContent() {
     var lastResult by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val activity = context as ComponentActivity
     
     Column(
         modifier = Modifier
@@ -171,10 +174,42 @@ fun SampleAppContent() {
         Button(
             onClick = {
                 isLoading = true
-                launchCompleteVerificationFlow { result ->
-                    lastResult = result
-                    isLoading = false
-                }
+                // Launch verification flow from the activity context
+                ArtiusIDSDK.startVerificationFlow(
+                    activity = activity,
+                    callback = object : VerificationCallback {
+                        override fun onVerificationComplete(result: VerificationResult) {
+                            lastResult = "✅ Verification Success!\n" +
+                                    "Confidence: ${result.confidence}\n" +
+                                    "Face Match: ${result.faceMatch}\n" +
+                                    "Document Valid: ${result.documentValid}\n" +
+                                    "Completed: ${formatTimestamp(result.timestamp)}"
+                            isLoading = false
+                        }
+                        
+                        override fun onVerificationError(error: SDKError) {
+                            lastResult = "❌ Verification Failed\n" +
+                                    "Error: ${error.message}\n" +
+                                    "Code: ${error.code}\n" +
+                                    "Time: ${formatTimestamp(System.currentTimeMillis())}"
+                            isLoading = false
+                        }
+                        
+                        override fun onVerificationCancelled() {
+                            lastResult = "🚫 Verification Cancelled\n" +
+                                    "User cancelled the verification process\n" +
+                                    "Time: ${formatTimestamp(System.currentTimeMillis())}"
+                            isLoading = false
+                        }
+                        
+                        override fun onVerificationBackled() {
+                            lastResult = "🚫 Verification Back Pressed\n" +
+                                    "User pressed back during verification\n" +
+                                    "Time: ${formatTimestamp(System.currentTimeMillis())}"
+                            isLoading = false
+                        }
+                    }
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -204,10 +239,41 @@ fun SampleAppContent() {
         Button(
             onClick = {
                 isLoading = true
-                launchCompleteAuthenticationFlow { result ->
-                    lastResult = result
-                    isLoading = false
-                }
+                // Launch authentication flow from the activity context
+                ArtiusIDSDK.startAuthenticationFlow(
+                    activity = activity,
+                    callback = object : AuthenticationCallback {
+                        override fun onAuthenticationComplete(result: AuthenticationResult) {
+                            lastResult = "✅ Authentication Success!\n" +
+                                    "Token: ${result.token?.take(20)}...\n" +
+                                    "User ID: ${result.userId}\n" +
+                                    "Completed: ${formatTimestamp(result.timestamp)}"
+                            isLoading = false
+                        }
+                        
+                        override fun onAuthenticationError(error: SDKError) {
+                            lastResult = "❌ Authentication Failed\n" +
+                                    "Error: ${error.message}\n" +
+                                    "Code: ${error.code}\n" +
+                                    "Time: ${formatTimestamp(System.currentTimeMillis())}"
+                            isLoading = false
+                        }
+                        
+                        override fun onAuthenticationCancelled() {
+                            lastResult = "🚫 Authentication Cancelled\n" +
+                                    "User cancelled the authentication process\n" +
+                                    "Time: ${formatTimestamp(System.currentTimeMillis())}"
+                            isLoading = false
+                        }
+                        
+                        override fun onAuthenticationBackled() {
+                            lastResult = "🚫 Authentication Back Pressed\n" +
+                                    "User pressed back during authentication\n" +
+                                    "Time: ${formatTimestamp(System.currentTimeMillis())}"
+                            isLoading = false
+                        }
+                    }
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -292,90 +358,7 @@ fun SampleAppContent() {
     }
 }
 
-/**
- * Launch COMPLETE verification flow - SDK handles everything
- * Host app just calls this and receives result
- */
-fun launchCompleteVerificationFlow(onResult: (String) -> Unit) {
-    android.util.Log.d("SampleApp", "🚀 Launching COMPLETE verification flow...")
-    android.util.Log.d("SampleApp", "📱 SDK will show complete standalone app UI/UX")
-    
-    // Get current activity context
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val activity = context as ComponentActivity
-    
-    // Launch complete verification flow - SDK handles EVERYTHING
-    ArtiusIDSDK.startVerificationFlow(
-        activity = activity,
-        callback = object : VerificationCallback {
-            override fun onVerificationComplete(result: VerificationResult) {
-                android.util.Log.d("SampleApp", "✅ Verification completed successfully!")
-                onResult("✅ Verification Success!\n" +
-                        "Confidence: ${result.confidence}\n" +
-                        "Face Match: ${result.faceMatch}\n" +
-                        "Document Valid: ${result.documentValid}\n" +
-                        "Completed: ${formatTimestamp(result.timestamp)}")
-            }
-            
-            override fun onVerificationError(error: SDKError) {
-                android.util.Log.e("SampleApp", "❌ Verification failed: ${error.message}")
-                onResult("❌ Verification Failed\n" +
-                        "Error: ${error.message}\n" +
-                        "Code: ${error.code}\n" +
-                        "Time: ${formatTimestamp(System.currentTimeMillis())}")
-            }
-            
-            override fun onVerificationCancelled() {
-                android.util.Log.d("SampleApp", "🚫 Verification cancelled by user")
-                onResult("🚫 Verification Cancelled\n" +
-                        "User cancelled the verification process\n" +
-                        "Time: ${formatTimestamp(System.currentTimeMillis())}")
-            }
-        }
-    )
-}
 
-/**
- * Launch COMPLETE authentication flow - SDK handles everything
- * Host app just calls this and receives result
- */
-fun launchCompleteAuthenticationFlow(onResult: (String) -> Unit) {
-    android.util.Log.d("SampleApp", "🚀 Launching COMPLETE authentication flow...")
-    android.util.Log.d("SampleApp", "🔐 SDK will show complete standalone app UI/UX")
-    
-    // Get current activity context
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val activity = context as ComponentActivity
-    
-    // Launch complete authentication flow - SDK handles EVERYTHING
-    ArtiusIDSDK.startAuthenticationFlow(
-        activity = activity,
-        callback = object : AuthenticationCallback {
-            override fun onAuthenticationComplete(result: AuthenticationResult) {
-                android.util.Log.d("SampleApp", "✅ Authentication completed successfully!")
-                onResult("✅ Authentication Success!\n" +
-                        "Token: ${result.token?.take(20)}...\n" +
-                        "User ID: ${result.userId}\n" +
-                        "Completed: ${formatTimestamp(result.timestamp)}")
-            }
-            
-            override fun onAuthenticationError(error: SDKError) {
-                android.util.Log.e("SampleApp", "❌ Authentication failed: ${error.message}")
-                onResult("❌ Authentication Failed\n" +
-                        "Error: ${error.message}\n" +
-                        "Code: ${error.code}\n" +
-                        "Time: ${formatTimestamp(System.currentTimeMillis())}")
-            }
-            
-            override fun onAuthenticationCancelled() {
-                android.util.Log.d("SampleApp", "🚫 Authentication cancelled by user")
-                onResult("🚫 Authentication Cancelled\n" +
-                        "User cancelled the authentication process\n" +
-                        "Time: ${formatTimestamp(System.currentTimeMillis())}")
-            }
-        }
-    )
-}
 
 /**
  * Helper function to format timestamps
