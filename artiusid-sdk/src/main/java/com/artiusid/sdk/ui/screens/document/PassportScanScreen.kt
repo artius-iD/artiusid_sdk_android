@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.artiusid.sdk.R
+// Using fully qualified name to avoid conflicts
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,13 +41,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.artiusid.sdk.ui.components.CustomBackButton
 import com.artiusid.sdk.ui.components.CustomInfoButton
 import com.artiusid.sdk.ui.theme.*
-import com.artiusid.sdk.ui.utils.getRelativeWidthDp
-import com.artiusid.sdk.ui.utils.getRelativeHeightDp
 import com.artiusid.sdk.models.PassportScanningState
 import com.artiusid.sdk.models.PassportMRZData
+import com.artiusid.sdk.utils.passport.PassportTextAnalyzer
 
 /**
  * PassportScanScreen - EXACT STANDALONE APPLICATION IMPLEMENTATION
@@ -67,8 +66,8 @@ fun PassportScanScreen(
     val recognizedText by viewModel.recognizedText.collectAsState()
     
     // Handle success navigation with delay (like iOS) - EXACT STANDALONE IMPLEMENTATION
-    LaunchedEffect(uiState.scanningState) {
-        if (uiState.scanningState == PassportScanningState.COMPLETED) {
+    LaunchedEffect(uiState.isComplete) {
+        if (uiState.isComplete) {
             kotlinx.coroutines.delay(2000) // Show success for 2 seconds
             onPassportScanComplete()
         }
@@ -103,57 +102,15 @@ fun PassportScanScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // Custom back button - EXACT STANDALONE IMPLEMENTATION
-        CustomBackButton(
-            onBackClick = onNavigateBack,
-            navTitle = "Passport Scan"
-        )
-        
         if (hasCameraPermission) {
             // Camera preview with MRZ analysis - EXACT STANDALONE IMPLEMENTATION
-            AndroidView(
-                factory = { ctx ->
-                    PreviewView(ctx).apply {
-                        this.scaleType = PreviewView.ScaleType.FILL_CENTER
-                    }
-                },
+            CameraPreview(
                 modifier = Modifier.fillMaxSize(),
-                update = { previewView ->
-                    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
-                        val preview = Preview.Builder().build()
-                        
-                        // Create image analyzer for MRZ detection
-                        val imageAnalyzer = ImageAnalysis.Builder()
-                            .setTargetResolution(Size(1280, 720))
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                            .build()
-                        
-                        // Set analyzer for MRZ detection
-                        imageAnalyzer.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
-                            // TODO: Implement MRZ detection logic here
-                            // This would use ML Kit or similar for text recognition
-                            imageProxy.close()
-                        }
-                        
-                        val cameraSelector = CameraSelector.Builder()
-                            .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                            .build()
-                        
-                        try {
-                            cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                cameraSelector,
-                                preview,
-                                imageAnalyzer
-                            )
-                            preview.setSurfaceProvider(previewView.surfaceProvider)
-                        } catch (e: Exception) {
-                            Log.e("PassportScanScreen", "Camera binding failed", e)
-                        }
-                    }, ContextCompat.getMainExecutor(context))
+                onMRZDetected = { mrzData, bitmap ->
+                    viewModel.onMRZDetected(mrzData, bitmap)
+                },
+                onTextRecognized = { textLines ->
+                    viewModel.onTextRecognized(textLines)
                 }
             )
             
@@ -167,7 +124,7 @@ fun PassportScanScreen(
                     painter = painterResource(id = R.drawable.passport_overlay),
                     contentDescription = "Passport overlay",
                     modifier = Modifier
-                        .size(width = getRelativeWidthDp(351f), height = getRelativeHeightDp(510f))
+                        .size(width = getRelativeWidth(351f).dp, height = getRelativeHeight(510f).dp)
                         .alpha(0.4f),
                     contentScale = ContentScale.Fit
                 )
@@ -178,7 +135,7 @@ fun PassportScanScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        start = getRelativeWidthDp(48f)
+                        start = getRelativeWidth(48f).dp
                     )
             ) {
                 val statusText = when (uiState.scanningState) {
@@ -188,6 +145,11 @@ fun PassportScanScreen(
                     PassportScanningState.VALIDATING -> "VALIDATING MRZ DATA..."
                     PassportScanningState.COMPLETED -> "✓ PASSPORT SCAN COMPLETE"
                     PassportScanningState.FAILED -> "SCAN FAILED - TRY AGAIN"
+                    PassportScanningState.IDLE -> "POSITION PASSPORT IN FRAME"
+                    PassportScanningState.PROCESSING_MRZ -> "PROCESSING MRZ DATA..."
+                    PassportScanningState.MRZ_COMPLETE -> "MRZ PROCESSING COMPLETE"
+                    PassportScanningState.READY_FOR_NFC -> "READY FOR NFC SCAN"
+                    PassportScanningState.ERROR -> "ERROR - PLEASE TRY AGAIN"
                 }
                 
                 CustomInfoButton(
@@ -196,12 +158,12 @@ fun PassportScanScreen(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .rotate(90f)
-                        .width(getRelativeWidthDp(140f))
+                        .width(getRelativeWidth(140f).dp)
                 )
             }
             
             // Success overlay (similar to DocumentScanScreen) - EXACT STANDALONE IMPLEMENTATION
-            if (uiState.scanningState == PassportScanningState.COMPLETED) {
+            if (uiState.isComplete) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -245,80 +207,177 @@ fun PassportScanScreen(
                 }
             }
             
-            // Error overlay - EXACT STANDALONE IMPLEMENTATION
-            if (uiState.scanningState == PassportScanningState.FAILED) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Red.copy(alpha = 0.3f))
-                ) {
-                    Card(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(32.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.Red.copy(alpha = 0.9f)
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "⚠",
-                                color = Color.White,
-                                fontSize = 48.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Passport scan failed",
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Please try again",
-                                color = Color.White.copy(alpha = 0.9f),
-                                fontSize = 14.sp,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-            }
-            
-        } else {
-            // Camera permission not granted - EXACT STANDALONE IMPLEMENTATION
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            // Back button - EXACT STANDALONE IMPLEMENTATION
+            IconButton(
+                onClick = onNavigateBack,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(24.dp)
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Camera permission required",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+        } else {
+            // Permission request - EXACT STANDALONE IMPLEMENTATION
+            PermissionRequest(
+                onRequestPermission = {
+                    launcher.launch(Manifest.permission.CAMERA)
+                }
+            )
+        }
+    }
+}
+
+/**
+ * CameraPreview - EXACT STANDALONE APPLICATION IMPLEMENTATION
+ * This handles the camera preview and MRZ detection
+ */
+@Composable
+private fun CameraPreview(
+    modifier: Modifier = Modifier,
+    onMRZDetected: (com.artiusid.sdk.data.models.passport.PassportMRZData, android.graphics.Bitmap) -> Unit,
+    onTextRecognized: (List<String>) -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    
+    var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+    var textAnalyzer by remember { mutableStateOf<PassportTextAnalyzer?>(null) }
+    
+    // Initialize text analyzer - EXACT STANDALONE IMPLEMENTATION
+    LaunchedEffect(Unit) {
+        Log.d("PassportScan", "Initializing PassportTextAnalyzer")
+        textAnalyzer = PassportTextAnalyzer(
+            onMRZDetected = onMRZDetected,
+            onTextRecognized = onTextRecognized,
+            onPassportCaptured = { bitmap ->
+                Log.d("PassportScan", "📸 Passport captured: ${bitmap.width}x${bitmap.height}")
+                // TODO: Store or process captured passport image
+            }
+        )
+        Log.d("PassportScan", "PassportTextAnalyzer initialized")
+    }
+    
+    // Cleanup analyzer on dispose - EXACT STANDALONE IMPLEMENTATION
+    DisposableEffect(Unit) {
+        onDispose {
+            textAnalyzer?.cleanup()
+        }
+    }
+    
+    LaunchedEffect(Unit) {
+        val provider = ProcessCameraProvider.getInstance(context).get()
+        cameraProvider = provider
+    }
+    
+    val previewView = remember { 
+        PreviewView(context).apply {
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+        }
+    }
+
+    // Bind camera only once when components are ready - EXACT STANDALONE IMPLEMENTATION
+    LaunchedEffect(cameraProvider, textAnalyzer) {
+        cameraProvider?.let { provider ->
+            textAnalyzer?.let { analyzer ->
+                try {
+                    val preview = Preview.Builder()
+                        .setTargetResolution(Size(1920, 1080)) // High resolution 16:9 to match preview
+                        .build()
+                    preview.setSurfaceProvider(previewView.surfaceProvider)
+                    
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setTargetResolution(Size(1920, 1080)) // High resolution 16:9 for better OCR/MRZ
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                    
+                    imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(context), analyzer)
+                    
+                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                    
+                    provider.unbindAll()
+                    provider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        imageAnalysis
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = { launcher.launch(Manifest.permission.CAMERA) },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFF6B35)
-                        )
-                    ) {
-                        Text("Grant Permission")
-                    }
+                    
+                    Log.d("PassportScan", "Camera bound successfully")
+                } catch (e: Exception) {
+                    Log.e("PassportScan", "Camera binding error: ${e.message}", e)
                 }
             }
         }
     }
+
+    AndroidView(
+        factory = { previewView },
+        modifier = modifier
+    )
+}
+
+/**
+ * PermissionRequest - EXACT STANDALONE APPLICATION IMPLEMENTATION
+ */
+@Composable
+private fun PermissionRequest(
+    onRequestPermission: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Camera Permission Required",
+            color = Color.White,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = "This app needs camera access to scan your passport",
+            color = Color.White.copy(alpha = 0.8f),
+            fontSize = 16.sp,
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Button(
+            onClick = onRequestPermission,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFF58220) // Yellow900
+            )
+        ) {
+            Text("Grant Permission")
+        }
+    }
+}
+
+/**
+ * Helper functions to match iOS relative dimensions - EXACT STANDALONE IMPLEMENTATION
+ */
+@Composable
+fun getRelativeWidth(value: Float): Float {
+    val context = LocalContext.current
+    val displayMetrics = context.resources.displayMetrics
+    return (displayMetrics.widthPixels * value) / 375.0f
+}
+
+@Composable  
+fun getRelativeHeight(value: Float): Float {
+    val context = LocalContext.current
+    val displayMetrics = context.resources.displayMetrics
+    return (displayMetrics.heightPixels * value) / 812.0f
 }
 

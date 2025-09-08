@@ -18,8 +18,8 @@ import com.artiusid.sdk.ui.screens.DocumentScanScreen
 import com.artiusid.sdk.ui.screens.DocumentScanBackIntroScreen
 import com.artiusid.sdk.ui.screens.PassportScanIntroScreen
 import com.artiusid.sdk.ui.screens.PassportScanScreen
-import com.artiusid.sdk.ui.screens.PassportChipIntroScreen
-import com.artiusid.sdk.ui.screens.PassportChipScanScreen
+import com.artiusid.sdk.ui.screens.document.PassportChipIntroScreen
+import com.artiusid.sdk.ui.screens.document.PassportChipScanScreen
 import com.artiusid.sdk.ui.screens.VerificationProcessingScreen
 import com.artiusid.sdk.ui.screens.VerificationResultsScreen
 import com.artiusid.sdk.ui.screens.VerificationFailureScreen
@@ -78,7 +78,7 @@ fun SDKNavigation(
             FaceScanScreen(
                 onFaceScanComplete = { livenessResult ->
                     VerificationDataHolder.setLivenessResult(livenessResult)
-                    ImageStorage.setFaceImage(livenessResult.faceImage)
+                    ImageStorage.setFaceImage(livenessResult.faceBitmap)
                     navController.navigate(SDKScreen.SelectDocumentType.route)
                 },
                 onBack = {
@@ -187,13 +187,10 @@ fun SDKNavigation(
 
         composable(SDKScreen.PassportChipIntro.route) {
             PassportChipIntroScreen(
-                onContinue = {
+                onNavigateToPassportChip = {
                     navController.navigate(SDKScreen.PassportChipScan.route)
                 },
-                onSkip = {
-                    navController.navigate(SDKScreen.VerificationProcessing.route)
-                },
-                onBack = {
+                onNavigateBack = {
                     navController.popBackStack()
                 }
             )
@@ -201,15 +198,26 @@ fun SDKNavigation(
 
         composable(SDKScreen.PassportChipScan.route) {
             PassportChipScanScreen(
-                onNfcComplete = { nfcResult ->
-                    VerificationDataHolder.setNfcPassportResult(nfcResult)
+                onChipScanComplete = { nfcResult ->
+                    if (nfcResult != null) {
+                        // Convert models.PassportNFCData to data.models.passport.PassportNFCData
+                        // nfcResult is already the correct type, no conversion needed
+                        val convertedNfcData = nfcResult
+                        
+                        val nfcPassportResult = NFCPassportResult(
+                            nfcData = convertedNfcData,
+                            success = nfcResult.isValid,
+                            isAuthenticated = nfcResult.isAuthenticated,
+                            expiresAt = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L), // 1 year from now
+                            processingTime = nfcResult.processingTimeMs,
+                            sessionId = "nfc_session_${System.currentTimeMillis()}"
+                        )
+                        VerificationDataHolder.setNfcPassportResult(nfcPassportResult)
+                    }
                     navController.navigate(SDKScreen.VerificationProcessing.route)
                 },
-                onBack = {
+                onNavigateBack = {
                     navController.popBackStack()
-                },
-                onError = { errorMessage ->
-                    ArtiusIDSDK.verificationCallback?.onVerificationError(SDKError(SDKErrorCode.NFC_FAILED, errorMessage))
                 }
             )
         }

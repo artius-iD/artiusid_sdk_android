@@ -3,81 +3,39 @@ package com.artiusid.sdk.managers
 import android.util.Log
 
 /**
- * Analytics Manager for SDK usage tracking
- * 
- * Tracks SDK usage patterns and performance metrics
- * while respecting user privacy and host app preferences.
+ * Analytics manager for tracking SDK events - EXACT STANDALONE MATCH
  */
 object AnalyticsManager {
-    
     private const val TAG = "AnalyticsManager"
-    private var isEnabled = true
     
-    /**
-     * Initialize analytics with configuration
-     */
-    fun initialize(enabled: Boolean = true) {
-        isEnabled = enabled
-        Log.d(TAG, "Analytics initialized - enabled: $enabled")
+    fun trackEvent(eventName: String, parameters: Map<String, Any> = emptyMap()) {
+        Log.d(TAG, "Event: $eventName, Parameters: $parameters")
+        // Implementation would integrate with analytics service
     }
     
-    /**
-     * Track verification flow started
-     */
+    fun trackError(error: Throwable, context: String = "") {
+        Log.e(TAG, "Error in $context", error)
+        // Implementation would report to crash analytics
+    }
+    
+    fun setUserId(userId: String) {
+        Log.d(TAG, "User ID set: $userId")
+        // Implementation would set user context
+    }
+    
     fun trackVerificationStarted() {
-        if (!isEnabled) return
-        
-        Log.d(TAG, "📊 Verification flow started")
-        // In production, send to analytics service
+        trackEvent("verification_started")
     }
     
-    /**
-     * Track verification flow completed
-     */
-    fun trackVerificationCompleted(success: Boolean, confidence: Float) {
-        if (!isEnabled) return
-        
-        Log.d(TAG, "📊 Verification completed - success: $success, confidence: $confidence")
-        // In production, send to analytics service
-    }
-    
-    /**
-     * Track authentication flow started
-     */
     fun trackAuthenticationStarted() {
-        if (!isEnabled) return
-        
-        Log.d(TAG, "📊 Authentication flow started")
-        // In production, send to analytics service
+        trackEvent("authentication_started")
     }
     
-    /**
-     * Track authentication flow completed
-     */
+    fun trackVerificationCompleted(success: Boolean) {
+        trackEvent("verification_completed", mapOf("success" to success))
+    }
+    
     fun trackAuthenticationCompleted(success: Boolean) {
-        if (!isEnabled) return
-        
-        Log.d(TAG, "📊 Authentication completed - success: $success")
-        // In production, send to analytics service
-    }
-    
-    /**
-     * Track SDK error
-     */
-    fun trackError(errorCode: String, errorMessage: String) {
-        if (!isEnabled) return
-        
-        Log.d(TAG, "📊 SDK error - code: $errorCode, message: $errorMessage")
-        // In production, send to analytics service
-    }
-    
-    /**
-     * Track performance metric
-     */
-    fun trackPerformance(operation: String, durationMs: Long) {
-        if (!isEnabled) return
-        
-        Log.d(TAG, "📊 Performance - $operation: ${durationMs}ms")
-        // In production, send to analytics service
+        trackEvent("authentication_completed", mapOf("success" to success))
     }
 }

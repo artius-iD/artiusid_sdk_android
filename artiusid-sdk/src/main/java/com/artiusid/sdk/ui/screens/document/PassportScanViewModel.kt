@@ -6,11 +6,11 @@ import android.graphics.Bitmap
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artiusid.sdk.models.PassportMRZData
+import com.artiusid.sdk.data.models.passport.PassportMRZData
 import com.artiusid.sdk.models.PassportScanningState
 import com.artiusid.sdk.models.PassportData
 import com.artiusid.sdk.models.ScannedPassportImage
-import com.artiusid.sdk.models.PassportScanUiState
+// import com.artiusid.sdk.models.PassportScanUiState // Using local version instead
 import com.artiusid.sdk.models.PassportNFCData
 import com.artiusid.sdk.utils.passport.MRZParser
 import com.artiusid.sdk.utils.ImageStorage
@@ -70,7 +70,7 @@ class PassportScanViewModel constructor() : ViewModel() {
                 _uiState.value = _uiState.value.copy(
                     isScanning = false,
                     scanningState = PassportScanningState.VALIDATING,
-                    mrzDetected = true
+                    detectedMRZ = mrzData
                 )
                 
                 // **ENHANCED VALIDATION** - More permissive for better user experience
@@ -127,7 +127,9 @@ class PassportScanViewModel constructor() : ViewModel() {
                     _uiState.value = _uiState.value.copy(
                         scanningState = PassportScanningState.COMPLETED,
                         isScanning = false,
-                        mrzDetected = true
+                        isComplete = true,
+                        detectedMRZ = mrzData,
+                        successMessage = "Passport scanned successfully!"
                     )
                     
                     // TODO: Add sound feedback like iOS (AudioServicesPlaySystemSound(1108))
@@ -206,7 +208,7 @@ class PassportScanViewModel constructor() : ViewModel() {
                     "DATE_OF_BIRTH" to (mrzData.dateOfBirth ?: ""),
                     "NATIONALITY" to (mrzData.nationality ?: ""),
                     "EXPIRY_DATE" to (mrzData.dateOfExpiry ?: ""),
-                    "GENDER" to (mrzData.gender ?: "")
+                    "GENDER" to (mrzData.sex ?: "")
                 )
                 
                 // Convert NFC data to comparable format
@@ -232,7 +234,7 @@ class PassportScanViewModel constructor() : ViewModel() {
                     _uiState.value = _uiState.value.copy(
                         scanningState = PassportScanningState.COMPLETED,
                         isScanning = false,
-                        mrzDetected = true
+                        detectedMRZ = mrzData
                     )
                     
                     Log.i(TAG, "Passport verification PASSED - OCR/NFC match above 70% threshold")
@@ -417,7 +419,7 @@ data class PassportScanUiState(
     val isScanning: Boolean = false,
     val scanningState: PassportScanningState = PassportScanningState.NOT_STARTED,
     val potentialMRZLines: List<String> = emptyList(),
-    val detectedMRZ: PassportMRZData? = null,
+    val detectedMRZ: com.artiusid.sdk.data.models.passport.PassportMRZData? = null,
     val isComplete: Boolean = false,
     val errorMessage: String? = null,
     val successMessage: String? = null

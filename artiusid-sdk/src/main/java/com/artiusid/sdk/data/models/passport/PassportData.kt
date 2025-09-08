@@ -1,7 +1,5 @@
 package com.artiusid.sdk.data.models.passport
 
-import com.artiusid.sdk.models.*
-
 /**
  * Main passport data container combining all passport information
  * Android equivalent of iOS Passport class
@@ -42,7 +40,7 @@ data class PassportData(
      */
     fun isNFCReadingComplete(): Boolean {
         return passportRFIDData != null && 
-               passportRFIDData.isAuthenticated() &&
+               passportRFIDData.isAuthenticated &&
                nfcReadingState == PassportNFCReadingState.COMPLETED
     }
     
@@ -57,7 +55,7 @@ data class PassportData(
      * Get MRZ key for NFC authentication
      */
     fun getMRZKeyForNFC(): String? {
-        return passportMRZData?.generateMRZKey()
+        return passportMRZData?.let { "${it.passportNumber}_${it.dateOfBirth}_${it.expirationDate}" }
     }
     
     /**
@@ -73,7 +71,7 @@ data class PassportData(
     fun isReadyForVerification(): Boolean {
         return isComplete() && 
                passportScan?.meetsQualityRequirements() == true &&
-               passportRFIDData?.hasEssentialData() == true
+               passportRFIDData?.hasEssentialData == true
     }
     
     /**
@@ -88,13 +86,13 @@ data class PassportData(
             passportMRZData?.let { mrz ->
                 append("MRZ Valid: ${mrz.isValid}\n")
                 append("Passport #: ${mrz.passportNumber}\n")
-                append("Name: ${mrz.getFullName()}\n")
+                append("Name: ${mrz.fullName}\n")
             }
             
             passportRFIDData?.let { nfc ->
-                append("NFC Auth: ${nfc.isAuthenticated()}\n")
+                append("NFC Auth: ${nfc.isAuthenticated}\n")
                 append("Face Image: ${nfc.faceImage != null}\n")
-                append(nfc.getProcessingSummary())
+                append(nfc.processingTimeMs)
             }
             
             if (processingErrors.isNotEmpty()) {
@@ -119,13 +117,15 @@ data class PassportData(
         
         // Add NFC data
         passportRFIDData?.let { nfcData ->
-            baseData.putAll(nfcData.toVerificationData())
+            // Add NFC verification data
+            baseData["nfcAuthenticated"] = nfcData.isAuthenticated
+            baseData["nfcProcessingTime"] = nfcData.processingTimeMs
         }
         
         // Add MRZ data
         passportMRZData?.let { mrzData ->
-            baseData["mrzLine1"] = mrzData.line1
-            baseData["mrzLine2"] = mrzData.line2
+            baseData["mrzLine1"] = mrzData.mrzLine1 ?: ""
+            baseData["mrzLine2"] = mrzData.mrzLine2 ?: ""
             baseData["mrzValid"] = mrzData.isValid
         }
         

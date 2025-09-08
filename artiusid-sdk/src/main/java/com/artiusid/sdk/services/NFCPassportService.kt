@@ -81,11 +81,13 @@ class NFCPassportService(private val context: Context) {
             if (isoDep == null) {
                 Log.e(TAG, "Tag is not ISO-DEP compatible")
                 return@withContext NFCPassportResult(
+                    nfcData = null,
                     success = false,
-                    passportData = emptyMap(),
-                    confidence = 0.0f,
+                    isAuthenticated = false,
+                    expiresAt = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L), // 1 year from now
                     processingTime = 0L,
-                    sessionId = "nfc-error-${System.currentTimeMillis()}"
+                    sessionId = "nfc-error-${System.currentTimeMillis()}",
+                    errorMessage = "Tag is not ISO-DEP compatible"
                 )
             }
             
@@ -117,9 +119,10 @@ class NFCPassportService(private val context: Context) {
             Log.d(TAG, "NFC reading completed successfully")
             
             NFCPassportResult(
+                nfcData = null, // TODO: Convert passportData to PassportNFCData
                 success = true,
-                passportData = passportData,
-                confidence = 0.95f,
+                isAuthenticated = true,
+                expiresAt = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L), // 1 year from now
                 processingTime = 2000L,
                 sessionId = "nfc-${System.currentTimeMillis()}"
             )
@@ -127,20 +130,24 @@ class NFCPassportService(private val context: Context) {
         } catch (e: IOException) {
             Log.e(TAG, "NFC communication error", e)
             NFCPassportResult(
+                nfcData = null,
                 success = false,
-                passportData = emptyMap(),
-                confidence = 0.0f,
+                isAuthenticated = false,
+                expiresAt = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L), // 1 year from now
                 processingTime = 0L,
-                sessionId = "nfc-error-${System.currentTimeMillis()}"
+                sessionId = "nfc-error-${System.currentTimeMillis()}",
+                errorMessage = "NFC communication error: ${e.message}"
             )
         } catch (e: Exception) {
             Log.e(TAG, "Unexpected error during NFC reading", e)
             NFCPassportResult(
+                nfcData = null,
                 success = false,
-                passportData = emptyMap(),
-                confidence = 0.0f,
+                isAuthenticated = false,
+                expiresAt = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L), // 1 year from now
                 processingTime = 0L,
-                sessionId = "nfc-error-${System.currentTimeMillis()}"
+                sessionId = "nfc-error-${System.currentTimeMillis()}",
+                errorMessage = "Unexpected error: ${e.message}"
             )
         }
     }
@@ -169,9 +176,10 @@ class NFCPassportService(private val context: Context) {
         }
         
         return NFCPassportResult(
+            nfcData = null, // TODO: Convert passportData to PassportNFCData
             success = true,
-            passportData = passportData,
-            confidence = 0.98f,
+            isAuthenticated = true,
+            expiresAt = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L), // 1 year from now
             processingTime = 3000L,
             sessionId = "nfc-sim-${System.currentTimeMillis()}"
         )

@@ -130,7 +130,7 @@ class EnhancedBarcodeService(private val context: Context) {
                         lastName = parsedData?.lastName ?: "",
                         middleName = parsedData?.firstName ?: "", // Using firstName as middleName fallback
                         dateOfBirth = parsedData?.dateOfBirth ?: "",
-                        gender = parsedData?.firstName ?: "", // Simplified mapping
+                        sex = parsedData?.firstName ?: "", // Simplified mapping
                         licenseNumber = parsedData?.licenseNumber ?: "",
                         address = parsedData?.address ?: "",
                         city = parsedData?.city ?: "",
@@ -138,7 +138,7 @@ class EnhancedBarcodeService(private val context: Context) {
                         zipCode = parsedData?.zipCode ?: "",
                         issueDate = parsedData?.issueDate ?: "",
                         expirationDate = parsedData?.expirationDate ?: "",
-                        rawData = rawValue
+                        rawData = mapOf("rawValue" to rawValue)
                     )
                 } else null
             )
@@ -188,7 +188,7 @@ class EnhancedBarcodeService(private val context: Context) {
                         lastName = parsedData?.lastName ?: "",
                         middleName = parsedData?.firstName ?: "", // Using firstName as middleName fallback
                         dateOfBirth = parsedData?.dateOfBirth ?: "",
-                        gender = parsedData?.firstName ?: "", // Simplified mapping
+                        sex = parsedData?.firstName ?: "", // Simplified mapping
                         licenseNumber = parsedData?.licenseNumber ?: "",
                         address = parsedData?.address ?: "",
                         city = parsedData?.city ?: "",
@@ -196,7 +196,7 @@ class EnhancedBarcodeService(private val context: Context) {
                         zipCode = parsedData?.zipCode ?: "",
                         issueDate = parsedData?.issueDate ?: "",
                         expirationDate = parsedData?.expirationDate ?: "",
-                        rawData = rawValue
+                        rawData = mapOf("rawValue" to rawValue)
                     )
                 } else null
             )

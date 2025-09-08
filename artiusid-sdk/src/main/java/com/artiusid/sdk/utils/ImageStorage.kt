@@ -184,12 +184,22 @@ object ImageStorage {
         )
     }
     
+    // Store MRZ data
+    private var passportMRZData: Any? = null
+    
     /**
      * Set passport MRZ data
      */
     fun setPassportMRZData(mrzData: Any?) {
-        // Store MRZ data - in full implementation would store structured data
+        passportMRZData = mrzData
         android.util.Log.d("ImageStorage", "Storing passport MRZ data: $mrzData")
+    }
+    
+    /**
+     * Get passport MRZ data
+     */
+    fun getPassportMRZData(): Any? {
+        return passportMRZData
     }
 
 

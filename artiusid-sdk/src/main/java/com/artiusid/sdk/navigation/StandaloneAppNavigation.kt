@@ -11,12 +11,12 @@ import com.artiusid.sdk.models.*
 import com.artiusid.sdk.utils.DocumentSide
 // Import the REAL screens from their specific packages - EXACT STANDALONE APP STRUCTURE
 import com.artiusid.sdk.ui.screens.face.FaceScanIntroScreen
-import com.artiusid.sdk.ui.screens.face.FaceScanScreen
+// import com.artiusid.sdk.ui.screens.face.FaceScanScreen // Temporarily disabled
 import com.artiusid.sdk.ui.screens.face.FaceVerificationScreen
 import com.artiusid.sdk.ui.screens.document.*
 import com.artiusid.sdk.ui.screens.verification.*
 import com.artiusid.sdk.ui.screens.authentication.*
-import com.artiusid.sdk.data.model.VerificationResultData
+import com.artiusid.sdk.data.models.VerificationResultData
 
 /**
  * Complete Standalone Application Navigation - EXACT MATCH
@@ -64,10 +64,11 @@ fun StandaloneAppNavigation(
     navController: NavHostController,
     flowType: String = "verification"
 ) {
+    // EXACT STANDALONE APP START DESTINATION
     val startDestination = if (flowType == "authentication") {
         StandaloneAppScreen.Authentication.route
     } else {
-        StandaloneAppScreen.VerificationSteps.route
+        StandaloneAppScreen.VerificationSteps.route // Start with VerificationSteps like standalone app
     }
 
     NavHost(
@@ -105,6 +106,8 @@ fun StandaloneAppNavigation(
             )
         }
 
+        // Temporarily disabled - FaceScanScreen compilation issues
+        /*
         composable(StandaloneAppScreen.FaceScan.route) {
             android.util.Log.d("StandaloneAppNavigation", "🎬 Loading FaceScanScreen - EXACT standalone app implementation")
             FaceScanScreen(
@@ -118,6 +121,7 @@ fun StandaloneAppNavigation(
                 }
             )
         }
+        */
 
         // ============ DOCUMENT SELECTION AND SCANNING - EXACT STANDALONE ============
         
@@ -275,24 +279,25 @@ fun StandaloneAppNavigation(
                     // Create complete verification result with all data - EXACT STANDALONE BEHAVIOR
                     val verificationResult = com.artiusid.sdk.models.VerificationResult(
                         success = true,
-                        confidence = 0.95f,
                         livenessResult = LivenessResult(
                             success = true,
+                            isLive = true,
+                            faceBitmap = null,
                             confidence = 0.92f,
                             livenessScore = 0.88f,
                             processingTime = 2500L,
                             sessionId = "face_${System.currentTimeMillis()}"
                         ),
-                        documentScanResult = DocumentScanResult(
+                        documentResult = DocumentScanResult(
                             success = true,
+                            frontImage = null,
+                            backImage = null,
                             documentType = "government_id",
                             confidence = 0.94f,
                             processingTime = 3200L,
                             sessionId = "doc_${System.currentTimeMillis()}"
                         ),
-                        nfcResult = null, // Only for passports
-                        processingTime = 5700L,
-                        sessionId = "verification_${System.currentTimeMillis()}"
+                        nfcResult = null // Only for passports
                     )
                     ArtiusIDSDK.verificationCallback?.onVerificationComplete(verificationResult)
                 },
@@ -351,6 +356,12 @@ fun StandaloneAppNavigation(
                                 popUpTo(StandaloneAppScreen.VerificationFailure.route) { inclusive = true }
                             }
                         }
+                        else -> {
+                            // Default: go back to document selection
+                            navController.navigate(StandaloneAppScreen.SelectDocumentType.route) {
+                                popUpTo(StandaloneAppScreen.VerificationFailure.route) { inclusive = true }
+                            }
+                        }
                     }
                 },
                 onBackToHomeClick = {
@@ -358,7 +369,7 @@ fun StandaloneAppNavigation(
                     // ImageStorage.clearAll()
                     // VerificationDataHolder.clearVerificationData()
                     ArtiusIDSDK.verificationCallback?.onVerificationError(
-                        SDKError(SDKErrorCode.PROCESSING_FAILED, "Verification failed")
+                        SDKError(SDKErrorCode.VERIFICATION_FAILED, "Verification failed")
                     )
                 }
             )
@@ -382,10 +393,8 @@ fun StandaloneAppNavigation(
                 onNavigateToHome = {
                     // Create complete authentication result - EXACT STANDALONE BEHAVIOR
                     val authResult = AuthenticationResult(
-                        success = true,
+                        isAuthenticated = true,
                         token = "auth_token_${System.currentTimeMillis()}",
-                        expiresAt = System.currentTimeMillis() + 3600000L, // 1 hour
-                        sessionId = "auth_${System.currentTimeMillis()}",
                         userId = "user_${System.currentTimeMillis()}"
                     )
                     ArtiusIDSDK.authenticationCallback?.onAuthenticationComplete(authResult)

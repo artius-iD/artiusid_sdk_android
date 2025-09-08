@@ -9,8 +9,6 @@
 
 package com.artiusid.sdk.utils
 
-import com.artiusid.sdk.utils.*
-
 import android.graphics.*
 import android.util.Log
 import com.google.mlkit.vision.barcode.BarcodeScanner

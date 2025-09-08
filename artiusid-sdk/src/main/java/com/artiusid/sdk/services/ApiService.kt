@@ -1,9 +1,9 @@
 package com.artiusid.sdk.services
 
-import com.artiusid.sdk.models.VerificationRequest
-import com.artiusid.sdk.models.VerificationResponse
-import com.artiusid.sdk.models.ApprovalRequestTestingRequest
-import com.artiusid.sdk.models.ApprovalResponse
+import com.artiusid.sdk.data.models.VerificationRequest
+import com.artiusid.sdk.data.models.VerificationResponse
+import com.artiusid.sdk.data.models.ApprovalRequestTestingRequest
+import com.artiusid.sdk.data.models.ApprovalResponse
 
 /**
  * API service interface for verification requests

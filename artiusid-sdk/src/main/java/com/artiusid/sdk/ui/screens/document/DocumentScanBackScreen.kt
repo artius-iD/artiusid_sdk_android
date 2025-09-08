@@ -34,7 +34,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.artiusid.sdk.ui.theme.*
 import com.artiusid.sdk.utils.DocumentSide
-import com.artiusid.sdk.ui.screens.document.DocumentCameraPreview
+// DocumentCameraPreview should be available in the same package
 
 @Composable
 fun DocumentScanBackScreen(
@@ -80,7 +80,7 @@ fun DocumentScanBackScreen(
     ) {
         if (hasCameraPermission) {
             // Use our DocumentCameraPreview with barcode detection pipeline
-            DocumentCameraPreview(
+            com.artiusid.sdk.ui.screens.document.DocumentCameraPreview(
                 modifier = Modifier.fillMaxSize(),
                 viewModel = viewModel
             )

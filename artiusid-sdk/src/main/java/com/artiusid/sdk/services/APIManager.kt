@@ -6,8 +6,8 @@ package com.artiusid.sdk.services
 
 import android.content.Context
 import android.util.Log
-import com.artiusid.sdk.models.LoadCertificateRequest
-import com.artiusid.sdk.models.LoadCertificateResponse
+import com.artiusid.sdk.data.models.LoadCertificateRequest
+import com.artiusid.sdk.data.models.LoadCertificateResponse
 import com.artiusid.sdk.utils.CertificateManager
 import com.artiusid.sdk.utils.TLSSessionManager
 import kotlinx.coroutines.Dispatchers
@@ -37,11 +37,11 @@ class APIManager(private val context: Context) {
             Log.d(TAG, "No certificate PEM found, generating Keystore keypair and CSR...")
             val csr = certManager.generateCSR(deviceId)
             val response = loadCertificate(serviceUrl, LoadCertificateRequest(
+                clientId = deviceId.hashCode(), // Convert string to int
                 certificateType = "device",
-                environment = "production", 
-                clientId = deviceId
+                sessionId = "cert_session_${System.currentTimeMillis()}"
             ))
-            certManager.storeCertificatePem(response.certificate)
+            certManager.storeCertificatePem(response.certificate ?: "")
             Log.d(TAG, "Certificate registration and PEM storage complete")
         } else {
             Log.d(TAG, "Existing certificate PEM found")
@@ -70,8 +70,8 @@ class APIManager(private val context: Context) {
 
                 val jsonBody = JSONObject().apply {
                     put("certificateType", request.certificateType)
-                    put("environment", request.environment)
                     put("clientId", request.clientId)
+                    put("sessionId", request.sessionId)
                 }.toString()
                 val body = jsonBody.toRequestBody("application/json".toMediaTypeOrNull())
 

@@ -1,94 +1,97 @@
-package com.artiusid.sdk.utils
-
-import com.artiusid.sdk.utils.*
+package com.artiusid.data.repository
 
 import android.util.Log
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
- * Centralized logging manager for the SDK
+ * Matches iOS LogManager functionality
  */
 object LogManager {
+    private val logs = mutableListOf<LogEntry>()
+    private const val TAG = "LogManagerDebug"
+    private const val MAX_LOGS = 500
     
-    private const val TAG_PREFIX = "ArtiusSDK"
-    private var isDebugEnabled = true
-    
-    /**
-     * Enable or disable debug logging
-     */
-    fun setDebugEnabled(enabled: Boolean) {
-        isDebugEnabled = enabled
+    enum class LogLevel {
+        DEBUG, INFO, WARNING, ERROR
     }
     
-    /**
-     * Log debug message
-     */
-    fun d(tag: String, message: String) {
-        if (isDebugEnabled) {
-            Log.d("$TAG_PREFIX-$tag", message)
+    data class LogEntry(
+        val timestamp: String,
+        val level: LogLevel,
+        val source: String,
+        val message: String
+    ) {
+        override fun toString(): String {
+            return "[$timestamp] [${level.name}] [$source] $message"
         }
     }
     
-    /**
-     * Log info message
-     */
-    fun i(tag: String, message: String) {
-        Log.i("$TAG_PREFIX-$tag", message)
+    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+    
+    fun getLogs(): List<String> {
+        Log.d(TAG, "getLogs called, logs size: ${logs.size}")
+        return logs.map { it.toString() }
     }
     
-    /**
-     * Log warning message
-     */
-    fun w(tag: String, message: String) {
-        Log.w("$TAG_PREFIX-$tag", message)
+    fun addLog(message: String, level: LogLevel = LogLevel.INFO, source: String = "App") {
+        val timestamp = dateFormatter.format(Date())
+        val entry = LogEntry(timestamp, level, source, message)
+        
+        synchronized(logs) {
+            logs.add(entry)
+            if (logs.size > MAX_LOGS) {
+                logs.removeAt(0)
+            }
+        }
+        
+        Log.d(TAG, "addLog: $entry")
     }
     
-    /**
-     * Log error message
-     */
-    fun e(tag: String, message: String, throwable: Throwable? = null) {
-        if (throwable != null) {
-            Log.e("$TAG_PREFIX-$tag", message, throwable)
+    fun clearLogs() {
+        synchronized(logs) {
+            logs.clear()
+        }
+        Log.d(TAG, "clearLogs called")
+    }
+    
+    fun exportLogs(): String {
+        val header = """
+            ArtiusID Debug Logs
+            ===================
+            Export Time: ${dateFormatter.format(Date())}
+            Total Logs: ${logs.size}
+            
+            Device Info:
+            - Build: ${android.os.Build.MODEL} (${android.os.Build.DEVICE})
+            - Android: ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})
+            
+            Logs:
+            -----
+            
+        """.trimIndent()
+        
+        return if (logs.isNotEmpty()) {
+            header + logs.joinToString("\n") { it.toString() }
         } else {
-            Log.e("$TAG_PREFIX-$tag", message)
+            header + "No logs available."
         }
     }
     
-    /**
-     * Log verification event
-     */
-    fun logVerificationEvent(event: String, details: Map<String, Any> = emptyMap()) {
-        val message = buildString {
-            append("Verification Event: $event")
-            if (details.isNotEmpty()) {
-                append(" - Details: $details")
-            }
-        }
-        i("Verification", message)
+    // Convenience methods matching iOS usage
+    fun logDebug(message: String, source: String = "App") {
+        addLog(message, LogLevel.DEBUG, source)
     }
     
-    /**
-     * Log authentication event
-     */
-    fun logAuthenticationEvent(event: String, details: Map<String, Any> = emptyMap()) {
-        val message = buildString {
-            append("Authentication Event: $event")
-            if (details.isNotEmpty()) {
-                append(" - Details: $details")
-            }
-        }
-        i("Authentication", message)
+    fun logInfo(message: String, source: String = "App") {
+        addLog(message, LogLevel.INFO, source)
     }
     
-    /**
-     * Log performance metrics
-     */
-    fun logPerformance(operation: String, duration: Long, details: Map<String, Any> = emptyMap()) {
-        val message = buildString {
-            append("Performance: $operation took ${duration}ms")
-            if (details.isNotEmpty()) {
-                append(" - Details: $details")
-            }
-        }
-        i("Performance", message)
+    fun logWarning(message: String, source: String = "App") {
+        addLog(message, LogLevel.WARNING, source)
     }
-}
+    
+    fun logError(message: String, source: String = "App") {
+        addLog(message, LogLevel.ERROR, source)
+    }
+} 

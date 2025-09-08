@@ -19,7 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
+import com.artiusid.sdk.ui.components.CustomBackButton
 import coil.compose.AsyncImage
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import androidx.compose.ui.platform.LocalContext
 
 /**
  * FaceScanIntroScreen - EXACT STANDALONE APPLICATION IMPLEMENTATION
@@ -31,6 +35,16 @@ fun FaceScanIntroScreen(
     onNavigateToFaceScan: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    
+    // Configure Coil for GIF support - EXACT STANDALONE IMPLEMENTATION
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                add(GifDecoder.Factory())
+            }
+            .build()
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -60,6 +74,7 @@ fun FaceScanIntroScreen(
                 AsyncImage(
                     model = R.drawable.face_rotation_ios,
                     contentDescription = "Face Scan Animation",
+                    imageLoader = imageLoader,
                     modifier = Modifier.size(280.dp), // EXACT STANDALONE SIZE
                     contentScale = ContentScale.Fit
                 )

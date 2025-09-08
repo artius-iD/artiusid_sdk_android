@@ -29,6 +29,7 @@ class SDKMainActivity : ComponentActivity() {
         const val EXTRA_CONFIG = "config"
         const val FLOW_TYPE_VERIFICATION = "verification"
         const val FLOW_TYPE_AUTHENTICATION = "authentication"
+        const val FLOW_TYPE_COMPLETE_EMBEDDED_VERIFICATION = "complete_embedded_verification"
         
         private const val TAG = "SDKMainActivity"
     }
@@ -43,6 +44,9 @@ class SDKMainActivity : ComponentActivity() {
         
         android.util.Log.d(TAG, "Starting SDK with flow type: $flowType")
         
+        // Enable SDK's internal NFC handling
+        ArtiusIDSDK.enableNfcReading(this)
+        
         setContent {
             // Use the SDK's themeable system
             SDKThemeProvider.ArtiusSDKTheme {
@@ -53,7 +57,7 @@ class SDKMainActivity : ComponentActivity() {
                     // Use the complete navigation system from standalone app
                     val navController = rememberNavController()
                     
-                    StandaloneAppNavigation(
+                        StandaloneAppNavigation(
                         navController = navController,
                         flowType = flowType ?: "verification"
                     )
@@ -62,7 +66,17 @@ class SDKMainActivity : ComponentActivity() {
         }
     }
     
-
+    override fun onResume() {
+        super.onResume()
+        // Ensure NFC is enabled when SDK is active
+        ArtiusIDSDK.enableNfcReading(this)
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // Disable NFC when SDK goes to background
+        ArtiusIDSDK.disableNfcReading(this)
+    }
     
     override fun onBackPressed() {
         // Handle back press - return to host app with cancelled result

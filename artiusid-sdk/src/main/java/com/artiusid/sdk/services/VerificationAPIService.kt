@@ -54,7 +54,8 @@ class VerificationAPIService {
         
         livenessResult?.confidence?.let { scores.add(it) }
         documentResult?.confidence?.let { scores.add(it) }
-        nfcResult?.confidence?.let { scores.add(it) }
+        // NFCPassportResult doesn't have confidence, use isAuthenticated as indicator
+        if (nfcResult?.isAuthenticated == true) scores.add(0.95f)
         
         return if (scores.isNotEmpty()) {
             scores.average().toFloat()
@@ -91,7 +92,7 @@ class VerificationAPIService {
         if (nfcResult != null) {
             maxScore += 20f
             if (nfcResult.success) {
-                score += 20f * nfcResult.confidence
+                score += 20f * (if (nfcResult.isAuthenticated) 0.95f else 0.5f)
             }
         } else {
             // If no NFC, redistribute the 20% to document verification

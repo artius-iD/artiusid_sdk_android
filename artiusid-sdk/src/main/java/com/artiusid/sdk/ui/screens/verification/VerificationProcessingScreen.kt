@@ -1,6 +1,7 @@
 package com.artiusid.sdk.ui.screens.verification
 
 import com.artiusid.sdk.models.*
+import com.artiusid.sdk.models.DocumentRecaptureType
 
 import com.artiusid.sdk.ui.components.*
 

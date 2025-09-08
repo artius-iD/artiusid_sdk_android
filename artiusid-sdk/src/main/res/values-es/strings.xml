@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Author: Todd Bryant
+  Company: artius.iD
+  
+  Comprehensive Spanish string resources for ArtiusID Android application
+  Organized by feature/screen sections for maintainability
+-->
+<resources>
+    <!-- App Name -->
+    <string name="app_name">ArtiusID</string>
+    <string name="app_name_artius">Artius</string>
+    <string name="app_name_id">ID</string>
+    
+    <!-- Common/Generic Strings -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancelar</string>
+    <string name="retry">Reintentar</string>
+    <string name="back">Atrás</string>
+    <string name="next">Siguiente</string>
+    <string name="done">Hecho</string>
+    <string name="error">Error</string>
+    <string name="success">Éxito</string>
+    <string name="warning">Advertencia</string>
+    <string name="info">Información</string>
+    <string name="help">Ayuda</string>
+    <string name="settings">Configuración</string>
+    <string name="close">Cerrar</string>
+    <string name="menu">Menú</string>
+    <string name="loading">Cargando…</string>
+    <string name="processing">Procesando…</string>
+    <string name="please_wait">Por favor espere…</string>
+    
+    <!-- Button Labels -->
+    <string name="button_verify_now">Verificar Ahora</string>
+    <string name="button_authenticate">Autenticar</string>
+    <string name="button_approve">Aprobar</string>
+    <string name="button_deny">Denegar</string>
+    <string name="button_try_again">Intentar de Nuevo</string>
+    <string name="button_back_home">Volver al Inicio</string>
+    <string name="button_go_back">Regresar</string>
+    <string name="button_start_now">Comenzar Ahora</string>
+    <string name="button_continue">Continuar</string>
+    <string name="button_skip">Omitir</string>
+    
+    <!-- Home Screen -->
+    <string name="welcome_to">Bienvenido a</string>
+    <string name="home_intro_title_1">La mejor manera de asegurar</string>
+    <string name="home_intro_title_2">tu</string>
+    <string name="home_intro_title_3">verdadera</string>
+    <string name="home_intro_title_4">identidad</string>
+    <string name="auth_verification_required">Por favor verifique antes de autenticar</string>
+    <string name="auth_verification_completed">Verificación completada</string>
+    <string name="auth_ready">Listo para autenticar</string>
+    
+    <!-- Verification Steps Screen -->
+    <string name="verify_steps_nav_title">Pasos de Verificación</string>
+    <string name="verify_steps_label_1">Paso 1</string>
+    <string name="verify_steps_label_2">Paso 2</string>
+    <string name="verify_steps_label_3">Paso 3</string>
+    <string name="verify_steps_text_1">Escanea tu rostro.</string>
+    <string name="verify_steps_text_2">Verifica tu documento.</string>
+    <string name="verify_steps_text_3">Estás verificado.</string>
+    <string name="verify_steps_description">Sigue el proceso de verificación de 2 pasos simples. Tomará de 2 a 5 minutos.</string>
+    
+    <!-- Document Type Selection -->
+    <string name="document_type_nav_title">Seleccionar Documento</string>
+    <string name="document_type_state_id_label">Identificación Gubernamental con Foto</string>
+    <string name="document_type_state_id_description">Necesita escanear el frente y el reverso de su ID</string>
+    <string name="document_type_passport_label">Pasaporte Gubernamental</string>
+    <string name="document_type_passport_description">Necesita escanear su pasaporte y chip</string>
+    <string name="document_type_disclaimer">Esto es solo para validar su identidad en el proceso de verificación, su información no se guardará en ningún lugar.</string>
+    
+    <!-- Document Scanning - General -->
+    <string name="document_scan">Escaneo de Documento</string>
+    <string name="document_scan_success">Escaneo de Documento Exitoso</string>
+    <string name="document_scan_error">Error de Escaneo de Documento</string>
+    <string name="document_scan_failed">Escaneo de Documento Falló</string>
+    <string name="document_scan_retry">Reintentar Escaneo de Documento</string>
+    <string name="document_scan_cancel">Cancelar Escaneo de Documento</string>
+    
+    <!-- Document Scanning - State ID Front -->
+    <string name="document_front_nav_title">ID Frontal</string>
+    <string name="document_front_intro_title">Escanear ID Frontal</string>
+    <string name="document_front_intro_description">Continúe su verificación escaneando su documento. Vea la animación arriba y cuando esté listo toque Escanear Mi ID</string>
+    <string name="document_front_scan_button">Escanear Frente de Mi ID</string>
+    <string name="document_front_instruction">ALINEE EL FRENTE DEL ID EN EL MARCO COMO SE MUESTRA</string>
+    
+    <!-- Document Scanning - State ID Back -->
+    <string name="document_back_nav_title">ID Posterior</string>
+    <string name="document_back_intro_title">Escanear Reverso del ID</string>
+    <string name="document_back_intro_description">Segundo, voltee su ID gubernamental y alinee el reverso de su ID en el marco.</string>
+    <string name="document_back_scan_button">Escanear Reverso de Mi ID</string>
+    <string name="document_back_instruction">ALINEE EL REVERSO DEL ID EN EL MARCO COMO SE MUESTRA</string>
+    
+    <!-- Passport Scanning -->
+    <string name="passport_nav_title">Pasaporte</string>
+    <string name="passport_intro_title">Escanear Pasaporte</string>
+    <string name="passport_intro_description">Continúe su verificación escaneando su pasaporte. Asegúrese de que el código MRZ en la parte inferior esté claro y visible en la cámara.</string>
+    <string name="passport_scan_button">Escanear Mi Pasaporte</string>
+    <string name="passport_instruction">ALINEE EL PASAPORTE EN EL MARCO COMO SE MUESTRA</string>
+    
+    <!-- Passport Scanning Status Messages -->
+    <string name="passport_status_not_started">SOSTENGA EL PASAPORTE HORIZONTALMENTE</string>
+    <string name="passport_status_scanning">ESCANEANDO MRZ EN EL LADO IZQUIERDO…</string>
+    <string name="passport_status_mrz_detected">MRZ DETECTADO - MANTÉNGASE FIRME</string>
+    <string name="passport_status_validating">VALIDANDO DATOS MRZ…</string>
+    <string name="passport_status_completed">✓ ESCANEO DE PASAPORTE COMPLETO</string>
+    <string name="passport_status_failed">ESCANEO FALLÓ - INTENTE DE NUEVO</string>
+    
+    <!-- Passport Chip/NFC Scanning -->
+    <string name="passport_chip_nav_title">Escaneo de Chip de Pasaporte</string>
+    <string name="passport_chip_intro_title">Escaneo de Chip de Pasaporte</string>
+    <string name="passport_chip_intro_description">Verifique su pasaporte colocando el teléfono encima de su pasaporte para que esté tocando el pasaporte. Mueva su teléfono lentamente como se muestra para encontrar su chip.</string>
+    <string name="passport_chip_scan_button">Escanear Chip de Mi Pasaporte</string>
+    <string name="passport_chip_instruction">MUEVA EL DISPOSITIVO LENTAMENTE ALREDEDOR</string>
+    
+    <!-- NFC Status Messages -->
+    <string name="nfc_status_waiting">Mantenga su dispositivo contra el pasaporte</string>
+    <string name="nfc_status_detected">📡 ¡Etiqueta NFC detectada! Iniciando autenticación…</string>
+    <string name="nfc_status_reading">Leyendo chip del pasaporte…</string>
+    <string name="nfc_status_success">✅ Lectura del chip NFC exitosa</string>
+    <string name="nfc_status_failed">❌ Escaneo NFC falló</string>
+    <string name="nfc_status_retry">Reintentar escaneo NFC</string>
+    <string name="nfc_skip_scan">Omitir Escaneo de Chip</string>
+    <string name="nfc_monitoring_start">🔍 Iniciando bucle de monitoreo de etiqueta NFC…</string>
+    
+    <!-- Face Scanning -->
+    <string name="face_scan">Escaneo Facial</string>
+    <string name="face_scan_nav_title">Escaneo Facial</string>
+    <string name="face_scan_intro_title">Escaneo Facial</string>
+    <string name="face_scan_intro_description">Comience su verificación escaneando su rostro. Vea la animación arriba como referencia y cuando esté listo toque "Escanear Mi Rostro".</string>
+    <string name="face_scan_button">Escanear Mi Rostro</string>
+    <string name="face_scan_instruction">DISPOSITIVO ARRIBA, PARALELO AL ROSTRO</string>
+    
+    <!-- Face Liveness Instructions -->
+    <string name="face_turn_head_slowly">Gire su cabeza lentamente</string>
+    <string name="face_blink_to_complete">Por favor parpadee para completar</string>
+    <string name="face_liveness_completed">¡Verificación de vida completada!</string>
+    <string name="face_position_in_circle">Posicione su rostro en el círculo</string>
+    <string name="face_centered_taking_selfie">¡Rostro centrado! Tomando selfie…</string>
+    <string name="face_positioning_instruction">Posicione su teléfono para ver su rostro claramente</string>
+    
+    <!-- Face Positioning Directions -->
+    <string name="face_move_phone_away">Aleje el teléfono.</string>
+    <string name="face_move_phone_closer">Acerque el teléfono.</string>
+    <string name="face_turn_up">Gire el rostro un poco hacia arriba.</string>
+    <string name="face_turn_down">Gire el rostro un poco hacia abajo.</string>
+    <string name="face_turn_left">Gire el rostro un poco hacia la izquierda.</string>
+    <string name="face_turn_right">Gire el rostro un poco hacia la derecha.</string>
+    <string name="face_up">Rostro Arriba</string>
+    <string name="face_down">Rostro Abajo</string>
+    <string name="face_left">Rostro Izquierda</string>
+    <string name="face_right">Rostro Derecha</string>
+    <string name="phone_up">Teléfono Arriba</string>
+    <string name="phone_down">Teléfono Abajo</string>
+    
+    <!-- Face Scan Error Messages -->
+    <string name="face_scan_error_header">Algo salió mal</string>
+    <string name="face_scan_error_message">No pudimos capturar su rostro. Por favor asegúrese de seguir estos pasos:</string>
+    
+    <!-- Verification Processing -->
+    <string name="verification_processing">Procesando verificación…</string>
+    <string name="verification_uploading">Subiendo imágenes…</string>
+    <string name="verification_analyzing">Analizando documentos…</string>
+    <string name="verification_complete">¡Verificación completa!</string>
+    <string name="verification_successful">Verificación Exitosa</string>
+    <string name="verification_failed">Verificación Falló</string>
+    <string name="verification_success_description">Haga clic para ver los detalles de su verificación.</string>
+    <string name="verification_account_details">Detalles de la Cuenta</string>
+    
+    <!-- Verification Results -->
+    <string name="verify_details_member_label">Miembro</string>
+    <string name="verify_details_document_results_label">Resultados del Documento</string>
+    <string name="verify_details_state_id_label">Identificación Gubernamental con Foto</string>
+    <string name="verify_details_face_match_label">Puntuación de Coincidencia Facial</string>
+    <string name="verify_details_spoof_match_label">Puntuación Anti-Suplantación Facial</string>
+    <string name="verify_details_document_score_label">Puntuación del Documento</string>
+    <string name="verify_details_risk_results_label">Resultados de Riesgo</string>
+    <string name="verify_details_risk_subheading">Verificación de Antecedentes</string>
+    <string name="verify_details_person_search_score_label">Puntuación de Búsqueda de Persona</string>
+    <string name="verify_details_person_search_rating_label">Calificación de Búsqueda de Persona</string>
+    
+    <!-- Authentication -->
+    <string name="auth_processing_nav_title">Autenticación</string>
+    <string name="auth_successful">Autenticación Exitosa</string>
+    <string name="auth_unsuccessful">Autenticación No Exitosa</string>
+    <string name="auth_no_biometrics">El dispositivo no tiene biometría</string>
+    <string name="auth_unlock_device_permission">Necesitamos desbloquear su dispositivo para autenticar</string>
+    
+    <!-- Approval Request -->
+    <string name="approval_request_nav_title">Solicitud de Aprobación</string>
+    <string name="approval_request_title">Solicitud de Aprobación</string>
+    <string name="approval_request_message">Solicitud de Aprobación de Prueba: Se ha solicitado una solicitud de $0.00.</string>
+    <string name="approval_request_failed">Nos disculpamos, pero la solicitud de aprobación no es posible en este momento. Por favor contacte al soporte al 1-800-GET-HELP para asistencia.</string>
+    
+    <!-- Approval Response -->
+    <string name="approval_response_nav_title">Aprobar</string>
+    <string name="approval_response_title">Aprobar</string>
+    <string name="approval_response_message">Ha seleccionado</string>
+    <string name="approval_response_approved_title">Aprobado</string>
+    <string name="approval_response_declined_title">Rechazado</string>
+    <string name="approval_response_failed">Nos disculpamos, pero la respuesta de aprobación no es posible en este momento. Por favor contacte al soporte al 1-800-GET-HELP para asistencia.</string>
+    
+    <!-- Error Messages - Verification Results -->
+    <string name="error_document_validation">Error de validación de imagen del documento, por favor seleccione el tipo de documento y vuelva a capturar los datos del documento</string>
+    <string name="error_face_validation">Error de validación de captura de imagen facial, por favor vuelva a capturar la imagen facial</string>
+    <string name="error_general">Ha ocurrido un error general, por favor REGRESE e intente de nuevo (400)</string>
+    <string name="error_ocr">No se pueden capturar datos del frente de su documento gubernamental.</string>
+    <string name="error_barcode">No se puede decodificar el código de barras de la imagen del documento.</string>
+    <string name="error_preprocessing">No se puede procesar la imagen de su documento. Por favor vuelva a escanear su pasaporte con mejor iluminación y enfoque.</string>
+    <string name="error_mrz">No se pueden capturar los datos de la Zona Legible por Máquina (MRZ) de la imagen de su documento</string>
+    
+    <!-- Verification Failure Types -->
+    <string name="failure_passport_title">Problema de Calidad de Imagen del Pasaporte</string>
+    <string name="failure_passport_message">Tuvimos problemas leyendo su pasaporte. Por favor vuelva a tomar la foto asegurándose de que la MRZ (Zona Legible por Máquina) en la parte inferior esté claramente visible y el pasaporte esté bien iluminado.</string>
+    <string name="failure_passport_button">Volver a Tomar Foto del Pasaporte</string>
+    
+    <string name="failure_state_id_front_title">Problema de Calidad de Imagen del Frente del ID</string>
+    <string name="failure_state_id_front_message">Tuvimos problemas leyendo el frente de su ID. Por favor vuelva a tomar la foto asegurándose de que el texto esté claro, la iluminación sea buena, y todo el ID esté dentro del marco.</string>
+    <string name="failure_state_id_front_button">Volver a Tomar Foto del Frente del ID</string>
+    
+    <string name="failure_state_id_back_title">Problema de Calidad de Imagen del Reverso del ID</string>
+    <string name="failure_state_id_back_message">Tuvimos problemas leyendo el reverso de su ID. Por favor vuelva a tomar la foto asegurándose de que el código de barras esté claramente visible y la iluminación sea adecuada.</string>
+    <string name="failure_state_id_back_button">Volver a Tomar Foto del Reverso del ID</string>
+    
+    <string name="failure_face_title">Problema de Calidad de Imagen Facial</string>
+    <string name="failure_face_message">Tuvimos problemas procesando su imagen facial. Por favor vuelva a tomar la foto con buena iluminación sin gafas, sombrero o mascarilla cubriendo su rostro.</string>
+    <string name="failure_face_button">Volver a Tomar Foto Facial</string>
+    
+    <string name="failure_general_title">Verificación Falló</string>
+    <string name="failure_general_message">La verificación no se pudo completar en este momento. Esto puede deberse a problemas de validación de documentos o errores de procesamiento del sistema. Por favor intente de nuevo más tarde o contacte al soporte si el problema persiste.</string>
+    <string name="failure_general_button">Volver al Inicio</string>
+    
+    <!-- Tips -->
+    <string name="tip_header_label">Consejos</string>
+    <string name="tip_no_hat">Sin Sombrero</string>
+    <string name="tip_no_glasses">Sin Gafas</string>
+    <string name="tip_no_mask">Sin Mascarilla</string>
+    <string name="tip_good_light">Buena Luz</string>
+    <string name="tip_no_glare">Sin Reflejo</string>
+    <string name="tip_lay_flat">Poner Plano</string>
+    <string name="tip_focus">Enfocar</string>
+    <string name="tip_move_slow">Mover Lentamente</string>
+    <string name="tip_focus_mrz">Enfocar MRZ</string>
+    
+    <!-- General Messages -->
+    <string name="gen_hello">Hola</string>
+    <string name="gen_processing">Procesando…</string>
+    <string name="gen_do_not_close_app">Por favor no cierre la aplicación mientras procesamos su solicitud. Esto puede tomar hasta un minuto para procesar.</string>
+    <string name="gen_contact_support">Nos disculpamos, pero su solicitud no es posible en este momento. Por favor contacte al soporte al 1-800-GET-HELP para asistencia.</string>
+    <string name="gen_something_wrong">Algo salió mal</string>
+    
+    <!-- Settings -->
+    <string name="version_label">Versión</string>
+    <string name="version_developer_mode">Modo Desarrollador</string>
+    
+    <!-- Content Descriptions for Accessibility -->
+    <string name="content_desc_back_button">Atrás</string>
+    <string name="content_desc_intro_image">Imagen de Introducción</string>
+    <string name="content_desc_face_overlay">Superposición Facial</string>
+    <string name="content_desc_document_overlay">Superposición de Documento</string>
+    <string name="content_desc_passport_overlay">Superposición de Pasaporte</string>
+    <string name="content_desc_logo">Logo de ArtiusID</string>
+    <string name="content_desc_success_icon">Icono de Éxito</string>
+    <string name="content_desc_error_icon">Icono de Error</string>
+    <string name="content_desc_warning_icon">Icono de Advertencia</string>
+    <string name="content_desc_info_icon">Icono de Información</string>
+    <string name="content_desc_camera_preview">Vista Previa de Cámara</string>
+    <string name="content_desc_face_positioning">Guía de posicionamiento facial: %1$s</string>
+    
+    <!-- Plurals -->
+    <plurals name="verification_attempts_remaining">
+        <item quantity="one">%d intento restante</item>
+        <item quantity="other">%d intentos restantes</item>
+    </plurals>
+    
+    <plurals name="nfc_retry_attempts">
+        <item quantity="one">%d intento de reintento</item>
+        <item quantity="other">%d intentos de reintento</item>
+    </plurals>
+    
+    <!-- String Formatting -->
+    <string name="welcome_user">¡Bienvenido, %1$s!</string>
+    <string name="verification_score">Puntuación: %1$d%%</string>
+    <string name="face_match_score">Coincidencia Facial: %1$d%%</string>
+    <string name="document_score">Documento: %1$d%%</string>
+    <string name="person_search_score">Búsqueda de Persona: %1$d</string>
+    <string name="risk_information_score">Información de Riesgo: %1$d</string>
+    <string name="account_number_display">Cuenta: %1$s</string>
+    <string name="full_name_display">%1$s %2$s</string>
+    
+    <!-- Camera Permission -->
+    <string name="camera_permission_required">Permiso de Cámara Requerido</string>
+    <string name="camera_permission_description">Por favor otorgue permiso de cámara para usar el escaneo facial</string>
+    <string name="grant_permission">Otorgar Permiso</string>
+    
+    <!-- Fallback/Unknown Values -->
+    <string name="unknown_user">Desconocido</string>
+    <string name="unknown_value">Desconocido</string>
+    <string name="not_available">N/D</string>
+    
+</resources>

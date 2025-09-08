@@ -1,7 +1,7 @@
 package com.artiusid.sdk.utils
 
 /**
- * Enum representing the side of a document being scanned
+ * Document side enumeration - EXACT STANDALONE MATCH
  */
 enum class DocumentSide {
     FRONT,

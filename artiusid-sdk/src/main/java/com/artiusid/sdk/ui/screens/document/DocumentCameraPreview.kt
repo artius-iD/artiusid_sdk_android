@@ -1,7 +1,5 @@
 package com.artiusid.sdk.ui.screens.document
 
-import com.artiusid.sdk.ui.components.*
-
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Rect
@@ -21,7 +19,8 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.artiusid.sdk.ui.components.GradientBackground
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import com.artiusid.sdk.utils.DocumentSide
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -35,7 +34,7 @@ import java.util.concurrent.atomic.AtomicLong
 @Composable
 fun DocumentCameraPreview(
     modifier: Modifier = Modifier,
-    viewModel: DocumentScanViewModel
+    viewModel: com.artiusid.sdk.ui.screens.document.DocumentScanViewModel
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current

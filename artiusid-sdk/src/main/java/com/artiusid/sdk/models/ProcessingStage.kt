@@ -1,60 +1,21 @@
 package com.artiusid.sdk.models
 
-import com.artiusid.sdk.models.*
-
 /**
- * Enum representing different processing stages in face scanning
+ * Processing stages for face liveness - EXACT STANDALONE MATCH
  */
 enum class ProcessingStage {
     INITIALIZING,
+    POSITIONING,
     DETECTING_FACE,
-    ANALYZING_QUALITY,
-    CAPTURING_IMAGE,
-    PROCESSING_LIVENESS,
+    ANALYZING_LIVENESS,
+    CAPTURING,
+    PROCESSING,
     COMPLETED,
-    ERROR
-}
-
-/**
- * Enum representing passport scanning states
- */
-enum class PassportScanningState {
-    NOT_STARTED,
-    SCANNING,
-    MRZ_DETECTED,
-    VALIDATING,
-    COMPLETED,
-    FAILED
-}
-
-/**
- * Enum representing document recapture types
- */
-enum class DocumentRecaptureType {
-    NONE,
-    FRONT_DOCUMENT,
-    BACK_DOCUMENT,
-    PASSPORT,
-    FACE_IMAGE,
-    GENERAL_ERROR,
-    // Face-related errors
-    FACE_TOO_BLURRY,
-    FACE_NOT_DETECTED,
-    FACE_TOO_DARK,
-    FACE_TOO_BRIGHT,
-    FACE_TOO_FAR,
-    FACE_TOO_CLOSE,
-    FACE_ANGLE_INCORRECT,
-    // Document-related errors
-    DOCUMENT_TOO_BLURRY,
-    DOCUMENT_GLARE,
-    DOCUMENT_CROPPED,
-    DOCUMENT_NOT_DETECTED,
-    DOCUMENT_ANGLE_INCORRECT,
-    // Specific error types for verification processing
-    PASSPORT_MRZ_ERROR,
-    PASSPORT_OCR_ERROR,
-    STATE_ID_FRONT_ERROR,
-    STATE_ID_BACK_ERROR,
-    STATE_ID_BARCODE_ERROR
+    ERROR,
+    INITIAL_INSTRUCTIONS,
+    CAPTURE_PHOTO,
+    CALIBRATING,
+    SELFIE_CAPTURE,
+    GUIDED_MESH_CAPTURE,
+    BLINK_DETECTION
 }

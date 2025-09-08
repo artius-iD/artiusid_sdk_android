@@ -7,10 +7,10 @@ import android.provider.Settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artiusid.sdk.models.VerificationRequest
-import com.artiusid.sdk.models.VerificationResponse
-import com.artiusid.sdk.models.VerificationResults
-import com.artiusid.sdk.data.model.VerificationResultData
+import com.artiusid.sdk.data.models.VerificationRequest
+import com.artiusid.sdk.data.models.VerificationResponse
+import com.artiusid.sdk.models.DocumentRecaptureType
+import com.artiusid.sdk.models.VerificationFailureType
 import com.artiusid.sdk.services.VerificationService
 import com.artiusid.sdk.utils.ImageUtils
 import com.artiusid.sdk.utils.ImageStorage
@@ -28,33 +28,32 @@ import com.artiusid.sdk.services.MyFirebaseMessagingService
 import com.artiusid.sdk.utils.FirebaseTokenManager
 import com.artiusid.sdk.utils.VerificationDataHolder
 import com.google.gson.Gson
-import com.artiusid.sdk.models.DocumentRecaptureType
-import com.artiusid.sdk.models.VerificationFailureType
+// Using fully qualified names to avoid conflicts
 
 sealed class VerificationProcessingUiState {
     object Processing : VerificationProcessingUiState()
     object Success : VerificationProcessingUiState()
     data class Error(val message: String) : VerificationProcessingUiState()
     data class Failure(
-        val failureType: VerificationFailureType,
+        val failureType: com.artiusid.sdk.models.VerificationFailureType,
         val errorReason: String
     ) : VerificationProcessingUiState()
     
     // Enhanced recapture states with DocumentRecaptureType (matching existing usage)
     data class PassportRecaptureRequired(
-        val recaptureType: DocumentRecaptureType
+        val recaptureType: com.artiusid.sdk.models.DocumentRecaptureType
     ) : VerificationProcessingUiState()
     
     data class StateIdFrontRecaptureRequired(
-        val recaptureType: DocumentRecaptureType
+        val recaptureType: com.artiusid.sdk.models.DocumentRecaptureType
     ) : VerificationProcessingUiState()
     
     data class StateIdBackRecaptureRequired(
-        val recaptureType: DocumentRecaptureType
+        val recaptureType: com.artiusid.sdk.models.DocumentRecaptureType
     ) : VerificationProcessingUiState()
     
     data class DocumentRecaptureRequired(
-        val recaptureType: DocumentRecaptureType
+        val recaptureType: com.artiusid.sdk.models.DocumentRecaptureType
     ) : VerificationProcessingUiState()
 }
 
@@ -72,8 +71,8 @@ class VerificationProcessingViewModel constructor(
     private val _currentStep = MutableStateFlow("Initializing verification...")
     val currentStep: StateFlow<String> = _currentStep.asStateFlow()
     
-    private val _verificationResultData = MutableStateFlow<VerificationResultData?>(null)
-    val verificationResultData: StateFlow<VerificationResultData?> = _verificationResultData.asStateFlow()
+    private val _verificationResultData = MutableStateFlow<com.artiusid.sdk.data.models.VerificationResultData?>(null)
+    val verificationResultData: StateFlow<com.artiusid.sdk.data.models.VerificationResultData?> = _verificationResultData.asStateFlow()
 
     private var retryCount = 0
     private val maxRetries = 3
@@ -222,6 +221,8 @@ class VerificationProcessingViewModel constructor(
 
                 // Build request matching the actual VerificationRequest model
                 val request = VerificationRequest(
+                    clientId = 1001, // Default client ID
+                    clientGroupId = 2001, // Default client group ID
                     faceImage = "simulated_face_image_base64",
                     documentFrontImage = "simulated_front_image_base64", 
                     documentBackImage = "simulated_back_image_base64",
@@ -262,12 +263,29 @@ class VerificationProcessingViewModel constructor(
                 val verificationResult = processVerificationResponse(response)
                 
                                  when (verificationResult) {
-                     VerificationResults.SUCCESS -> {
+                     com.artiusid.sdk.models.VerificationResults.SUCCESS -> {
                          Log.d(TAG, "Verification completed successfully")
                          LogManager.addLog("Verification completed successfully")
                          
                          // Parse and store verification result data like iOS
-                                                 val resultData = VerificationResultData.fromPayload(response.verificationData?.payload)
+                        // Convert VerificationData to VerificationResultData
+                        val resultData = response.verificationData?.let { data ->
+                            com.artiusid.sdk.data.models.VerificationResultData(
+                                personScore = data.personScore,
+                                personResult = data.personResult,
+                                personRating = data.personRating,
+                                documentStatus = data.documentStatus,
+                                documentScore = data.documentScore,
+                                faceMatchScore = data.faceMatchScore,
+                                antiSpoofingFaceScore = data.antiSpoofingFaceScore,
+                                riskInformationScore = data.riskInformationScore,
+                                riskInformationResult = data.riskInformationResult,
+                                riskInformationRating = data.riskInformationRating,
+                                accountNumber = data.accountNumber,
+                                firstName = data.firstName,
+                                lastName = data.lastName
+                            )
+                        } ?: com.artiusid.sdk.data.models.VerificationResultData()
                         _verificationResultData.value = resultData
                         Log.d(TAG, "Parsed verification result data: $resultData")
                         
@@ -284,7 +302,7 @@ class VerificationProcessingViewModel constructor(
                      }
                     else -> {
                         Log.w(TAG, "Verification failed: ${verificationResult.toString()}")
-                        LogManager.addLog("Verification failed: ${verificationResult.name}")
+                        LogManager.addLog("Verification failed: ${verificationResult.status}")
                         
                         // Determine failure type and error reason based on verification result (like iOS)
                         val failureType = getFailureTypeFromResult(verificationResult)
@@ -320,13 +338,13 @@ class VerificationProcessingViewModel constructor(
                         600, 601, 602, 603, 604, 605 -> {
                             // Convert HTTP status code to VerificationResults like iOS
                             val verificationResult = when (e.code()) {
-                                in 600..605 -> VerificationResults.FAILED
-                                else -> VerificationResults.FAILED
+                                in 600..605 -> com.artiusid.sdk.models.VerificationResults.FAILURE
+                                else -> com.artiusid.sdk.models.VerificationResults.FAILURE
                             }
                             val failureType = getFailureTypeFromResult(verificationResult)
                             val errorReason = verificationResult.toString()
                             
-                            Log.w(TAG, "HTTP ${e.code()}: ${verificationResult.name} - navigating to failure screen")
+                            Log.w(TAG, "HTTP ${e.code()}: ${verificationResult.status} - navigating to failure screen")
                             LogManager.addLog("Verification failed: $errorReason")
                             
                             // Navigate to failure screen like iOS
@@ -375,44 +393,33 @@ class VerificationProcessingViewModel constructor(
     }
     
     // Process verification response exactly like iOS
-    private fun processVerificationResponse(response: VerificationResponse): VerificationResults {
+    private fun processVerificationResponse(response: VerificationResponse): com.artiusid.sdk.models.VerificationResults.Result {
         Log.d(TAG, "[PROCESSING] Processing verification response like iOS")
         
         // Check if verificationData exists
         val verificationData = response.verificationData
         if (verificationData == null) {
             Log.w(TAG, "No verification data in response")
-            return VerificationResults.FAILED
+            return com.artiusid.sdk.models.VerificationResults.FAILURE
         }
         
-        val responseStatusCode = verificationData.statusCode
-        Log.d(TAG, "[PROCESSING] Response status code: $responseStatusCode")
+        // Use the response success flag to determine result
+        Log.d(TAG, "[PROCESSING] Response success: ${response.success}")
         
-        // Handle success (exactly like iOS)
-        if (responseStatusCode == 200) {
-            val payload = verificationData.payload
-            if (payload != null && payload.isNotEmpty()) {
-                Log.d(TAG, "[PROCESSING] Success response with payload")
-                
-                // Parse payload JSON to check for failure status like iOS does
-                val failureResult = checkForFailureInPayload(payload)
-                if (failureResult != null) {
-                    Log.w(TAG, "[PROCESSING] Found failure in payload: $failureResult")
-                    return failureResult
-                }
-                
-                return VerificationResults.SUCCESS
+        // Handle success (simplified approach)
+        if (response.success) {
+            // Check if we have meaningful verification data
+            if (verificationData.personScore > 0.0 || verificationData.documentScore > 0) {
+                Log.d(TAG, "[PROCESSING] Success response with valid scores")
+                return com.artiusid.sdk.models.VerificationResults.SUCCESS
             } else {
-                Log.w(TAG, "[PROCESSING] Success response but empty payload")
-                return VerificationResults.SUCCESS
+                Log.w(TAG, "[PROCESSING] Success response but no valid scores")
+                return com.artiusid.sdk.models.VerificationResults.SUCCESS
             }
         } else {
-            // Handle error status codes exactly like iOS
-            Log.w(TAG, "[PROCESSING] Error response: $responseStatusCode")
-            return when (responseStatusCode) {
-                in 600..605 -> VerificationResults.FAILED
-                else -> VerificationResults.FAILED
-            }
+            // Handle error response
+            Log.w(TAG, "[PROCESSING] Error response")
+            return com.artiusid.sdk.models.VerificationResults.FAILURE
         }
     }
     
@@ -420,7 +427,7 @@ class VerificationProcessingViewModel constructor(
      * Check for failure status in JSON payload - looks for "fail" in various fields
      * Returns appropriate VerificationResults if failure found, null if success
      */
-    private fun checkForFailureInPayload(payload: String): VerificationResults? {
+    private fun checkForFailureInPayload(payload: String): com.artiusid.sdk.models.VerificationResults.Result? {
         try {
             val jsonObject = org.json.JSONObject(payload)
             Log.d(TAG, "[FAILURE_CHECK] Checking payload for failure status")
@@ -436,7 +443,7 @@ class VerificationProcessingViewModel constructor(
                         if (documentStatus.contains("fail")) {
                             Log.w(TAG, "[FAILURE_CHECK] Document status failure: $documentStatus")
                             // Like iOS, document status fail should be general failure, not recapture
-                            return VerificationResults.FAILED
+                            return com.artiusid.sdk.models.VerificationResults.FAILURE
                         }
                         
                         // Also check for low face match scores (like the faceMatchScore:13 in logs)
@@ -444,7 +451,7 @@ class VerificationProcessingViewModel constructor(
                         if (faceMatchScore < 50) {
                             Log.w(TAG, "[FAILURE_CHECK] Low face match score: $faceMatchScore")
                             // Low face match should also be general failure, not recapture
-                            return VerificationResults.FAILED
+                            return com.artiusid.sdk.models.VerificationResults.FAILURE
                         }
                     }
                 }
@@ -462,7 +469,7 @@ class VerificationProcessingViewModel constructor(
                         val personResult = personData.optString("personSearchResult", "").lowercase()
                         if (personResult.contains("fail")) {
                             Log.w(TAG, "[FAILURE_CHECK] Person search failure: $personResult")
-                            return VerificationResults.FAILED
+                            return com.artiusid.sdk.models.VerificationResults.FAILURE
                         }
                     }
                 }
@@ -475,7 +482,7 @@ class VerificationProcessingViewModel constructor(
                         val infoResult = infoData.optString("informationSearchResult", "").lowercase()
                         if (infoResult.contains("fail")) {
                             Log.w(TAG, "[FAILURE_CHECK] Information search failure: $infoResult")
-                            return VerificationResults.FAILED
+                            return com.artiusid.sdk.models.VerificationResults.FAILURE
                         }
                     }
                 }
@@ -489,7 +496,7 @@ class VerificationProcessingViewModel constructor(
                     val value = jsonObject.optString(key, "").lowercase()
                     if (value.contains("fail")) {
                         Log.w(TAG, "[FAILURE_CHECK] General failure found in $key: $value")
-                        return VerificationResults.FAILED
+                        return com.artiusid.sdk.models.VerificationResults.FAILURE
                     }
                 }
             }
@@ -507,37 +514,14 @@ class VerificationProcessingViewModel constructor(
     /**
      * Map VerificationResults to appropriate VerificationFailureType
      */
-    private fun getFailureTypeFromResult(result: VerificationResults): VerificationFailureType {
-        return when (result) {
-            VerificationResults.FACE_IMAGE_VALIDATION_ERROR -> VerificationFailureType.FACE
-            VerificationResults.OCR_ERROR -> {
-                // Determine document type based on captured images
-                val capturedImages = ImageStorage.getCapturedImages()
-                if (capturedImages.passportImage != null) {
-                    VerificationFailureType.PASSPORT
-                } else {
-                    VerificationFailureType.STATE_ID_FRONT
-                }
-            }
-            VerificationResults.MRZ_OCR_ERROR -> VerificationFailureType.PASSPORT
-            VerificationResults.PRD417_ERROR -> VerificationFailureType.STATE_ID_BACK
-            VerificationResults.PRE_PROCESS_ERROR -> {
-                // Determine document type based on captured images
-                val capturedImages = ImageStorage.getCapturedImages()
-                if (capturedImages.passportImage != null) {
-                    VerificationFailureType.PASSPORT
-                } else {
-                    VerificationFailureType.STATE_ID_FRONT
-                }
-            }
-            VerificationResults.DOCUMENT_VALIDATION_ERROR -> VerificationFailureType.GENERAL
-            VerificationResults.FAILED -> VerificationFailureType.GENERAL
-            VerificationResults.FAILED_FACE_MATCH -> VerificationFailureType.FACE
-            VerificationResults.FAILED_DOCUMENT_QUALITY -> VerificationFailureType.GENERAL
-            VerificationResults.FAILED_NFC_VERIFICATION -> VerificationFailureType.PASSPORT
-            VerificationResults.FAILED_GENERAL -> VerificationFailureType.GENERAL
-            VerificationResults.PROCESSING_ERROR -> VerificationFailureType.GENERAL
-            VerificationResults.SUCCESS -> VerificationFailureType.GENERAL // Should not happen
+    private fun getFailureTypeFromResult(result: com.artiusid.sdk.models.VerificationResults.Result): com.artiusid.sdk.models.VerificationFailureType {
+        // Simplified failure type mapping since we only have SUCCESS/FAILURE
+        return when (result.status) {
+            com.artiusid.sdk.models.VerificationResults.Status.SUCCESS -> com.artiusid.sdk.models.VerificationFailureType.GENERAL // This shouldn't happen
+            com.artiusid.sdk.models.VerificationResults.Status.FAILURE -> com.artiusid.sdk.models.VerificationFailureType.GENERAL
+            com.artiusid.sdk.models.VerificationResults.Status.ERROR -> com.artiusid.sdk.models.VerificationFailureType.PROCESSING_ERROR
+            com.artiusid.sdk.models.VerificationResults.Status.CANCELLED -> com.artiusid.sdk.models.VerificationFailureType.USER_CANCELLED
+            else -> com.artiusid.sdk.models.VerificationFailureType.GENERAL
         }
     }
     

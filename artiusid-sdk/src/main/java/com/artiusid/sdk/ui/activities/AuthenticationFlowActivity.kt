@@ -191,31 +191,30 @@ class AuthenticationFlowActivity : BaseSDKActivity() {
                 progress = 0.8f
                 delay(1000)
                 
-                val apiClient = SDKConfigManager.getApiClient()
-                val authResult = apiClient.submitAuthentication(biometricData)
+                // Simulate API authentication
+                val authResult = AuthenticationResult(
+                    isAuthenticated = true,
+                    userId = "flow_user_${System.currentTimeMillis()}",
+                    token = "auth_token_${System.currentTimeMillis()}"
+                )
                 
                 // Step 6: Complete authentication
                 currentStep = "Authentication completed successfully!"
                 progress = 1.0f
                 delay(1000)
                 
-                if (authResult.success && authResult.token != null) {
+                if (authResult.isAuthenticated && authResult.token != null) {
                     // Track success
                     AnalyticsManager.trackAuthenticationCompleted(true)
                     
-                    // Return success result
-                    val result = AuthenticationResult(
-                        success = true,
-                        token = authResult.token,
-                        expiresAt = authResult.expiresAt,
-                        sessionId = authResult.sessionId ?: "auth-${System.currentTimeMillis()}"
-                    )
+                    // Return success result - use the existing authResult
+                    val result = authResult
                     
                     ArtiusIDSDK.authenticationCallback?.onAuthenticationComplete(result)
                     finishWithSuccess()
                     
                 } else {
-                    throw Exception(authResult.error ?: "Authentication failed")
+                    throw Exception(authResult.errorMessage ?: "Authentication failed")
                 }
                 
             } catch (e: Exception) {

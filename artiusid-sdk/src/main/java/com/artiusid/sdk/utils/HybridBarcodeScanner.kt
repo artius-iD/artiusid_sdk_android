@@ -8,8 +8,6 @@
 
 package com.artiusid.sdk.utils
 
-import com.artiusid.sdk.utils.*
-
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.Rect

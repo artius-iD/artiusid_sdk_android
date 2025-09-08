@@ -97,10 +97,9 @@ class AuthenticationActivity : BaseSDKActivity() {
             
             if (success) {
                 val result = AuthenticationResult(
-                    success = true,
-                    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFydGl1c0lEIFVzZXIiLCJpYXQiOjE1MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-                    expiresAt = System.currentTimeMillis() + (24 * 60 * 60 * 1000),
-                    sessionId = "auth-${System.currentTimeMillis()}"
+                    isAuthenticated = true,
+                    userId = "demo_user",
+                    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFydGl1c0lEIFVzZXIiLCJpYXQiOjE1MTYyMzkwMjJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                 )
                 
                 ArtiusIDSDK.authenticationCallback?.onAuthenticationComplete(result)

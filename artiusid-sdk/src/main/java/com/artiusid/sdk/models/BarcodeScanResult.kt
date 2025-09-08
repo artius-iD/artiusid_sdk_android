@@ -12,7 +12,7 @@ data class BarcodeScanResult(
     val success: Boolean,
     val rawValue: String? = null,
     val format: String? = null,
-    val aamvaData: AAMVAData? = null,
+    val aamvaData: @RawValue AAMVAData? = null,
     val confidence: Float = 0f,
     val boundingBox: android.graphics.Rect? = null,
     val processingTime: Long = 0L,

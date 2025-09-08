@@ -69,6 +69,7 @@ fun DocumentScanFrame(
                 DocumentType.DRIVERS_LICENSE -> "Position your driver's license within the frame"
                 DocumentType.VISA -> "Position your visa within the frame"
                 DocumentType.OTHER -> "Position your document within the frame"
+                else -> "Position your document within the frame"
             },
             style = MaterialTheme.typography.bodyLarge,
             color = Color.White,

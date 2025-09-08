@@ -3,8 +3,8 @@ package com.artiusid.sdk.utils
 import android.content.Context
 import android.util.Log
 import com.artiusid.sdk.services.ApiService
-import com.artiusid.sdk.models.ApprovalRequestTestingRequest
-import com.artiusid.sdk.models.ApprovalResponse
+import com.artiusid.sdk.data.models.ApprovalRequestTestingRequest
+import com.artiusid.sdk.data.models.ApprovalResponse
 import com.artiusid.sdk.utils.VerificationStateManager
 // Removed Dagger imports
 

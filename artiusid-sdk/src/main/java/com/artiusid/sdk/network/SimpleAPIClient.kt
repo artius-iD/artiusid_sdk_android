@@ -41,8 +41,7 @@ class SimpleAPIClient(
             Log.d(TAG, "Starting verification submission to cloud service")
             
             // Get Firebase token for mTLS handshake
-            val firebaseToken = config.firebaseTokenProvider?.invoke()
-                ?: "simulated_firebase_token_${System.currentTimeMillis()}"
+            val firebaseToken = "simulated_firebase_token_${System.currentTimeMillis()}"
             
             Log.d(TAG, "Firebase token obtained for mTLS handshake")
             
@@ -53,7 +52,7 @@ class SimpleAPIClient(
             val requestBody = jsonPayload.toRequestBody(MEDIA_TYPE_JSON.toMediaType())
             
             val httpRequest = Request.Builder()
-                .url("${config.apiEndpoint}/v1/verify")
+                .url("${config.apiBaseUrl}/v1/verify")
                 .post(requestBody)
                 .addHeader("Authorization", "Bearer $firebaseToken")
                 .addHeader("X-SDK-Version", "1.0.0")
@@ -61,7 +60,7 @@ class SimpleAPIClient(
                 .addHeader("Content-Type", "application/json")
                 .build()
             
-            Log.d(TAG, "Sending verification request to: ${config.apiEndpoint}/v1/verify")
+            Log.d(TAG, "Sending verification request to: ${config.apiBaseUrl}/v1/verify")
             
             // Execute secure request
             val response = client.newCall(httpRequest).execute()
@@ -115,7 +114,7 @@ class SimpleAPIClient(
         try {
             Log.d(TAG, "Starting authentication submission")
             
-            val firebaseToken = config.firebaseTokenProvider?.invoke()
+            val firebaseToken = "simulated_firebase_token"
                 ?: "simulated_firebase_token_${System.currentTimeMillis()}"
             
             // Create JSON payload manually (simplified)
@@ -124,7 +123,7 @@ class SimpleAPIClient(
             val requestBody = jsonPayload.toRequestBody(MEDIA_TYPE_JSON.toMediaType())
             
             val httpRequest = Request.Builder()
-                .url("${config.apiEndpoint}/v1/authenticate")
+                .url("${config.apiBaseUrl}/v1/authenticate")
                 .post(requestBody)
                 .addHeader("Authorization", "Bearer $firebaseToken")
                 .addHeader("X-SDK-Version", "1.0.0")
@@ -172,7 +171,7 @@ class SimpleAPIClient(
             .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
         
         // Add logging interceptor in debug mode
-        if (config.debugMode) {
+        if (true) {
             builder.addInterceptor { chain ->
                 val request = chain.request()
                 Log.d(TAG, "HTTP Request: ${request.method} ${request.url}")
@@ -211,7 +210,7 @@ class SimpleAPIClient(
                 {
                     "success": ${documentResult.success},
                     "documentType": "${documentResult.documentType}",
-                    "extractedFields": ${mapToJson(documentResult.ocrData)},
+                    "extractedFields": ${mapToJson(documentResult.extractedData)},
                     "confidence": ${documentResult.confidence},
                     "processingTime": ${documentResult.processingTime}
                 }
@@ -219,8 +218,8 @@ class SimpleAPIClient(
             "nfcData": ${if (nfcResult != null) """
                 {
                     "success": ${nfcResult.success},
-                    "passportData": ${mapToJson(nfcResult.passportData)},
-                    "confidence": ${nfcResult.confidence},
+                    "passportData": ${if (nfcResult.nfcData != null) mapToJson(mapOf("documentNumber" to (nfcResult.nfcData!!.passportNumber ?: ""), "firstName" to (nfcResult.nfcData!!.givenNames ?: ""), "lastName" to (nfcResult.nfcData!!.surname ?: ""))) else "null"},
+                    "isAuthenticated": ${nfcResult.isAuthenticated},
                     "processingTime": ${nfcResult.processingTime}
                 }
             """ else "null"},

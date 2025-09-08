@@ -1,6 +1,11 @@
 package com.artiusid.sample
 
+import android.content.Intent
+import android.nfc.NfcAdapter
+import android.nfc.Tag
+import android.nfc.tech.IsoDep
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -38,11 +43,23 @@ import java.util.Date
  */
 class MainActivity : ComponentActivity() {
     
+    companion object {
+        private const val TAG = "SampleMainActivity"
+        
+        // NFC handling is now completely managed by the SDK
+        // No need for static variables in the sample app
+    }
+    
+    private var nfcAdapter: NfcAdapter? = null
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         // 1. CONFIGURE SDK with host app's branding and settings
         initializeSDK()
+        
+        // NFC is now completely handled by the SDK internally
+        Log.d(TAG, "📡 NFC handling delegated to SDK")
         
         setContent {
             MaterialTheme {
@@ -130,6 +147,13 @@ class MainActivity : ComponentActivity() {
         delay(100) // Simulate network call
         return "firebase-token-${System.currentTimeMillis()}"
     }
+    
+    // =====================================================
+    // NFC HANDLING IS NOW COMPLETELY MANAGED BY THE SDK
+    // =====================================================
+    
+    // The SDK now handles all NFC operations internally
+    // No need for sample app to manage NFC reader mode
 }
 
 /**
@@ -174,8 +198,8 @@ fun SampleAppContent() {
         Button(
             onClick = {
                 isLoading = true
-                // Launch verification flow from the activity context
-                ArtiusIDSDK.startVerificationFlow(
+                // Launch COMPLETE EMBEDDED verification flow with all standalone functionality
+                ArtiusIDSDK.startCompleteEmbeddedVerification(
                     activity = activity,
                     callback = object : VerificationCallback {
                         override fun onVerificationComplete(result: VerificationResult) {
@@ -226,7 +250,7 @@ fun SampleAppContent() {
                 )
             } else {
                 Text(
-                    text = "🔍 Start Complete Verification Flow",
+                    text = "🚀 Start Complete Embedded Verification",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )

@@ -91,7 +91,9 @@ fun FaceScanScreen(
                     onFaceScanComplete(
                         LivenessResult(
                             success = true,
+                            isLive = true,
                             confidence = 0.95f,
+                            faceBitmap = null,
                             livenessScore = 0.92f,
                             processingTime = 2000L,
                             sessionId = "face_${System.currentTimeMillis()}"
@@ -292,9 +294,10 @@ fun PassportChipScanScreen(
                 onClick = {
                     onNfcComplete(
                         NFCPassportResult(
+                            nfcData = null, // TODO: Create proper PassportNFCData
                             success = true,
-                            passportData = mapOf("name" to "John Doe"),
-                            confidence = 0.90f,
+                            isAuthenticated = true,
+                            expiresAt = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L), // 1 year from now
                             processingTime = 3000L,
                             sessionId = "nfc_${System.currentTimeMillis()}"
                         )
@@ -346,12 +349,9 @@ fun VerificationProcessingScreen(
                 onProcessingComplete(
                     VerificationResult(
                         success = true,
-                        confidence = 0.92f,
                         livenessResult = null,
-                        documentScanResult = null,
-                        nfcResult = null,
-                        processingTime = 3000L,
-                        sessionId = "verification_${System.currentTimeMillis()}"
+                        documentResult = null,
+                        nfcResult = null
                     )
                 )
             }
@@ -386,12 +386,9 @@ fun VerificationResultsScreen(
                     onComplete(
                         VerificationResult(
                             success = true,
-                            confidence = 0.92f,
                             livenessResult = null,
-                            documentScanResult = null,
-                            nfcResult = null,
-                            processingTime = 5000L,
-                            sessionId = "final_${System.currentTimeMillis()}"
+                            documentResult = null,
+                            nfcResult = null
                         )
                     )
                 },
@@ -477,10 +474,9 @@ fun AuthenticationScreen(
                 onClick = {
                     onAuthenticationComplete(
                         AuthenticationResult(
-                            success = true,
-                            token = "auth_token_${System.currentTimeMillis()}",
-                            expiresAt = System.currentTimeMillis() + 3600000L, // 1 hour
-                            sessionId = "auth_${System.currentTimeMillis()}"
+                            isAuthenticated = true,
+                            userId = "auth_user_${System.currentTimeMillis()}",
+                            token = "auth_token_${System.currentTimeMillis()}"
                         )
                     )
                 }
@@ -522,10 +518,9 @@ fun AuthenticatedScreen(
                 onClick = {
                     onComplete(
                         AuthenticationResult(
-                            success = true,
-                            token = "final_auth_token_${System.currentTimeMillis()}",
-                            expiresAt = System.currentTimeMillis() + 3600000L, // 1 hour
-                            sessionId = "final_auth_${System.currentTimeMillis()}"
+                            isAuthenticated = true,
+                            userId = "final_auth_user_${System.currentTimeMillis()}",
+                            token = "final_auth_token_${System.currentTimeMillis()}"
                         )
                     )
                 }
@@ -582,7 +577,9 @@ fun DocumentScanScreen(
                                 "back" -> "ID_CARD"
                                 else -> "OTHER"
                             },
-                            ocrData = mapOf("name" to "John Doe"),
+                            frontImage = null,
+                            backImage = null,
+                            extractedData = mapOf("name" to "John Doe"),
                             confidence = 0.88f,
                             processingTime = 1500L,
                             sessionId = "doc_${System.currentTimeMillis()}"

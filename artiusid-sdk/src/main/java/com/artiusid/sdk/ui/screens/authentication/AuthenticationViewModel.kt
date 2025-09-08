@@ -63,8 +63,12 @@ class AuthenticationViewModel : ViewModel() {
                 _currentStep.value = "Preparing authentication request..."
                 
                 // Create authentication request
+                val sessionId = "auth_${System.currentTimeMillis()}"
                 val authRequest = AuthenticationRequest(
-                    sessionId = "auth_${System.currentTimeMillis()}"
+                    username = "demo_user",
+                    password = "demo_password",
+                    biometricData = null,
+                    deviceId = "sdk_device_${System.currentTimeMillis()}"
                 )
                 
                 Log.d(TAG, "Authentication request prepared")
@@ -74,10 +78,12 @@ class AuthenticationViewModel : ViewModel() {
                 
                 // Simulate authentication API call
                 delay(1000)
-                val response = com.artiusid.sdk.models.AuthenticationResponse(
+                val response = com.artiusid.sdk.data.models.AuthenticationResponse(
                     success = true,
                     message = "Authentication successful",
-                    authenticationId = "auth_${System.currentTimeMillis()}"
+                    token = "auth_token_${System.currentTimeMillis()}",
+                    userId = "demo_user",
+                    sessionId = sessionId
                 )
                 
                 Log.d(TAG, "Authentication response: $response")

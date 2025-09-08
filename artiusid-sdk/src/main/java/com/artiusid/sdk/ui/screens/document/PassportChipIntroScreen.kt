@@ -16,9 +16,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
+import com.artiusid.sdk.ui.components.CustomBackButton
 import coil.compose.AsyncImage
+import coil.ImageLoader
+import coil.decode.GifDecoder
 
 /**
  * PassportChipIntroScreen - EXACT STANDALONE APPLICATION IMPLEMENTATION
@@ -29,6 +33,14 @@ fun PassportChipIntroScreen(
     onNavigateToPassportChip: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val imageLoader = remember {
+        ImageLoader.Builder(context)
+            .components {
+                add(GifDecoder.Factory())
+            }
+            .build()
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -58,6 +70,7 @@ fun PassportChipIntroScreen(
                 AsyncImage(
                     model = R.drawable.passport_animation,
                     contentDescription = "Passport Chip Animation",
+                    imageLoader = imageLoader,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)

@@ -21,9 +21,9 @@ class FaceVerificationServiceImpl(private val context: Context) : FaceVerificati
         delay(1000) // Simulate processing time
         faceVerified = true
         return FaceVerificationResult(
-            success = true,
+            isVerified = true,
             confidence = 0.95f,
-            message = "Face verification completed successfully"
+            faceBitmap = null
         )
     }
 
@@ -33,16 +33,17 @@ class FaceVerificationServiceImpl(private val context: Context) : FaceVerificati
 
     override fun startVerification(): Flow<FaceVerificationResult> = flow {
         emit(FaceVerificationResult(
-            success = false,
+            isVerified = false,
             confidence = 0f,
-            message = "Verification in progress"
+            faceBitmap = null,
+            errorMessage = "Verification in progress"
         ))
         delay(1000) // Simulate processing time
         faceVerified = true
         emit(FaceVerificationResult(
-            success = true,
+            isVerified = true,
             confidence = 0.95f,
-            message = "Face verification completed successfully"
+            faceBitmap = null
         ))
     }
 } 

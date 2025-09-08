@@ -1,52 +1,41 @@
 package com.artiusid.sdk.config
 
+import androidx.compose.ui.graphics.Color
+
 /**
- * Main SDK configuration
+ * SDK configuration class - EXACT STANDALONE MATCH
  */
-data class SDKConfig(
+data class ArtiusSDKConfig(
     val apiKey: String,
-    val environment: String = "production",
-    val enableLogging: Boolean = false
-)
-
-/**
- * Configuration for verification flow
- */
-data class VerificationConfig(
-    val enableFaceLiveness: Boolean = true,
-    val enableDocumentScan: Boolean = true,
-    val enableNFC: Boolean = false,
-    val timeoutMs: Long = 60000L
-)
-
-/**
- * Configuration for liveness detection
- */
-data class LivenessConfig(
-    val timeoutMs: Long = 30000L,
-    val qualityThreshold: Float = 0.8f
-)
-
-/**
- * Configuration for document scanning
- */
-data class DocumentScanConfig(
-    val allowedDocumentTypes: List<String> = listOf("PASSPORT", "ID_CARD"),
-    val timeoutMs: Long = 45000L
-)
-
-/**
- * Configuration for NFC reading
- */
-data class NFCConfig(
-    val timeoutMs: Long = 20000L,
-    val enablePassiveAuth: Boolean = true
-)
-
-/**
- * Configuration for authentication
- */
-data class AuthConfig(
-    val endpoint: String,
-    val timeoutMs: Long = 15000L
+    val baseUrl: String = "https://api.artiusid.com",
+    val clientId: Int = 0,
+    val clientGroupId: Int = 0,
+    val enableLogging: Boolean = false,
+    val enableAnalytics: Boolean = true,
+    
+    // Theme configuration
+    val primaryColor: Color = Color(0xFF2D3748),
+    val secondaryColor: Color = Color(0xFFFF6B35),
+    val backgroundColor: Color = Color.White,
+    val textColor: Color = Color.Black,
+    val buttonColor: Color = Color(0xFF4CAF50),
+    
+    // Camera settings
+    val cameraQuality: Float = 0.8f,
+    val enableFaceDetection: Boolean = true,
+    val enableLivenessDetection: Boolean = true,
+    
+    // NFC settings
+    val enableNFC: Boolean = true,
+    val nfcTimeout: Long = 30000L,
+    
+    // Network settings
+    val requestTimeout: Long = 30000L,
+    val retryAttempts: Int = 3,
+    
+    // Additional API settings
+    val apiBaseUrl: String = baseUrl,
+    val apiTimeout: Long = requestTimeout,
+    val livenessThreshold: Float = 0.7f,
+    val documentConfidenceThreshold: Float = 0.8f
 )

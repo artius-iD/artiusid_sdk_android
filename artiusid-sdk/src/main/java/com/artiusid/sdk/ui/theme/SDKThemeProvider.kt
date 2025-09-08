@@ -1,7 +1,18 @@
 package com.artiusid.sdk.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
@@ -14,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
-import com.artiusid.sdk.config.SDKTheme
+import com.artiusid.sdk.ui.theme.SDKTheme
 import com.artiusid.sdk.managers.SDKConfigManager
 
 /**
@@ -206,7 +217,7 @@ fun SDKButton(
     val sdkTheme = SDKConfigManager.getTheme()
     
     when (sdkTheme.buttonStyle) {
-        com.artiusid.sdk.config.ButtonStyle.FILLED -> {
+        "FILLED" -> {
             Button(
                 onClick = onClick,
                 modifier = modifier,
@@ -218,7 +229,7 @@ fun SDKButton(
                 content = { content() }
             )
         }
-        com.artiusid.sdk.config.ButtonStyle.OUTLINED -> {
+        "OUTLINED" -> {
             OutlinedButton(
                 onClick = onClick,
                 modifier = modifier,
@@ -229,7 +240,7 @@ fun SDKButton(
                 content = { content() }
             )
         }
-        com.artiusid.sdk.config.ButtonStyle.TEXT -> {
+        "TEXT" -> {
             TextButton(
                 onClick = onClick,
                 modifier = modifier,
@@ -240,7 +251,7 @@ fun SDKButton(
                 content = { content() }
             )
         }
-        com.artiusid.sdk.config.ButtonStyle.ROUNDED -> {
+        "ROUNDED" -> {
             Button(
                 onClick = onClick,
                 modifier = modifier,
@@ -264,7 +275,7 @@ fun SDKProgressIndicator(
     val sdkTheme = SDKConfigManager.getTheme()
     
     when (sdkTheme.progressIndicatorStyle) {
-        com.artiusid.sdk.config.ProgressStyle.CIRCULAR -> {
+        "CIRCULAR" -> {
             if (progress != null) {
                 CircularProgressIndicator(
                     progress = progress,
@@ -278,7 +289,7 @@ fun SDKProgressIndicator(
                 )
             }
         }
-        com.artiusid.sdk.config.ProgressStyle.LINEAR -> {
+        "LINEAR" -> {
             if (progress != null) {
                 LinearProgressIndicator(
                     progress = progress,
@@ -292,7 +303,7 @@ fun SDKProgressIndicator(
                 )
             }
         }
-        com.artiusid.sdk.config.ProgressStyle.CUSTOM -> {
+        "CUSTOM" -> {
             // Custom progress indicator implementation
             if (progress != null) {
                 LinearProgressIndicator(

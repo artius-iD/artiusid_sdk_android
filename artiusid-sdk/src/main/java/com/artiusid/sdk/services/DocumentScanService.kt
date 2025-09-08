@@ -9,6 +9,9 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.artiusid.sdk.models.*
 import com.artiusid.sdk.models.DocumentScanResult as ModelsDocumentScanResult
+import com.artiusid.sdk.data.models.MRZData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.artiusid.sdk.utils.AAMVABarcodeParser
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
@@ -46,6 +49,7 @@ class DocumentScanService(private val context: Context) {
         bitmap: Bitmap,
         documentType: DocumentType
     ): ModelsDocumentScanResult {
+        val startTime = System.currentTimeMillis()
         return try {
             Log.d(TAG, "Starting document scan for type: $documentType")
             
@@ -61,7 +65,7 @@ class DocumentScanService(private val context: Context) {
                         "lastName" to (barcodeResult.aamvaData?.lastName ?: ""),
                         "middleName" to (barcodeResult.aamvaData?.middleName ?: ""),
                         "dateOfBirth" to (barcodeResult.aamvaData?.dateOfBirth ?: ""),
-                        "gender" to (barcodeResult.aamvaData?.gender ?: ""),
+                        "gender" to (barcodeResult.aamvaData?.sex ?: ""),
                         "licenseNumber" to (barcodeResult.aamvaData?.licenseNumber ?: ""),
                         "address" to (barcodeResult.aamvaData?.address ?: ""),
                         "city" to (barcodeResult.aamvaData?.city ?: ""),
@@ -76,11 +80,12 @@ class DocumentScanService(private val context: Context) {
                         documentType = documentType.name,
                         frontImage = null,
                         backImage = null,
-                        ocrData = aamvaMap,
-                        mrzData = null,
-                        aamvaData = barcodeResult.aamvaData,
-                        message = "Barcode scan successful",
-                        error = null
+                        extractedData = aamvaMap,
+                        confidence = barcodeResult.confidence,
+                        processingTime = barcodeResult.processingTime,
+                        sessionId = "barcode_scan_${System.currentTimeMillis()}",
+                        errorMessage = null,
+                        barcodeData = barcodeResult.barcodeData ?: ""
                     )
                 } else {
                     Log.d(TAG, "Barcode scan failed, falling back to OCR")
@@ -103,28 +108,28 @@ class DocumentScanService(private val context: Context) {
             
             ModelsDocumentScanResult(
                 success = extractedData.isNotEmpty(),
-                documentType = documentType.name,
                 frontImage = null,
                 backImage = null,
-                ocrData = extractedData,
-                mrzData = null,
-                aamvaData = null,
-                message = if (extractedData.isNotEmpty()) "Document scan successful" else "No data extracted",
-                error = if (extractedData.isEmpty()) SDKError(SDKErrorCode.DOCUMENT_SCAN_FAILED, "No data extracted") else null
+                documentType = documentType.name,
+                extractedData = extractedData,
+                confidence = confidence,
+                processingTime = System.currentTimeMillis() - startTime,
+                sessionId = "doc_scan_${System.currentTimeMillis()}",
+                errorMessage = if (extractedData.isEmpty()) "No data extracted" else null
             )
             
         } catch (e: Exception) {
             Log.e(TAG, "Document scan failed", e)
             ModelsDocumentScanResult(
                 success = false,
-                documentType = documentType.name,
                 frontImage = null,
                 backImage = null,
-                ocrData = emptyMap(),
-                mrzData = null,
-                aamvaData = null,
-                message = "Document scan failed: ${e.message}",
-                error = SDKError(SDKErrorCode.DOCUMENT_SCAN_FAILED, e.message ?: "Unknown error")
+                documentType = documentType.name,
+                extractedData = emptyMap(),
+                confidence = 0.0f,
+                processingTime = System.currentTimeMillis() - startTime,
+                sessionId = "doc_scan_${System.currentTimeMillis()}",
+                errorMessage = "Document scan failed: ${e.message}"
             )
         }
     }
@@ -260,7 +265,7 @@ class DocumentScanService(private val context: Context) {
             
             MRZData(
                 documentType = documentType,
-                issuingCountry = issuingCountry,
+                countryCode = issuingCountry,
                 documentNumber = documentNumber,
                 nationality = nationality,
                 dateOfBirth = dateOfBirth,
@@ -308,7 +313,7 @@ class DocumentScanService(private val context: Context) {
             
             MRZData(
                 documentType = "I",
-                issuingCountry = issuingCountry,
+                countryCode = issuingCountry,
                 documentNumber = documentNumber,
                 nationality = nationality,
                 dateOfBirth = dateOfBirth,
@@ -460,15 +465,15 @@ class DocumentScanService(private val context: Context) {
  */
 private fun MRZData.toMap(): Map<String, String> {
     return mapOf(
-        "documentType" to documentType,
-        "issuingCountry" to issuingCountry,
-        "documentNumber" to documentNumber,
-        "nationality" to nationality,
-        "dateOfBirth" to dateOfBirth,
-        "sex" to sex,
-        "expirationDate" to expirationDate,
-        "personalNumber" to personalNumber,
-        "surname" to surname,
-        "givenNames" to givenNames
+        "documentType" to (documentType ?: ""),
+        "issuingCountry" to (countryCode ?: ""),
+        "documentNumber" to (documentNumber ?: ""),
+        "nationality" to (nationality ?: ""),
+        "dateOfBirth" to (dateOfBirth ?: ""),
+        "sex" to (sex ?: ""),
+        "expirationDate" to (expirationDate ?: ""),
+        "personalNumber" to (personalNumber ?: ""),
+        "surname" to (surname ?: ""),
+        "givenNames" to (givenNames ?: "")
     ).filterValues { it.isNotEmpty() }
 }

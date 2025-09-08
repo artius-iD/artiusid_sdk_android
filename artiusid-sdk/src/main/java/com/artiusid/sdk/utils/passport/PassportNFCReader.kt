@@ -8,8 +8,6 @@
 
 package com.artiusid.sdk.utils.passport
 
-import com.artiusid.sdk.models.*
-
 import android.content.Context
 import android.graphics.Bitmap
 import android.nfc.NfcAdapter
@@ -21,7 +19,7 @@ import com.artiusid.sdk.data.models.passport.PassportAuthenticationStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-
+import javax.inject.Inject
 
 // NFC and cryptography imports
 import java.io.IOException
@@ -34,7 +32,7 @@ import java.security.GeneralSecurityException
  * 
  * This implementation now uses real JMRTD library for passport communication
  */
-class PassportNFCReader constructor(
+class PassportNFCReader @Inject constructor(
     private val context: Context,
     private val jmrtdReader: JMRTDPassportReaderSimple,
     private val securityProvider: NFCSecurityProvider

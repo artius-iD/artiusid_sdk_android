@@ -74,12 +74,13 @@ class DocumentScanViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val documentResult = documentScanManager.scanDocument(bitmap, _documentSide.value)
-                android.util.Log.d("DocumentScanViewModel", "Document validation result: ${documentResult.validationStatus}")
+                android.util.Log.d("DocumentScanViewModel", "Document scan result: ${documentResult.success}")
                 
-                _validationMessage.value = documentResult.validationStatus
-                when (documentResult.validationStatus) {
-                    "Valid", "Document detected" -> {
-                        android.util.Log.d("DocumentScanViewModel", "Front scan validation successful (${documentResult.validationStatus}), saving image and extracting OCR")
+                val validationMessage = if (documentResult.success) "Document detected" else (documentResult.errorMessage ?: "Document not detected")
+                _validationMessage.value = validationMessage
+                when {
+                    documentResult.success -> {
+                        android.util.Log.d("DocumentScanViewModel", "Front scan validation successful, saving image and extracting OCR")
                         
                         // Store the front image for verification
                         ImageStorage.setFrontImage(bitmap)
@@ -117,25 +118,9 @@ class DocumentScanViewModel : ViewModel() {
                             _uiState.value = DocumentScanUiState.Error("OCR extraction failed: ${e.message}")
                         }
                     }
-                    "Invalid" -> {
-                        android.util.Log.d("DocumentScanViewModel", "Front scan validation failed")
-                        _uiState.value = DocumentScanUiState.Error("Invalid document. Please try again.")
-                    }
-                    "No face detected on ID" -> {
-                        android.util.Log.d("DocumentScanViewModel", "No face detected on ID")
-                        _uiState.value = DocumentScanUiState.Error("No face detected on ID. Please ensure your face is clearly visible.")
-                    }
-                    "Insufficient text content" -> {
-                        android.util.Log.d("DocumentScanViewModel", "Insufficient text content")
-                        _uiState.value = DocumentScanUiState.InsufficientContent
-                    }
-                    "Document content unclear" -> {
-                        android.util.Log.d("DocumentScanViewModel", "Document content unclear, confidence: ${documentResult.confidence}")
-                        _uiState.value = DocumentScanUiState.LowQuality(documentResult.confidence)
-                    }
                     else -> {
-                        android.util.Log.d("DocumentScanViewModel", "Unknown validation status: ${documentResult.validationStatus}")
-                        _uiState.value = DocumentScanUiState.Error("Unknown validation status: ${documentResult.validationStatus}")
+                        android.util.Log.d("DocumentScanViewModel", "Front scan validation failed")
+                        _uiState.value = DocumentScanUiState.Error(documentResult.errorMessage ?: "Invalid document. Please try again.")
                     }
                 }
             } catch (e: Exception) {
@@ -180,7 +165,7 @@ class DocumentScanViewModel : ViewModel() {
                         lastName = parsedData?.lastName ?: "",
                         middleName = parsedData?.firstName ?: "",
                         dateOfBirth = parsedData?.dateOfBirth ?: "",
-                        gender = parsedData?.firstName ?: "",
+                        sex = parsedData?.firstName ?: "",
                         licenseNumber = parsedData?.licenseNumber ?: "",
                         address = parsedData?.address ?: "",
                         city = parsedData?.city ?: "",
@@ -309,19 +294,21 @@ class DocumentScanViewModel : ViewModel() {
         isCurrentlyProcessing = true
         android.util.Log.d("DocumentScanViewModel", "Processing document image with bounds for side: ${_documentSide.value}")
         
+        val startTime = System.currentTimeMillis()
         var documentBounds: Rect? = null
         
         viewModelScope.launch {
             try {
                 val documentResult = documentScanManager.scanDocument(bitmap, _documentSide.value)
-                android.util.Log.d("DocumentScanViewModel", "Document validation result: ${documentResult.validationStatus}")
+                android.util.Log.d("DocumentScanViewModel", "Document validation result: ${documentResult.success}")
                 
-                // Extract document bounds from the result if available
-                documentBounds = documentResult.documentBounds
+                // Document bounds not available in current result structure
+                documentBounds = null
                 
-                _validationMessage.value = documentResult.validationStatus
-                when (documentResult.validationStatus) {
-                    "Valid", "Document detected" -> {
+                val validationMessage = if (documentResult.success) "Document detected" else (documentResult.errorMessage ?: "Document not detected")
+                _validationMessage.value = validationMessage
+                when {
+                    documentResult.success -> {
                         android.util.Log.d("DocumentScanViewModel", "Valid document detected, processing OCR")
                         
                         // Extract text using OCR (MLKit or Tesseract)
@@ -349,27 +336,18 @@ class DocumentScanViewModel : ViewModel() {
                             _uiState.value = DocumentScanUiState.Success(
                                 DocumentScanResult(
                                     success = true,
-                                    documentType = "ID_CARD",
-                                    validationStatus = "Front scan completed successfully",
-                                    confidence = 1.0f,
                                     frontImage = bitmap,
-                                    documentBounds = documentBounds
+                                    backImage = null,
+                                    documentType = "ID_CARD",
+                                    extractedData = frontOcrData ?: emptyMap(),
+                                    confidence = 1.0f,
+                                    processingTime = System.currentTimeMillis() - startTime,
+                                    sessionId = "front_scan_${System.currentTimeMillis()}"
                                 )
                             )
                         }
                     }
-                    "Move closer", "Document too far" -> {
-                        _uiState.value = DocumentScanUiState.InsufficientContent
-                    }
-                    "Document blurry" -> {
-                        _uiState.value = DocumentScanUiState.LowQuality(documentResult.confidence)
-                    }
-                    "Rotate device", "Wrong orientation" -> {
-                        _uiState.value = DocumentScanUiState.IncorrectOrientation
-                    }
-                    else -> {
-                        _uiState.value = DocumentScanUiState.Initial
-                    }
+                    // Additional error handling based on error message can be added here
                 }
             } catch (e: Exception) {
                 android.util.Log.e("DocumentScanViewModel", "Error processing document", e)
@@ -432,7 +410,7 @@ class DocumentScanViewModel : ViewModel() {
                         lastName = parsedData?.lastName ?: "",
                         middleName = parsedData?.firstName ?: "",
                         dateOfBirth = parsedData?.dateOfBirth ?: "",
-                        gender = parsedData?.firstName ?: "",
+                        sex = parsedData?.firstName ?: "",
                         licenseNumber = parsedData?.licenseNumber ?: "",
                         address = parsedData?.address ?: "",
                         city = parsedData?.city ?: "",

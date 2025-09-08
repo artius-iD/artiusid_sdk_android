@@ -129,6 +129,7 @@ private fun getRecaptureTitle(type: DocumentRecaptureType): String {
         DocumentRecaptureType.STATE_ID_FRONT_ERROR -> "State ID Front Error"
         DocumentRecaptureType.STATE_ID_BACK_ERROR -> "State ID Back Error"
         DocumentRecaptureType.STATE_ID_BARCODE_ERROR -> "State ID Barcode Error"
+        else -> "Recapture Required"
     }
 }
 
@@ -183,5 +184,6 @@ private fun getRecaptureMessage(type: DocumentRecaptureType): String {
             "The back of your state ID couldn't be processed clearly. Please ensure good lighting and hold the document steady."
         DocumentRecaptureType.STATE_ID_BARCODE_ERROR -> 
             "The barcode on your state ID couldn't be read. Please ensure good lighting and hold the document steady."
+        else -> "Please retake the image with better positioning and lighting."
     }
 }

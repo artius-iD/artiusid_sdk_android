@@ -7,8 +7,6 @@
  */
 package com.artiusid.sdk.services
 
-import com.artiusid.sdk.models.*
-
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.PointF
@@ -21,6 +19,8 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.face.FaceLandmark
+import com.artiusid.sdk.models.FaceMeshResult
+import com.artiusid.sdk.models.ProcessingStage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -300,6 +300,33 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                 }
                 ProcessingStage.COMPLETED -> {
                     // Already completed
+                }
+                ProcessingStage.INITIALIZING -> {
+                    // Initialize face detection
+                    processingStage = ProcessingStage.INITIAL_INSTRUCTIONS
+                }
+                ProcessingStage.POSITIONING -> {
+                    // Position face properly
+                    processingStage = ProcessingStage.INITIAL_INSTRUCTIONS
+                }
+                ProcessingStage.DETECTING_FACE -> {
+                    // Detect face
+                    processingStage = ProcessingStage.INITIAL_INSTRUCTIONS
+                }
+                ProcessingStage.ANALYZING_LIVENESS -> {
+                    // Analyze liveness
+                    processingStage = ProcessingStage.GUIDED_MESH_CAPTURE
+                }
+                ProcessingStage.CAPTURING -> {
+                    // Capture image
+                    processingStage = ProcessingStage.CAPTURE_PHOTO
+                }
+                ProcessingStage.PROCESSING -> {
+                    // Process results
+                    processingStage = ProcessingStage.COMPLETED
+                }
+                ProcessingStage.ERROR -> {
+                    // Handle error
                 }
             }
             updateFaceResult(
@@ -691,6 +718,13 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
             ProcessingStage.GUIDED_MESH_CAPTURE -> "Move your head to fill all segments (${visitedSegments.size}/8)"
             ProcessingStage.BLINK_DETECTION -> "Please blink to complete"
             ProcessingStage.COMPLETED -> "Liveness check completed!"
+            ProcessingStage.INITIALIZING -> "Initializing face detection..."
+            ProcessingStage.POSITIONING -> "Position your face in the circle"
+            ProcessingStage.DETECTING_FACE -> "Detecting face..."
+            ProcessingStage.ANALYZING_LIVENESS -> "Analyzing liveness..."
+            ProcessingStage.CAPTURING -> "Capturing image..."
+            ProcessingStage.PROCESSING -> "Processing..."
+            ProcessingStage.ERROR -> "Error occurred"
         }
     }
     
@@ -703,8 +737,11 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
         hintText: String = ""
     ) {
         _faceResult.value = FaceMeshResult(
-            hasFace = hasFace,
+            faceBitmap = null,
+            isLive = false,
             confidence = confidence,
+            livenessScore = 0.0f,
+            hasFace = hasFace,
             error = error,
             processingStage = processingStage,
             alignmentDirection = alignmentDirection,
@@ -712,7 +749,7 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
         )
     }
     
-    override suspend fun detectFaceMesh(bitmap: Bitmap): FaceMeshResult {
+    suspend fun detectFaceMesh(bitmap: Bitmap): FaceMeshResult {
         return suspendCancellableCoroutine { continuation ->
             val inputImage = InputImage.fromBitmap(bitmap, 0)
             
@@ -721,16 +758,22 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                     if (faces.isNotEmpty()) {
                         val face = faces[0]
                         val result = FaceMeshResult(
-                            hasFace = true,
+                            faceBitmap = bitmap,
+                            isLive = true,
                             confidence = face.trackingId?.toFloat() ?: 0.0f,
+                            livenessScore = 0.8f,
+                            hasFace = true,
                             error = null,
                             processingStage = processingStage
                         )
                         continuation.resume(result)
                     } else {
                         val result = FaceMeshResult(
-                            hasFace = false,
+                            faceBitmap = null,
+                            isLive = false,
                             confidence = 0.0f,
+                            livenessScore = 0.0f,
+                            hasFace = false,
                             error = "No face detected",
                             processingStage = processingStage
                         )
@@ -739,8 +782,11 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                 }
                 .addOnFailureListener { e ->
                     val result = FaceMeshResult(
-                        hasFace = false,
+                        faceBitmap = null,
+                        isLive = false,
                         confidence = 0.0f,
+                        livenessScore = 0.0f,
+                        hasFace = false,
                         error = "Face detection failed: ${e.message}",
                         processingStage = processingStage
                     )

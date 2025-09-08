@@ -1,22 +1,15 @@
 package com.artiusid.sdk.models
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
-import kotlinx.parcelize.RawValue
+import android.graphics.Bitmap
 
 /**
- * Result of face verification process
+ * Face verification result - EXACT STANDALONE MATCH
  */
-@Parcelize
 data class FaceVerificationResult(
-    val success: Boolean,
-    val confidence: Float = 0f,
-    val matchScore: Float = 0f,
-    val livenessScore: Float = 0f,
-    val isLive: Boolean = false,
-    val faceDetected: Boolean = false,
-    val message: String? = null,
-    val error: @RawValue SDKError? = null,
-    val processingTime: Long = 0L,
-    val sessionId: String? = null
-) : Parcelable
+    val isVerified: Boolean,
+    val confidence: Float,
+    val faceBitmap: Bitmap?,
+    val timestamp: Long = System.currentTimeMillis(),
+    val errorMessage: String? = null,
+    val success: Boolean = isVerified
+)

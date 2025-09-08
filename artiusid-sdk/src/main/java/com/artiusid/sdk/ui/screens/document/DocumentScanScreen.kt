@@ -34,8 +34,7 @@ import com.artiusid.sdk.ui.components.CustomInfoButton
 import com.artiusid.sdk.utils.DocumentSide
 import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
-import com.artiusid.sdk.ui.utils.getRelativeWidthDp
-import com.artiusid.sdk.ui.utils.getRelativeHeightDp
+
 
 /**
  * DocumentScanScreen - EXACT STANDALONE APPLICATION IMPLEMENTATION
@@ -192,7 +191,7 @@ fun DocumentScanScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(top = getRelativeHeightDp(60.0f))
+                                .padding(top = 60.dp)
                         ) {
                             Image(
                                 painter = painterResource(
@@ -214,9 +213,9 @@ fun DocumentScanScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(
-                                    end = getRelativeWidthDp(48.0f),
-                                    top = getRelativeHeightDp(32.0f),
-                                    bottom = getRelativeHeightDp(32.0f)
+                                    end = 48.dp,
+                                    top = 32.dp,
+                                    bottom = 32.dp
                                 )
                         ) {
                             CustomInfoButton(
@@ -224,7 +223,7 @@ fun DocumentScanScreen(
                                 modifier = Modifier
                                     .align(Alignment.CenterEnd)
                                     .rotate(90f)
-                                    .width(getRelativeWidthDp(140.0f))
+                                    .width(140.dp)
                             )
                         }
 
@@ -233,8 +232,8 @@ fun DocumentScanScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(
-                                    end = getRelativeWidthDp(48.0f),
-                                    bottom = getRelativeHeightDp(48.0f)
+                                    end = 48.dp,
+                                    bottom = 48.dp
                                 )
                         ) {
                             CustomInfoButton(
@@ -245,7 +244,7 @@ fun DocumentScanScreen(
                                 modifier = Modifier
                                     .align(Alignment.BottomEnd)
                                     .rotate(90f)
-                                    .width(getRelativeWidthDp(110.0f))
+                                    .width(110.dp)
                             )
                         }
 
@@ -261,7 +260,7 @@ fun DocumentScanScreen(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
                                         .rotate(90f)
-                                        .width(getRelativeWidthDp(80.0f))
+                                        .width(80.dp)
                                 )
                             }
                         }

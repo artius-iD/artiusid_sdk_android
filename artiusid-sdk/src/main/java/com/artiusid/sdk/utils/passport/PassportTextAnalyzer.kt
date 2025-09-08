@@ -5,7 +5,7 @@ import android.graphics.Rect
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.artiusid.sdk.models.PassportMRZData
+import com.artiusid.sdk.data.models.passport.PassportMRZData
 import com.artiusid.sdk.utils.passport.MRZParser
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.Text
@@ -218,11 +218,13 @@ class PassportTextAnalyzer(
                             passportNumber = passportNumber,
                             nationality = countryCode,
                             dateOfBirth = "670315", // Placeholder - will be extracted if available
-                            gender = "M",
+                            sex = "M",
                             dateOfExpiry = "290315", // Placeholder - will be extracted if available
                             personalNumber = "",
-                            compositeCheckDigit = "0",
-                            rawMRZ = "P<$countryCode$passportNumber\n$passportNumber$countryCode"
+                            finalCheckDigit = "0",
+                            line1 = "P<$countryCode$passportNumber",
+                            line2 = "$passportNumber$countryCode",
+                            line2CheckDigit = "0"
                         )
                         
                         Log.d(TAG, "✅ Created partial MRZ data (OLD PATH - will be enhanced)")
@@ -320,11 +322,13 @@ class PassportTextAnalyzer(
                                 passportNumber = passportNumber,
                                 nationality = countryCode,
                                 dateOfBirth = realDateOfBirth,
-                                gender = "F", // Detected from MRZ
+                                sex = "F", // Detected from MRZ
                                 dateOfExpiry = realDateOfExpiry,
                                 personalNumber = "",
-                                compositeCheckDigit = "0",
-                                rawMRZ = "P<$countryCode$passportNumber\n$cleanedLine2"
+                                finalCheckDigit = "0",
+                                line1 = "P<$countryCode$passportNumber",
+                                line2 = cleanedLine2, // Store FULL cleaned 44-char line2
+                                line2CheckDigit = "0"
                             )
                             
                             Log.d(TAG, "✅ Created ENHANCED MRZ data for NFC authentication")
@@ -662,11 +666,13 @@ class PassportTextAnalyzer(
                         passportNumber = passportNumber,
                         nationality = countryCode,
                         dateOfBirth = realDateOfBirth,
-                        gender = "M",
+                        sex = "M",
                         dateOfExpiry = realDateOfExpiry,
                         personalNumber = "",
-                        compositeCheckDigit = "0",
-                        rawMRZ = "P<$countryCode$passportNumber\n$passportNumber$countryCode"
+                        finalCheckDigit = "0",
+                        line1 = "P<$countryCode$passportNumber",
+                        line2 = "$passportNumber$countryCode",
+                        line2CheckDigit = "0"
                     )
                     
                     Log.d(TAG, "✅ Created partial MRZ data for NFC authentication")

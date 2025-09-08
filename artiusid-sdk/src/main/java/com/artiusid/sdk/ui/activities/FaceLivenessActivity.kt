@@ -130,7 +130,9 @@ class FaceLivenessActivity : BaseSDKActivity() {
             
             val result = LivenessResult(
                 success = true,
+                isLive = true,
                 confidence = 0.95f,
+                faceBitmap = null,
                 livenessScore = 0.92f,
                 processingTime = 5000L,
                 sessionId = "liveness-${System.currentTimeMillis()}"

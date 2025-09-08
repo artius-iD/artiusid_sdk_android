@@ -197,16 +197,16 @@ class DocumentScanActivity : BaseSDKActivity() {
                         val result = documentScanService.scanDocument(bitmap, documentType)
                         
                         android.util.Log.d("DocumentScanActivity", "Document scan result: ${result.success}")
-                        android.util.Log.d("DocumentScanActivity", "OCR data: ${result.ocrData}")
+                        android.util.Log.d("DocumentScanActivity", "OCR data: ${result.extractedData}")
                         
-                        if (result.success && result.ocrData.isNotEmpty()) {
+                        if (result.success && result.extractedData.isNotEmpty()) {
                             onInstructionUpdate("Document scanned successfully!")
                             
                             // Store the captured image and OCR data
                             com.artiusid.sdk.utils.ImageStorage.setDocumentImage(bitmap)
-                            com.artiusid.sdk.utils.ImageStorage.setFrontOcrData(result.ocrData)
+                            com.artiusid.sdk.utils.ImageStorage.setFrontOcrData(result.extractedData)
                             
-                            android.util.Log.d("DocumentScanActivity", "Stored OCR data: ${result.ocrData}")
+                            android.util.Log.d("DocumentScanActivity", "Stored OCR data: ${result.extractedData}")
                             
                             ArtiusIDSDK.documentScanCallback?.onDocumentScanComplete(result)
                             finishWithSuccess()

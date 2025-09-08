@@ -134,7 +134,7 @@ class NFCReadingActivity : BaseSDKActivity() {
                 val result = nfcPassportService.readPassportData(null, mrzData)
                 
                 android.util.Log.d("NFCReadingActivity", "NFC reading result: ${result.success}")
-                android.util.Log.d("NFCReadingActivity", "NFC data: ${result.passportData}")
+                android.util.Log.d("NFCReadingActivity", "NFC data: ${result.nfcData}")
                 
                 ArtiusIDSDK.nfcReadingCallback?.onNFCReadingComplete(result)
                 finishWithSuccess()
@@ -143,11 +143,13 @@ class NFCReadingActivity : BaseSDKActivity() {
                 android.util.Log.e("NFCReadingActivity", "NFC reading failed", e)
                 
                 val errorResult = NFCPassportResult(
+                    nfcData = null,
                     success = false,
-                    passportData = emptyMap(),
-                    confidence = 0.0f,
+                    isAuthenticated = false,
+                    expiresAt = System.currentTimeMillis() + (365 * 24 * 60 * 60 * 1000L), // 1 year from now
                     processingTime = 0L,
-                    sessionId = "nfc-error-${System.currentTimeMillis()}"
+                    sessionId = "nfc-error-${System.currentTimeMillis()}",
+                    errorMessage = "NFC reading failed: ${e.message}"
                 )
                 
                 ArtiusIDSDK.nfcReadingCallback?.onNFCReadingComplete(errorResult)

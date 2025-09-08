@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import com.artiusid.sdk.callbacks.VerificationCallback
+import com.artiusid.sdk.utils.NfcHandler
 import com.artiusid.sdk.callbacks.AuthenticationCallback
 import com.artiusid.sdk.callbacks.LivenessCallback
 import com.artiusid.sdk.callbacks.DocumentScanCallback
@@ -19,6 +20,8 @@ import com.artiusid.sdk.models.LivenessResult
 import com.artiusid.sdk.models.DocumentScanResult
 import com.artiusid.sdk.models.NFCPassportResult
 import com.artiusid.sdk.ui.activities.SDKMainActivity
+import com.artiusid.sdk.services.StandaloneVerificationService
+import com.artiusid.sdk.data.models.StandaloneVerificationResultData
 
 /**
  * Main entry point for the ArtiusID Android SDK
@@ -45,6 +48,12 @@ object ArtiusIDSDK {
     
     private const val TAG = "ArtiusIDSDK"
     
+    // SDK's internal NFC handler
+    private var nfcHandler: NfcHandler? = null
+    
+    // Embedded standalone verification service
+    private var standaloneVerificationService: StandaloneVerificationService? = null
+    
     /**
      * Initialize the SDK with comprehensive configuration
      * 
@@ -61,8 +70,13 @@ object ArtiusIDSDK {
             // Initialize configuration manager with host app settings
             SDKConfigManager.initialize(context, config)
             
+            // Initialize SDK's internal NFC handler
+            nfcHandler = NfcHandler(context)
+            nfcHandler?.initialize()
+            
             android.util.Log.i(TAG, "ArtiusID SDK initialized successfully")
             android.util.Log.i(TAG, "SDK will provide complete standalone app experience")
+            android.util.Log.i(TAG, "SDK internal NFC handler initialized")
             
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Failed to initialize ArtiusID SDK", e)
@@ -94,7 +108,7 @@ object ArtiusIDSDK {
         try {
             android.util.Log.d(TAG, "Starting COMPLETE verification flow with standalone UI/UX...")
             
-            if (!SDKConfigManager.isInitialized()) {
+            if (!SDKConfigManager.isInitialized) {
                 callback.onVerificationError(SDKError(
                     code = SDKErrorCode.INVALID_CONFIG,
                     message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
@@ -128,6 +142,64 @@ object ArtiusIDSDK {
     }
     
     /**
+     * Start COMPLETE embedded verification flow with all standalone app functionality
+     * 
+     * This method provides the COMPLETE standalone application verification experience
+     * embedded directly in the SDK:
+     * - Face scanning and liveness detection (exact UI/UX from standalone)
+     * - Document scanning for State ID and Passport (exact UI/UX from standalone)
+     * - NFC passport chip reading (exact functionality from standalone)
+     * - Complete API verification calls (exact same endpoints and processing)
+     * - All UI flows, methods, and technology from the standalone application
+     * 
+     * The sample app simply calls this method and gets back the complete verification
+     * results exactly as if the standalone application was used.
+     * 
+     * @param activity The host activity
+     * @param callback Callback to receive verification results
+     */
+    fun startCompleteEmbeddedVerification(
+        activity: Activity,
+        callback: VerificationCallback
+    ) {
+        try {
+            android.util.Log.d(TAG, "🚀 Starting COMPLETE EMBEDDED verification with standalone functionality...")
+            
+            if (!SDKConfigManager.isInitialized) {
+                callback.onVerificationError(SDKError(
+                    code = SDKErrorCode.INVALID_CONFIG,
+                    message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
+                ))
+                return
+            }
+            
+            // Track analytics
+            AnalyticsManager.trackVerificationStarted()
+            
+            // Store callback for when verification completes
+            verificationCallback = callback
+            
+            // Launch the COMPLETE embedded standalone verification experience
+            val intent = Intent(activity, SDKMainActivity::class.java).apply {
+                putExtra(SDKMainActivity.EXTRA_FLOW_TYPE, SDKMainActivity.FLOW_TYPE_COMPLETE_EMBEDDED_VERIFICATION)
+                putExtra("start_time", System.currentTimeMillis())
+                putExtra("embedded_mode", true)
+            }
+            
+            activity.startActivity(intent)
+            android.util.Log.d(TAG, "✅ Launched COMPLETE embedded standalone verification experience")
+            
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "❌ Failed to start complete embedded verification flow", e)
+            callback.onVerificationError(SDKError(
+                code = SDKErrorCode.UNKNOWN_ERROR,
+                message = "Failed to start complete embedded verification: ${e.message}",
+                cause = e
+            ))
+        }
+    }
+    
+    /**
      * Start complete authentication flow with standalone app UI/UX
      * 
      * This launches the COMPLETE standalone application authentication experience:
@@ -150,7 +222,7 @@ object ArtiusIDSDK {
         try {
             android.util.Log.d(TAG, "Starting COMPLETE authentication flow with standalone UI/UX...")
             
-            if (!SDKConfigManager.isInitialized()) {
+            if (!SDKConfigManager.isInitialized) {
                 callback.onAuthenticationError(SDKError(
                     code = SDKErrorCode.INVALID_CONFIG,
                     message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
@@ -203,7 +275,7 @@ object ArtiusIDSDK {
     /**
      * Check if SDK is properly initialized
      */
-    fun isInitialized(): Boolean = SDKConfigManager.isInitialized()
+    fun isInitialized(): Boolean = SDKConfigManager.isInitialized
     
     /**
      * Get current SDK configuration (for debugging)
@@ -222,7 +294,7 @@ object ArtiusIDSDK {
      */
     internal fun notifyVerificationComplete(result: VerificationResult) {
         android.util.Log.d(TAG, "Verification completed - notifying host app")
-        AnalyticsManager.trackVerificationCompleted(result.success, result.confidence)
+        AnalyticsManager.trackVerificationCompleted(result.success)
         verificationCallback?.onVerificationComplete(result)
         verificationCallback = null
     }
@@ -233,7 +305,7 @@ object ArtiusIDSDK {
      */
     internal fun notifyVerificationError(error: SDKError) {
         android.util.Log.d(TAG, "Verification failed - notifying host app")
-        AnalyticsManager.trackVerificationCompleted(false, 0.0f)
+        AnalyticsManager.trackVerificationCompleted(false)
         verificationCallback?.onVerificationError(error)
         verificationCallback = null
     }
@@ -254,7 +326,7 @@ object ArtiusIDSDK {
      */
     internal fun notifyAuthenticationComplete(result: AuthenticationResult) {
         android.util.Log.d(TAG, "Authentication completed - notifying host app")
-        AnalyticsManager.trackAuthenticationCompleted(result.success)
+        AnalyticsManager.trackAuthenticationCompleted(result.isAuthenticated)
         authenticationCallback?.onAuthenticationComplete(result)
         authenticationCallback = null
     }
@@ -278,5 +350,30 @@ object ArtiusIDSDK {
         android.util.Log.d(TAG, "Authentication cancelled - notifying host app")
         authenticationCallback?.onAuthenticationCancelled()
         authenticationCallback = null
+    }
+    
+    // =====================================================
+    // INTERNAL NFC MANAGEMENT METHODS
+    // =====================================================
+    
+    /**
+     * Enable NFC reading within SDK (internal use)
+     */
+    internal fun enableNfcReading(activity: Activity) {
+        nfcHandler?.enableNfcReading(activity)
+    }
+    
+    /**
+     * Disable NFC reading within SDK (internal use)
+     */
+    internal fun disableNfcReading(activity: Activity) {
+        nfcHandler?.disableNfcReading(activity)
+    }
+    
+    /**
+     * Check if NFC is available (internal use)
+     */
+    internal fun isNfcAvailable(): Boolean {
+        return nfcHandler?.isNfcAvailable() ?: false
     }
 }

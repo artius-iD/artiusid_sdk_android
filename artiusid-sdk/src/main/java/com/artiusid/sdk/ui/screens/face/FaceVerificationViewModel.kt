@@ -5,8 +5,8 @@ import com.artiusid.sdk.models.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.artiusid.sdk.services.FaceMeshDetectorService
-import com.artiusid.sdk.services.FaceMeshResult
-import com.artiusid.sdk.services.ProcessingStage
+import com.artiusid.sdk.models.FaceMeshResult
+import com.artiusid.sdk.models.ProcessingStage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
