@@ -88,11 +88,15 @@ object SDKConfigManager {
             textSecondaryColor = Color(0xFF6B7280),
             buttonStyle = buttonStyle.name,
             progressStyle = progressStyle.name,
+            progressIndicatorStyle = progressStyle.name,
             darkModeSupport = true,
             errorColor = Color(0xFFD32F2F),
+            successColor = Color(0xFF4CAF50),
+            warningColor = Color(0xFFFF9800),
             surfaceColor = Color(0xFFF5F5F5),
             fontFamily = null, // No custom font resource
-            cornerRadius = 8.0f
+            cornerRadius = 8.0f,
+            logo = null // No custom logo resource
         )
     }
     

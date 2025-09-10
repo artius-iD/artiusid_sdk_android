@@ -161,36 +161,30 @@ class PassportNFCReader @Inject constructor(
         
         // Return simulated passport data
         PassportNFCData(
-            documentType = "P",
-            documentNumber = documentNumber,
+            passportNumber = documentNumber,
             issuingAuthority = "USA", 
-            firstName = "JANE",
-            lastName = "DOE",
+            givenNames = "JANE",
+            surname = "DOE",
             nationality = "USA",
             dateOfBirth = dateOfBirth,
-            gender = "F",
-            documentExpiryDate = dateOfExpiry,
+            sex = "F",
+            dateOfExpiry = dateOfExpiry,
             
             // Authentication status
-            bacStatus = PassportAuthenticationStatus.SUCCESS,
-            paceStatus = PassportAuthenticationStatus.NOT_DONE,
-            passiveAuthenticationStatus = PassportAuthenticationStatus.SUCCESS,
-            activeAuthenticationStatus = PassportAuthenticationStatus.NOT_DONE,
+            authenticationStatus = PassportAuthenticationStatus.SUCCESS,
             
             // Additional details
-            additionalPersonalDetails = mapOf(
+            rawData = mapOf(
                 "place_of_birth" to "NEW YORK, USA",
-                "issuing_authority" to "U.S. DEPARTMENT OF STATE"
-            ),
-            
-            additionalDocumentDetails = mapOf(
+                "issuing_authority" to "U.S. DEPARTMENT OF STATE",
                 "date_of_issue" to "190315",
-                "issuing_authority" to "PASSPORT AGENCY"
+                "processing_time_ms" to processingTime.toString(),
+                "data_groups_read" to "DG1,DG2,DG11,DG12,SOD"
             ),
             
-            // Metadata
-            processingTimeMs = processingTime,
-            dataGroupsRead = listOf("DG1", "DG2", "DG11", "DG12", "SOD")
+            // Validation flags
+            isValid = true,
+            isAuthenticated = true
         )
     }
     

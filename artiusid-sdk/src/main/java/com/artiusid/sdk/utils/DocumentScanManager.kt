@@ -313,6 +313,7 @@ class DocumentScanManager {
     // Legacy scanDocument method for backward compatibility
     suspend fun scanDocument(bitmap: Bitmap, side: DocumentSide): DocumentScanResult {
         Log.d("DocumentScanManager", "Legacy scanDocument called for ${side.name}")
+        val startTime = System.currentTimeMillis()
         
         return try {
             when (side) {
@@ -322,16 +323,25 @@ class DocumentScanManager {
                     if (faces.isNotEmpty()) {
                         DocumentScanResult(
                             success = true,
+                            frontImage = bitmap,
+                            backImage = null,
                             documentType = "ID_CARD",
-                            validationStatus = "Valid",
-                            confidence = 0.9f
+                            extractedData = emptyMap(),
+                            confidence = 0.9f,
+                            processingTime = System.currentTimeMillis() - startTime,
+                            sessionId = "scan_${System.currentTimeMillis()}"
                         )
                     } else {
                         DocumentScanResult(
                             success = false,
+                            frontImage = bitmap,
+                            backImage = null,
                             documentType = "ID_CARD",
-                            validationStatus = "No face detected on ID",
-                            confidence = 0.0f
+                            extractedData = emptyMap(),
+                            confidence = 0.0f,
+                            processingTime = System.currentTimeMillis() - startTime,
+                            sessionId = "scan_${System.currentTimeMillis()}",
+                            errorMessage = "No face detected on ID"
                         )
                     }
                 }
@@ -348,7 +358,7 @@ class DocumentScanManager {
                                 lastName = parsedData?.lastName ?: "",
                                 middleName = parsedData?.firstName ?: "", // Using firstName as fallback
                                 dateOfBirth = parsedData?.dateOfBirth ?: "",
-                                gender = parsedData?.firstName ?: "", // Simplified mapping
+                                sex = "", // Parser doesn't provide gender/sex data
                                 licenseNumber = parsedData?.licenseNumber ?: "",
                                 address = parsedData?.address ?: "",
                                 city = parsedData?.city ?: "",
@@ -361,17 +371,39 @@ class DocumentScanManager {
                         
                         DocumentScanResult(
                             success = true,
+                            frontImage = null,
+                            backImage = bitmap,
                             documentType = "ID_CARD",
-                            validationStatus = "PDF417 barcode detected",
+                            extractedData = aamvaData?.let { data ->
+                                mapOf(
+                                    "firstName" to (data.firstName ?: ""),
+                                    "lastName" to (data.lastName ?: ""),
+                                    "middleName" to (data.middleName ?: ""),
+                                    "dateOfBirth" to (data.dateOfBirth ?: ""),
+                                    "sex" to (data.sex ?: ""),
+                                    "licenseNumber" to (data.licenseNumber ?: ""),
+                                    "address" to (data.address ?: ""),
+                                    "city" to (data.city ?: ""),
+                                    "state" to (data.state ?: ""),
+                                    "zipCode" to (data.zipCode ?: "")
+                                )
+                            } ?: emptyMap(),
                             confidence = 0.9f,
-                            aamvaData = aamvaData
+                            processingTime = System.currentTimeMillis() - startTime,
+                            sessionId = "scan_${System.currentTimeMillis()}",
+                            barcodeData = "PDF417 barcode detected"
                         )
                     } else {
                         DocumentScanResult(
                             success = false,
+                            frontImage = null,
+                            backImage = bitmap,
                             documentType = "ID_CARD",
-                            validationStatus = "No barcode detected",
-                            confidence = 0.0f
+                            extractedData = emptyMap(),
+                            confidence = 0.0f,
+                            processingTime = System.currentTimeMillis() - startTime,
+                            sessionId = "scan_${System.currentTimeMillis()}",
+                            errorMessage = "No barcode detected"
                         )
                     }
                 }
@@ -380,9 +412,14 @@ class DocumentScanManager {
             Log.e("DocumentScanManager", "Error in legacy scanDocument: ${e.message}")
             DocumentScanResult(
                 success = false,
+                frontImage = null,
+                backImage = null,
                 documentType = "UNKNOWN",
-                validationStatus = "Error: ${e.message}",
-                confidence = 0.0f
+                extractedData = emptyMap(),
+                confidence = 0.0f,
+                processingTime = System.currentTimeMillis() - startTime,
+                sessionId = "scan_${System.currentTimeMillis()}",
+                errorMessage = "Error: ${e.message}"
             )
         }
     }

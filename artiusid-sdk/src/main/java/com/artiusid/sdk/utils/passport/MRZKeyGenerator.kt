@@ -58,7 +58,7 @@ object MRZKeyGenerator {
     /**
      * Generate MRZ key from PassportMRZData
      */
-    fun generateMRZKey(mrzData: com.artiusid.data.models.passport.PassportMRZData): String {
+    fun generateMRZKey(mrzData: com.artiusid.sdk.data.models.passport.PassportMRZData): String {
         return generateMRZKey(
             passportNumber = mrzData.passportNumber ?: "",
             dateOfBirth = mrzData.dateOfBirth ?: "",

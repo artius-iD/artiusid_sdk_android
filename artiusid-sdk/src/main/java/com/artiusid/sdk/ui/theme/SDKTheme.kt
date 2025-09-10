@@ -15,11 +15,15 @@ data class SDKTheme(
     val textSecondaryColor: Color = Color(0xFF6B7280),
     val buttonStyle: String = "FILLED",
     val progressStyle: String = "CIRCULAR",
+    val progressIndicatorStyle: String = "CIRCULAR",
     val darkModeSupport: Boolean = true,
     val errorColor: Color = Color(0xFFD32F2F),
+    val successColor: Color = Color(0xFF4CAF50),
+    val warningColor: Color = Color(0xFFFF9800),
     val surfaceColor: Color = Color(0xFFF5F5F5),
     val fontFamily: Int? = null, // Resource ID for font
-    val cornerRadius: Float = 8.0f
+    val cornerRadius: Float = 8.0f,
+    val logo: Int? = null // Resource ID for logo
 )
 
 @Composable

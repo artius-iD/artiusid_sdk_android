@@ -31,8 +31,4 @@ data class PassportMRZData(
     val line1: String? = null,
     val line2: String? = null,
     val line2CheckDigit: String? = null
-) {
-    fun getFullName(): String {
-        return fullName ?: "${givenNames ?: ""} ${surname ?: ""}".trim()
-    }
-}
+)

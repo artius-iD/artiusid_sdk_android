@@ -61,8 +61,10 @@ class SendApprovalRequest constructor(
             
             // Create request exactly like iOS (NO account number in body)
             val request = ApprovalRequestTestingRequest(
+                clientId = 1001,
+                requestType = "APPROVAL_TEST",
                 sessionId = "test-session-${System.currentTimeMillis()}",
-                mockData = mapOf("deviceId" to deviceId)
+                testData = mapOf("deviceId" to deviceId)
             )
             
             Log.d(TAG, "🔧 Android ID: $androidId -> UUID: $deviceId")
@@ -76,7 +78,7 @@ class SendApprovalRequest constructor(
             
             // Check if response is valid
             if (response != null && response.success) {
-                val requestId = response.approvalId
+                val requestId = response.sessionId
                 Log.d(TAG, "Received requestId: $requestId")
                 Log.d(TAG, "Approval request sent successfully")
                 Pair(true, requestId)

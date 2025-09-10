@@ -186,38 +186,31 @@ class JMRTDPassportReaderSimple @Inject constructor(
         
         return PassportNFCData(
             // Basic document information
-            documentType = "P",
-            documentNumber = mrzData["documentNumber"] ?: "P12345678",
+            passportNumber = mrzData["documentNumber"] ?: "P12345678",
             issuingAuthority = "USA",
-            documentExpiryDate = mrzData["dateOfExpiry"] ?: "301215",
+            dateOfExpiry = mrzData["dateOfExpiry"] ?: "301215",
             dateOfBirth = mrzData["dateOfBirth"] ?: "901215",
-            gender = "F",
+            sex = "F",
             nationality = "USA",
             
             // Name information (will be extracted from chip in Phase 2)
-            lastName = "DOE",
-            firstName = "JANE",
+            surname = "DOE",
+            givenNames = "JANE",
             
             // Authentication status (simplified for Phase 1)
-            bacStatus = if (communicationSuccess) PassportAuthenticationStatus.SUCCESS else PassportAuthenticationStatus.FAILED,
-            paceStatus = PassportAuthenticationStatus.NOT_DONE,
-            passiveAuthenticationStatus = PassportAuthenticationStatus.NOT_DONE,
-            activeAuthenticationStatus = PassportAuthenticationStatus.NOT_DONE,
+            authenticationStatus = if (communicationSuccess) PassportAuthenticationStatus.SUCCESS else PassportAuthenticationStatus.FAILED,
             
             // Additional details (placeholders for Phase 1)
-            additionalPersonalDetails = if (communicationSuccess) mapOf(
+            rawData = if (communicationSuccess) mapOf(
                 "nfc_communication" to "successful",
-                "connection_type" to "ISO-DEP"
-            ) else emptyMap(),
-            
-            additionalDocumentDetails = mapOf(
+                "connection_type" to "ISO-DEP",
                 "phase" to "1",
                 "implementation" to "simplified_jmrtd"
-            ),
+            ) else emptyMap(),
             
-            // Metadata
-            processingTimeMs = processingTime,
-            dataGroupsRead = if (communicationSuccess) listOf("BASIC_COMM") else emptyList()
+            // Validation flags
+            isValid = communicationSuccess,
+            isAuthenticated = communicationSuccess
         )
     }
 }
