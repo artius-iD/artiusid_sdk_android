@@ -3,7 +3,7 @@ package com.artiusid.sdk.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import com.artiusid.sdk.services.ApiService
+import com.artiusid.sdk.data.api.ApiService
 import com.artiusid.sdk.utils.SendApprovalRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -57,13 +57,12 @@ class SettingsRepository(
             } else {
                 val sendApprovalRequest = SendApprovalRequest(apiService, context)
                 val (success, requestId) = sendApprovalRequest.send()
-                val requestIdInt = requestId?.toIntOrNull() ?: 0 // Convert String to Int
                 
                 if (success) {
                     val message = "Approval request sent successfully."
                     LogManager.logInfo(message, TAG)
                     Log.d(TAG, message)
-                    Triple(true, message, requestIdInt)
+                    Triple(true, message, requestId)
                 } else {
                     val message = "Failed to send approval request."
                     LogManager.logError(message, TAG)

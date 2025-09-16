@@ -3,112 +3,158 @@ package com.artiusid.sdk
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import com.artiusid.sdk.bridge.StandaloneAppBridge
 import com.artiusid.sdk.callbacks.VerificationCallback
-import com.artiusid.sdk.utils.NfcHandler
 import com.artiusid.sdk.callbacks.AuthenticationCallback
-import com.artiusid.sdk.callbacks.LivenessCallback
-import com.artiusid.sdk.callbacks.DocumentScanCallback
-import com.artiusid.sdk.callbacks.NFCReadingCallback
-import com.artiusid.sdk.config.ArtiusSDKConfig
-import com.artiusid.sdk.managers.SDKConfigManager
-import com.artiusid.sdk.managers.AnalyticsManager
+import com.artiusid.sdk.config.SDKConfiguration
+import com.artiusid.sdk.models.SDKThemeConfiguration
 import com.artiusid.sdk.models.SDKError
 import com.artiusid.sdk.models.SDKErrorCode
-import com.artiusid.sdk.models.VerificationResult
-import com.artiusid.sdk.models.AuthenticationResult
-import com.artiusid.sdk.models.LivenessResult
-import com.artiusid.sdk.models.DocumentScanResult
-import com.artiusid.sdk.models.NFCPassportResult
-import com.artiusid.sdk.ui.activities.SDKMainActivity
-import com.artiusid.sdk.services.StandaloneVerificationService
-import com.artiusid.sdk.data.models.StandaloneVerificationResultData
+import com.artiusid.sdk.services.APIManager
+import com.artiusid.sdk.util.DeviceUtils
+import com.artiusid.sdk.utils.SharedContextManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
- * Main entry point for the ArtiusID Android SDK
+ * ArtiusID SDK - Bridge to Complete Standalone Application
  * 
- * This SDK provides complete identity verification and authentication flows
- * by wrapping the entire standalone application experience. When the host app
- * calls the SDK, it launches the complete standalone app UI/UX internally.
+ * This SDK provides a bridge interface to the complete standalone ArtiusID application.
+ * The standalone app runs in its own activity context with full isolation, while the
+ * SDK provides seamless integration, theming, and result communication.
  * 
- * The SDK acts as a wrapper around the sophisticated standalone application,
- * providing the exact same user experience while allowing host apps to 
- * integrate with just a few method calls.
- * 
- * @author ArtiusID Team
- * @version 2.0.0
+ * Architecture:
+ * Host App -> SDK Bridge -> Standalone App Activity -> Results -> SDK Bridge -> Host App
  */
 object ArtiusIDSDK {
+    
+    private const val TAG = "ArtiusIDSDK"
+    
+    // Bridge to standalone application
+    private lateinit var standaloneAppBridge: StandaloneAppBridge
     
     // Callback storage for returning results to host app
     var verificationCallback: VerificationCallback? = null
     var authenticationCallback: AuthenticationCallback? = null
-    var livenessCallback: LivenessCallback? = null
-    var documentScanCallback: DocumentScanCallback? = null
-    var nfcReadingCallback: NFCReadingCallback? = null
     
-    private const val TAG = "ArtiusIDSDK"
+    // SDK Configuration
+    private var sdkConfiguration: SDKConfiguration? = null
+    private var themeConfiguration: SDKThemeConfiguration? = null
+    private var isInitialized = false
     
-    // SDK's internal NFC handler
-    private var nfcHandler: NfcHandler? = null
-    
-    // Embedded standalone verification service
-    private var standaloneVerificationService: StandaloneVerificationService? = null
+    // Shared context management for mTLS and Firebase
+    private var sharedContextManager: SharedContextManager? = null
     
     /**
-     * Initialize the SDK with comprehensive configuration
-     * 
-     * This sets up the SDK to use the host app's branding, theme, and configuration
-     * while providing the complete standalone application experience.
+     * Initialize the SDK with configuration and theming
      * 
      * @param context Application context
-     * @param config Complete SDK configuration including theme, security, and API settings
+     * @param configuration SDK configuration (API keys, environment, etc.)
+     * @param theme Theme configuration for branding the standalone app
      */
-    fun initialize(context: Context, config: ArtiusSDKConfig) {
+    fun initialize(
+        context: Context, 
+        configuration: SDKConfiguration,
+        theme: SDKThemeConfiguration
+    ) {
         try {
-            android.util.Log.i(TAG, "Initializing ArtiusID SDK v2.0.0...")
-            
-            // Initialize configuration manager with host app settings
-            SDKConfigManager.initialize(context, config)
-            
-            // Initialize SDK's internal NFC handler
-            nfcHandler = NfcHandler(context)
-            nfcHandler?.initialize()
-            
-            android.util.Log.i(TAG, "ArtiusID SDK initialized successfully")
-            android.util.Log.i(TAG, "SDK will provide complete standalone app experience")
-            android.util.Log.i(TAG, "SDK internal NFC handler initialized")
-            
+            android.util.Log.i(TAG, "🌉 Initializing ArtiusID SDK Bridge...")
+
+            // Store configurations
+            sdkConfiguration = configuration.copy(
+                hostAppPackageName = context.packageName
+            )
+            themeConfiguration = theme
+
+            // Set up environment in SharedPreferences for UrlBuilder
+            val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            val environmentName = when (configuration.environment) {
+                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
+                com.artiusid.sdk.config.Environment.STAGING -> "Staging"
+                com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
+            }
+            prefs.edit().putString("environment", environmentName).apply()
+            android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
+
+            // Initialize shared context manager for mTLS and Firebase
+            sharedContextManager = SharedContextManager(context, sdkConfiguration!!)
+            sharedContextManager!!.logSharedContextStatus()
+
+            // Initialize mTLS certificate using shared context (non-blocking)
+            // Certificate registration may fail due to network issues, but app should continue
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    initializeSharedCertificate(context, sdkConfiguration!!)
+                } catch (e: Exception) {
+                    android.util.Log.e(TAG, "❌ Certificate initialization failed, but continuing with SDK initialization", e)
+                    // App continues without certificate - verification will handle this gracefully
+                }
+            }
+
+            // Initialize the bridge to standalone application
+            standaloneAppBridge = StandaloneAppBridge(context)
+            standaloneAppBridge.initialize(sdkConfiguration!!, theme)
+
+            isInitialized = true
+
+            android.util.Log.i(TAG, "✅ ArtiusID SDK Bridge initialized successfully")
+            android.util.Log.i(TAG, "🎨 Theme: ${theme.brandName}")
+            android.util.Log.i(TAG, "🏢 Environment: ${configuration.environment}")
+            android.util.Log.i(TAG, "🌉 Bridge ready to launch standalone application")
+
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "Failed to initialize ArtiusID SDK", e)
+            android.util.Log.e(TAG, "❌ Failed to initialize ArtiusID SDK Bridge", e)
             throw e
         }
     }
     
     /**
-     * Start complete verification flow with standalone app UI/UX
-     * 
-     * This launches the COMPLETE standalone application verification experience:
-     * - All the sophisticated UI screens from standalone app
-     * - Face liveness detection with advanced ML Kit integration
-     * - Document type selection with beautiful UI
-     * - Document capture with real camera, OCR, barcode scanning
-     * - NFC passport reading with chip authentication
-     * - Complete verification processing and results
-     * - All themed with host app's branding
-     * 
-     * The host app will see the SDK launch and then receive results when complete.
-     * 
-     * @param activity Calling activity
-     * @param callback Result callback for verification completion
+     * Initialize mTLS certificate using shared context for secure API communication
      */
-    fun startVerificationFlow(
-        activity: Activity,
-        callback: VerificationCallback
-    ) {
+    private fun initializeSharedCertificate(context: Context, configuration: SDKConfiguration) {
+        android.util.Log.d(TAG, "🔐 Initializing shared mTLS certificate...")
+        
+        // Initialize certificate in background to avoid blocking UI
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val deviceId = DeviceUtils.getDeviceId(context)
+                
+                android.util.Log.d(TAG, "📱 Device ID: $deviceId")
+                android.util.Log.d(TAG, "🌐 Service URL: ${configuration.baseUrl}")
+                android.util.Log.d(TAG, "🏢 Host Package: ${configuration.hostAppPackageName}")
+                
+                // Ensure certificate exists using shared context
+                sharedContextManager?.ensureSharedCertificate(deviceId)
+                
+                android.util.Log.d(TAG, "✅ Shared mTLS certificate initialization completed")
+                
+            } catch (e: Exception) {
+                android.util.Log.e(TAG, "❌ Failed to initialize shared mTLS certificate", e)
+                // Don't throw here - let the app continue and handle certificate errors during API calls
+            }
+        }
+    }
+    
+    /**
+     * Start complete verification flow using standalone application
+     * 
+     * This launches the complete standalone application in its own activity context:
+     * - All original UI screens and flows
+     * - Complete face liveness detection  
+     * - Document scanning with OCR and barcode reading
+     * - NFC passport reading
+     * - All functionality working exactly as in standalone app
+     * - Themed with host app's branding via bridge
+     * 
+     * @param activity Host activity
+     * @param callback Callback to receive verification results
+     */
+    fun startVerification(activity: Activity, callback: VerificationCallback) {
         try {
-            android.util.Log.d(TAG, "Starting COMPLETE verification flow with standalone UI/UX...")
+            android.util.Log.d(TAG, "🚀 Starting verification via standalone app bridge...")
             
-            if (!SDKConfigManager.isInitialized) {
+            if (!isInitialized) {
                 callback.onVerificationError(SDKError(
                     code = SDKErrorCode.INVALID_CONFIG,
                     message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
@@ -116,23 +162,32 @@ object ArtiusIDSDK {
                 return
             }
             
-            // Track analytics
-            AnalyticsManager.trackVerificationStarted()
-            
-            // Store callback for when standalone app completes
+            // Store callback for when verification completes
             verificationCallback = callback
             
-            // Launch the COMPLETE standalone app experience
-            val intent = Intent(activity, SDKMainActivity::class.java).apply {
-                putExtra(SDKMainActivity.EXTRA_FLOW_TYPE, SDKMainActivity.FLOW_TYPE_VERIFICATION)
-                putExtra("start_time", System.currentTimeMillis())
+            // Try to ensure certificate is ready, but don't block verification if it fails
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val deviceId = DeviceUtils.getDeviceId(activity)
+
+                    android.util.Log.d(TAG, "🔐 Attempting to ensure shared mTLS certificate for verification...")
+                    sharedContextManager?.ensureSharedCertificate(deviceId)
+                    android.util.Log.d(TAG, "✅ Certificate ready for verification")
+
+                } catch (e: Exception) {
+                    android.util.Log.w(TAG, "⚠️ Certificate not available for verification (${e.message}), but proceeding anyway")
+                    // Verification may work without mTLS depending on server configuration
+                }
+
+                // Always launch verification regardless of certificate status
+                CoroutineScope(Dispatchers.Main).launch {
+                    standaloneAppBridge.startVerification(activity, callback)
+                    android.util.Log.d(TAG, "🚀 Launched standalone application for verification")
+                }
             }
             
-            activity.startActivity(intent)
-            android.util.Log.d(TAG, "Launched complete standalone verification experience")
-            
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "Failed to start verification flow", e)
+            android.util.Log.e(TAG, "❌ Failed to start verification flow", e)
             callback.onVerificationError(SDKError(
                 code = SDKErrorCode.UNKNOWN_ERROR,
                 message = "Failed to start verification: ${e.message}",
@@ -142,87 +197,16 @@ object ArtiusIDSDK {
     }
     
     /**
-     * Start COMPLETE embedded verification flow with all standalone app functionality
+     * Start complete authentication flow using standalone application
      * 
-     * This method provides the COMPLETE standalone application verification experience
-     * embedded directly in the SDK:
-     * - Face scanning and liveness detection (exact UI/UX from standalone)
-     * - Document scanning for State ID and Passport (exact UI/UX from standalone)
-     * - NFC passport chip reading (exact functionality from standalone)
-     * - Complete API verification calls (exact same endpoints and processing)
-     * - All UI flows, methods, and technology from the standalone application
-     * 
-     * The sample app simply calls this method and gets back the complete verification
-     * results exactly as if the standalone application was used.
-     * 
-     * @param activity The host activity
-     * @param callback Callback to receive verification results
+     * @param activity Host activity
+     * @param callback Callback to receive authentication results
      */
-    fun startCompleteEmbeddedVerification(
-        activity: Activity,
-        callback: VerificationCallback
-    ) {
+    fun startAuthentication(activity: Activity, callback: AuthenticationCallback) {
         try {
-            android.util.Log.d(TAG, "🚀 Starting COMPLETE EMBEDDED verification with standalone functionality...")
+            android.util.Log.d(TAG, "🚀 Starting authentication via standalone app bridge...")
             
-            if (!SDKConfigManager.isInitialized) {
-                callback.onVerificationError(SDKError(
-                    code = SDKErrorCode.INVALID_CONFIG,
-                    message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
-                ))
-                return
-            }
-            
-            // Track analytics
-            AnalyticsManager.trackVerificationStarted()
-            
-            // Store callback for when verification completes
-            verificationCallback = callback
-            
-            // Launch the COMPLETE embedded standalone verification experience
-            val intent = Intent(activity, SDKMainActivity::class.java).apply {
-                putExtra(SDKMainActivity.EXTRA_FLOW_TYPE, SDKMainActivity.FLOW_TYPE_COMPLETE_EMBEDDED_VERIFICATION)
-                putExtra("start_time", System.currentTimeMillis())
-                putExtra("embedded_mode", true)
-            }
-            
-            activity.startActivity(intent)
-            android.util.Log.d(TAG, "✅ Launched COMPLETE embedded standalone verification experience")
-            
-        } catch (e: Exception) {
-            android.util.Log.e(TAG, "❌ Failed to start complete embedded verification flow", e)
-            callback.onVerificationError(SDKError(
-                code = SDKErrorCode.UNKNOWN_ERROR,
-                message = "Failed to start complete embedded verification: ${e.message}",
-                cause = e
-            ))
-        }
-    }
-    
-    /**
-     * Start complete authentication flow with standalone app UI/UX
-     * 
-     * This launches the COMPLETE standalone application authentication experience:
-     * - All the sophisticated UI screens from standalone app
-     * - Biometric authentication with advanced face recognition
-     * - Device binding and security checks
-     * - Secure token exchange with mTLS
-     * - Complete authentication processing and results
-     * - All themed with host app's branding
-     * 
-     * The host app will see the SDK launch and then receive results when complete.
-     * 
-     * @param activity Calling activity
-     * @param callback Result callback for authentication completion
-     */
-    fun startAuthenticationFlow(
-        activity: Activity,
-        callback: AuthenticationCallback
-    ) {
-        try {
-            android.util.Log.d(TAG, "Starting COMPLETE authentication flow with standalone UI/UX...")
-            
-            if (!SDKConfigManager.isInitialized) {
+            if (!isInitialized) {
                 callback.onAuthenticationError(SDKError(
                     code = SDKErrorCode.INVALID_CONFIG,
                     message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
@@ -230,23 +214,16 @@ object ArtiusIDSDK {
                 return
             }
             
-            // Track analytics
-            AnalyticsManager.trackAuthenticationStarted()
-            
-            // Store callback for when standalone app completes
+            // Store callback for when authentication completes
             authenticationCallback = callback
             
-            // Launch the COMPLETE standalone app experience
-            val intent = Intent(activity, SDKMainActivity::class.java).apply {
-                putExtra(SDKMainActivity.EXTRA_FLOW_TYPE, SDKMainActivity.FLOW_TYPE_AUTHENTICATION)
-                putExtra("start_time", System.currentTimeMillis())
-            }
+            // Launch standalone application via bridge
+            standaloneAppBridge.startAuthentication(activity, callback)
             
-            activity.startActivity(intent)
-            android.util.Log.d(TAG, "Launched complete standalone authentication experience")
+            android.util.Log.d(TAG, "✅ Launched standalone application for authentication")
             
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "Failed to start authentication flow", e)
+            android.util.Log.e(TAG, "❌ Failed to start authentication flow", e)
             callback.onAuthenticationError(SDKError(
                 code = SDKErrorCode.UNKNOWN_ERROR,
                 message = "Failed to start authentication: ${e.message}",
@@ -256,124 +233,23 @@ object ArtiusIDSDK {
     }
     
     /**
-     * Get SDK version information
+     * Get current theme configuration
      */
-    fun getVersion(): String = "2.0.0"
+    fun getCurrentTheme(): SDKThemeConfiguration? = themeConfiguration
     
     /**
-     * Get SDK build information
+     * Get current SDK configuration  
      */
-    fun getBuildInfo(): Map<String, String> = mapOf(
-        "version" to "2.0.0",
-        "buildDate" to "2024-01-01",
-        "platform" to "Android",
-        "type" to "Complete Standalone Wrapper",
-        "minSdkVersion" to "24",
-        "targetSdkVersion" to "34"
-    )
+    fun getCurrentConfiguration(): SDKConfiguration? = sdkConfiguration
     
     /**
-     * Check if SDK is properly initialized
+     * Check if SDK is initialized
      */
-    fun isInitialized(): Boolean = SDKConfigManager.isInitialized
+    fun isInitialized(): Boolean = isInitialized
     
     /**
-     * Get current SDK configuration (for debugging)
+     * Get shared context manager for mTLS and Firebase context sharing
+     * Internal use only - for SDK components that need shared context
      */
-    fun getConfiguration(): ArtiusSDKConfig? = try {
-        SDKConfigManager.getConfig()
-    } catch (e: Exception) {
-        null
-    }
-    
-    // Internal methods for the standalone app to call back to host app
-    
-    /**
-     * Internal method called by standalone app when verification completes
-     * This should only be called by the SDK's internal navigation system
-     */
-    internal fun notifyVerificationComplete(result: VerificationResult) {
-        android.util.Log.d(TAG, "Verification completed - notifying host app")
-        AnalyticsManager.trackVerificationCompleted(result.success)
-        verificationCallback?.onVerificationComplete(result)
-        verificationCallback = null
-    }
-    
-    /**
-     * Internal method called by standalone app when verification fails
-     * This should only be called by the SDK's internal navigation system
-     */
-    internal fun notifyVerificationError(error: SDKError) {
-        android.util.Log.d(TAG, "Verification failed - notifying host app")
-        AnalyticsManager.trackVerificationCompleted(false)
-        verificationCallback?.onVerificationError(error)
-        verificationCallback = null
-    }
-    
-    /**
-     * Internal method called by standalone app when verification is cancelled
-     * This should only be called by the SDK's internal navigation system
-     */
-    internal fun notifyVerificationCancelled() {
-        android.util.Log.d(TAG, "Verification cancelled - notifying host app")
-        verificationCallback?.onVerificationCancelled()
-        verificationCallback = null
-    }
-    
-    /**
-     * Internal method called by standalone app when authentication completes
-     * This should only be called by the SDK's internal navigation system
-     */
-    internal fun notifyAuthenticationComplete(result: AuthenticationResult) {
-        android.util.Log.d(TAG, "Authentication completed - notifying host app")
-        AnalyticsManager.trackAuthenticationCompleted(result.isAuthenticated)
-        authenticationCallback?.onAuthenticationComplete(result)
-        authenticationCallback = null
-    }
-    
-    /**
-     * Internal method called by standalone app when authentication fails
-     * This should only be called by the SDK's internal navigation system
-     */
-    internal fun notifyAuthenticationError(error: SDKError) {
-        android.util.Log.d(TAG, "Authentication failed - notifying host app")
-        AnalyticsManager.trackAuthenticationCompleted(false)
-        authenticationCallback?.onAuthenticationError(error)
-        authenticationCallback = null
-    }
-    
-    /**
-     * Internal method called by standalone app when authentication is cancelled
-     * This should only be called by the SDK's internal navigation system
-     */
-    internal fun notifyAuthenticationCancelled() {
-        android.util.Log.d(TAG, "Authentication cancelled - notifying host app")
-        authenticationCallback?.onAuthenticationCancelled()
-        authenticationCallback = null
-    }
-    
-    // =====================================================
-    // INTERNAL NFC MANAGEMENT METHODS
-    // =====================================================
-    
-    /**
-     * Enable NFC reading within SDK (internal use)
-     */
-    internal fun enableNfcReading(activity: Activity) {
-        nfcHandler?.enableNfcReading(activity)
-    }
-    
-    /**
-     * Disable NFC reading within SDK (internal use)
-     */
-    internal fun disableNfcReading(activity: Activity) {
-        nfcHandler?.disableNfcReading(activity)
-    }
-    
-    /**
-     * Check if NFC is available (internal use)
-     */
-    internal fun isNfcAvailable(): Boolean {
-        return nfcHandler?.isNfcAvailable() ?: false
-    }
+    internal fun getSharedContextManager(): SharedContextManager? = sharedContextManager
 }

@@ -21,9 +21,11 @@ class FirebaseTokenManager private constructor(private val context: Context) {
         @Volatile
         private var INSTANCE: FirebaseTokenManager? = null
         
-        fun getInstance(context: Context): FirebaseTokenManager {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: FirebaseTokenManager(context.applicationContext).also { INSTANCE = it }
+        fun getInstance(context: Context? = null): FirebaseTokenManager? {
+            return context?.let {
+                INSTANCE ?: synchronized(this) {
+                    INSTANCE ?: FirebaseTokenManager(it.applicationContext).also { INSTANCE = it }
+                }
             }
         }
     }
@@ -37,14 +39,14 @@ class FirebaseTokenManager private constructor(private val context: Context) {
             // Only return cached token synchronously
             val cachedToken = getCachedToken()
             if (!cachedToken.isNullOrEmpty()) {
-                Log.d(TAG, "Using cached FCM token")
+                Log.d(TAG, "✅ Using cached FCM token from keychain")
                 return cachedToken
             } else {
-                Log.d(TAG, "No cached FCM token available")
+                Log.d(TAG, "⚠️ No cached FCM token available in keychain")
                 return ""
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting cached FCM token: ${e.message}", e)
+            Log.e(TAG, "❌ Error getting cached FCM token from keychain: ${e.message}", e)
             ""
         }
     }
@@ -58,23 +60,23 @@ class FirebaseTokenManager private constructor(private val context: Context) {
             // First try to get cached token
             val cachedToken = getCachedToken()
             if (!cachedToken.isNullOrEmpty()) {
-                Log.d(TAG, "Using cached FCM token")
+                Log.d(TAG, "✅ Using cached FCM token from keychain")
                 return cachedToken
             }
             
             // If no cached token, request new one
-            Log.d(TAG, "No cached token found, requesting new FCM token")
+            Log.d(TAG, "🔄 No cached token found, requesting new FCM token")
             val newToken = FirebaseMessaging.getInstance().token.await()
             if (!newToken.isNullOrEmpty()) {
                 saveToken(newToken)
-                Log.d(TAG, "Generated new FCM token")
+                Log.d(TAG, "✅ Generated and saved new FCM token to keychain")
                 newToken
             } else {
-                Log.w(TAG, "Failed to get FCM token")
+                Log.w(TAG, "⚠️ Failed to get FCM token")
                 null
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error getting FCM token: ${e.message}", e)
+            Log.e(TAG, "❌ Error getting FCM token: ${e.message}", e)
             null
         }
     }
@@ -94,9 +96,9 @@ class FirebaseTokenManager private constructor(private val context: Context) {
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
             prefs.edit().putString(TOKEN_KEY, token).apply()
-            Log.d(TAG, "FCM token saved securely")
+            Log.d(TAG, "✅ FCM token saved securely to keychain")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to save FCM token: ${e.message}", e)
+            Log.e(TAG, "❌ Failed to save FCM token to keychain: ${e.message}", e)
         }
     }
     
@@ -115,7 +117,7 @@ class FirebaseTokenManager private constructor(private val context: Context) {
             )
             prefs.getString(TOKEN_KEY, null)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get cached FCM token: ${e.message}", e)
+            Log.e(TAG, "❌ Failed to get cached FCM token from keychain: ${e.message}", e)
             null
         }
     }
@@ -134,9 +136,9 @@ class FirebaseTokenManager private constructor(private val context: Context) {
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
             prefs.edit().remove(TOKEN_KEY).apply()
-            Log.d(TAG, "FCM token cleared")
+            Log.d(TAG, "✅ FCM token cleared from keychain")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to clear FCM token: ${e.message}", e)
+            Log.e(TAG, "❌ Failed to clear FCM token from keychain: ${e.message}", e)
         }
     }
 }

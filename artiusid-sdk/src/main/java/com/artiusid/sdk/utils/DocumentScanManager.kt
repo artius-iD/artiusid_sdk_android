@@ -1,10 +1,5 @@
 package com.artiusid.sdk.utils
 
-import com.artiusid.sdk.services.*
-import com.artiusid.sdk.models.DocumentScanResult
-import com.artiusid.sdk.models.AAMVAData
-import com.artiusid.sdk.utils.DocumentSide
-
 import android.graphics.Bitmap
 import android.graphics.Point
 import android.graphics.Rect
@@ -43,8 +38,18 @@ import kotlin.math.sqrt
 import kotlin.math.min
 import kotlin.math.max
 
-// DocumentSide enum moved to com.artiusid.sdk.utils.DocumentSide.kt
-// DocumentScanResult moved to com.artiusid.sdk.models package
+enum class DocumentSide {
+    FRONT, BACK
+}
+
+data class DocumentScanResult(
+    val validationStatus: String,
+    val confidence: Float,
+    val barcodeData: String? = null,
+    val isSuccess: Boolean = false,
+    val bitmap: Bitmap? = null,
+    val documentBounds: Rect? = null
+)
 
 class DocumentScanManager {
     private val textRecognizer by lazy {
@@ -313,7 +318,6 @@ class DocumentScanManager {
     // Legacy scanDocument method for backward compatibility
     suspend fun scanDocument(bitmap: Bitmap, side: DocumentSide): DocumentScanResult {
         Log.d("DocumentScanManager", "Legacy scanDocument called for ${side.name}")
-        val startTime = System.currentTimeMillis()
         
         return try {
             when (side) {
@@ -321,106 +325,24 @@ class DocumentScanManager {
                     // For front scan, just validate document presence
                     val faces = detectFaces(bitmap)
                     if (faces.isNotEmpty()) {
-                        DocumentScanResult(
-                            success = true,
-                            frontImage = bitmap,
-                            backImage = null,
-                            documentType = "ID_CARD",
-                            extractedData = emptyMap(),
-                            confidence = 0.9f,
-                            processingTime = System.currentTimeMillis() - startTime,
-                            sessionId = "scan_${System.currentTimeMillis()}"
-                        )
+                        DocumentScanResult("Valid", 0.9f, null)
                     } else {
-                        DocumentScanResult(
-                            success = false,
-                            frontImage = bitmap,
-                            backImage = null,
-                            documentType = "ID_CARD",
-                            extractedData = emptyMap(),
-                            confidence = 0.0f,
-                            processingTime = System.currentTimeMillis() - startTime,
-                            sessionId = "scan_${System.currentTimeMillis()}",
-                            errorMessage = "No face detected on ID"
-                        )
+                        DocumentScanResult("No face detected on ID", 0.0f, null)
                     }
                 }
                 DocumentSide.BACK -> {
                     // For back scan, try barcode detection
                     val barcodeData = scanDocumentForBarcode(bitmap, side)
                     if (barcodeData != null) {
-                        // Parse the barcode data into AAMVAData if it's a valid AAMVA barcode
-                        val aamvaData = try {
-                            val parsedData = AAMVABarcodeParser.parseBarcode(barcodeData)
-                            // Convert AAMVABarcodeParser.AAMVAData to models.AAMVAData
-                            AAMVAData(
-                                firstName = parsedData?.firstName ?: "",
-                                lastName = parsedData?.lastName ?: "",
-                                middleName = parsedData?.firstName ?: "", // Using firstName as fallback
-                                dateOfBirth = parsedData?.dateOfBirth ?: "",
-                                sex = "", // Parser doesn't provide gender/sex data
-                                licenseNumber = parsedData?.licenseNumber ?: "",
-                                address = parsedData?.address ?: "",
-                                city = parsedData?.city ?: "",
-                                state = parsedData?.state ?: "",
-                                zipCode = parsedData?.zipCode ?: ""
-                            )
-                        } catch (e: Exception) {
-                            null
-                        }
-                        
-                        DocumentScanResult(
-                            success = true,
-                            frontImage = null,
-                            backImage = bitmap,
-                            documentType = "ID_CARD",
-                            extractedData = aamvaData?.let { data ->
-                                mapOf(
-                                    "firstName" to (data.firstName ?: ""),
-                                    "lastName" to (data.lastName ?: ""),
-                                    "middleName" to (data.middleName ?: ""),
-                                    "dateOfBirth" to (data.dateOfBirth ?: ""),
-                                    "sex" to (data.sex ?: ""),
-                                    "licenseNumber" to (data.licenseNumber ?: ""),
-                                    "address" to (data.address ?: ""),
-                                    "city" to (data.city ?: ""),
-                                    "state" to (data.state ?: ""),
-                                    "zipCode" to (data.zipCode ?: "")
-                                )
-                            } ?: emptyMap(),
-                            confidence = 0.9f,
-                            processingTime = System.currentTimeMillis() - startTime,
-                            sessionId = "scan_${System.currentTimeMillis()}",
-                            barcodeData = "PDF417 barcode detected"
-                        )
+                        DocumentScanResult("PDF417 barcode detected", 0.9f, barcodeData)
                     } else {
-                        DocumentScanResult(
-                            success = false,
-                            frontImage = null,
-                            backImage = bitmap,
-                            documentType = "ID_CARD",
-                            extractedData = emptyMap(),
-                            confidence = 0.0f,
-                            processingTime = System.currentTimeMillis() - startTime,
-                            sessionId = "scan_${System.currentTimeMillis()}",
-                            errorMessage = "No barcode detected"
-                        )
+                        DocumentScanResult("No barcode detected", 0.0f, null)
                     }
                 }
             }
         } catch (e: Exception) {
             Log.e("DocumentScanManager", "Error in legacy scanDocument: ${e.message}")
-            DocumentScanResult(
-                success = false,
-                frontImage = null,
-                backImage = null,
-                documentType = "UNKNOWN",
-                extractedData = emptyMap(),
-                confidence = 0.0f,
-                processingTime = System.currentTimeMillis() - startTime,
-                sessionId = "scan_${System.currentTimeMillis()}",
-                errorMessage = "Error: ${e.message}"
-            )
+            DocumentScanResult("Error: ${e.message}", 0.0f, null)
         }
     }
 

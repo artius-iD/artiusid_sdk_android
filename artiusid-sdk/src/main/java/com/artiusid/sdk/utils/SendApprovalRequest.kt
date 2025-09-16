@@ -2,20 +2,20 @@ package com.artiusid.sdk.utils
 
 import android.content.Context
 import android.util.Log
-import com.artiusid.sdk.services.ApiService
-import com.artiusid.sdk.data.models.ApprovalRequestTestingRequest
-import com.artiusid.sdk.data.models.ApprovalResponse
+import com.artiusid.sdk.data.api.ApiService
+import com.artiusid.sdk.data.model.ApprovalRequestTestingRequest
 import com.artiusid.sdk.utils.VerificationStateManager
-// Removed Dagger imports
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Named
 
 /**
  * Matches iOS SendApprovalRequest.swift exactly
  * Sends test approval requests to the server
  */
-class SendApprovalRequest constructor(
-    // @Named annotation removed - using manual initialization
-    private val apiService: ApiService?,
-     private val context: Context
+class SendApprovalRequest @Inject constructor(
+    @Named("approvalRequest") private val apiService: ApiService,
+    @ApplicationContext private val context: Context
 ) {
     
     companion object {
@@ -40,7 +40,7 @@ class SendApprovalRequest constructor(
      * Send approval request - matches iOS send() function exactly
      * Returns (success, requestId)
      */
-    suspend fun send(): Pair<Boolean, String?> {
+    suspend fun send(): Pair<Boolean, Int?> {
         return try {
             // Get device ID in iOS UUID format for server compatibility
             val androidId = android.provider.Settings.Secure.getString(
@@ -61,10 +61,11 @@ class SendApprovalRequest constructor(
             
             // Create request exactly like iOS (NO account number in body)
             val request = ApprovalRequestTestingRequest(
-                clientId = 1001,
-                requestType = "APPROVAL_TEST",
-                sessionId = "test-session-${System.currentTimeMillis()}",
-                testData = mapOf("deviceId" to deviceId)
+                clientId = 1, // AppConstants.clientId
+                clientGroupId = 1, // AppConstants.clientGroupId
+                deviceId = deviceId,
+                approvalTitle = "Approval Request",
+                approvalDescription = "This is a test approval request."
             )
             
             Log.d(TAG, "🔧 Android ID: $androidId -> UUID: $deviceId")
@@ -74,11 +75,11 @@ class SendApprovalRequest constructor(
             Log.d(TAG, "✅ Server should now find device mapping with UUID format")
             
             // Call API endpoint exactly like iOS (NO query parameters)
-            val response = apiService?.sendApprovalRequest(request)
+            val response = apiService.sendApprovalRequest(request)
             
-            // Check if response is valid
-            if (response != null && response.success) {
-                val requestId = response.sessionId
+            // Check if response and approval data are valid
+            if (response.approvalData != null) {
+                val requestId = response.approvalData.requestId
                 Log.d(TAG, "Received requestId: $requestId")
                 Log.d(TAG, "Approval request sent successfully")
                 Pair(true, requestId)

@@ -2,16 +2,16 @@ package com.artiusid.sdk.utils
 
 import android.content.Context
 import com.artiusid.sdk.data.api.ApiService
-// Removed Dagger import
+import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Inject
+import javax.inject.Singleton
 
-// Removed javax.inject.Singleton import
-
-// @Singleton annotation removed - using manual initialization
-class RetrofitFactory constructor(
-     private val context: Context
+@Singleton
+class RetrofitFactory @Inject constructor(
+    @ApplicationContext private val context: Context
 ) {
     
     fun createVerificationRetrofit(okHttpClient: OkHttpClient): Retrofit {

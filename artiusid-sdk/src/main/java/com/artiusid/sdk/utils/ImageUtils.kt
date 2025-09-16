@@ -1,172 +1,162 @@
 package com.artiusid.sdk.utils
 
-import com.artiusid.sdk.utils.*
-
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.util.Base64
 import android.util.Log
 import java.io.ByteArrayOutputStream
+import kotlin.math.max
+import kotlin.math.min
 
-/**
- * Utility class for image processing operations
- */
 object ImageUtils {
+    private const val TAG = "ImageUtils"
     
+    // TESTING: Revert to original larger sizes to test if aggressive compression caused 400 error
+    private const val MAX_DOCUMENT_IMAGE_SIZE_KB = 1024 // 1MB max for documents (REVERTED)
+    private const val MAX_FACE_IMAGE_SIZE_KB = 512      // 512KB max for faces (REVERTED)
+    private const val MIN_IMAGE_QUALITY = 30          // Minimum acceptable quality
+    
+    // Target image dimensions for different types
+    private const val MAX_DOCUMENT_WIDTH = 1200
+    private const val MAX_DOCUMENT_HEIGHT = 1600
+    private const val MAX_FACE_WIDTH = 800
+    private const val MAX_FACE_HEIGHT = 600
+
     /**
-     * Convert bitmap to base64 string
+     * Convert bitmap to base64 string matching iOS implementation
+     * iOS uses compressionQuality: 1.0 (100%) and standard base64 encoding
      */
-    fun bitmapToBase64(bitmap: Bitmap, quality: Int = 90): String {
+    fun bitmapToBase64(bitmap: Bitmap): String {
         val byteArrayOutputStream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, byteArrayOutputStream)
+        // TESTING: Revert to 100% quality to test if compression change caused 400 error
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
         val byteArray = byteArrayOutputStream.toByteArray()
-        return Base64.encodeToString(byteArray, Base64.DEFAULT)
+        // Use NO_WRAP to match iOS base64 encoding (no line breaks)
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP)
     }
     
     /**
-     * Convert bitmap to base64 string optimized for documents
-     */
-    fun bitmapToDocumentBase64(bitmap: Bitmap): String {
-        return bitmapToBase64(bitmap, 80) // Lower quality for documents to reduce size
-    }
-    
-    /**
-     * Convert bitmap to base64 string optimized for face images
+     * Convert bitmap to base64 string for face images with compression
+     * Aggressively compressed to avoid HTTP 413 errors while maintaining quality
      */
     fun bitmapToFaceBase64(bitmap: Bitmap): String {
-        return bitmapToBase64(bitmap, 90) // Higher quality for face images
+        Log.d(TAG, "Compressing face image. Original size: ${bitmap.width}x${bitmap.height}")
+        
+        // Resize face image to reasonable dimensions
+        val resizedBitmap = resizeImage(bitmap, MAX_FACE_WIDTH, MAX_FACE_HEIGHT)
+        Log.d(TAG, "Resized face image to: ${resizedBitmap.width}x${resizedBitmap.height}")
+        
+        // Compress with adaptive quality to target file size
+        val compressedBase64 = compressToTargetSize(
+            resizedBitmap, 
+            MAX_FACE_IMAGE_SIZE_KB,
+            "face"
+        )
+        
+        // Clean up if we created a new bitmap
+        if (resizedBitmap != bitmap) {
+            resizedBitmap.recycle()
+        }
+        
+        return compressedBase64
     }
     
     /**
-     * Get estimated payload size in KB for a base64 string
+     * Convert bitmap to base64 string for document images with compression
+     * Balances quality and file size for document readability
+     */
+    fun bitmapToDocumentBase64(bitmap: Bitmap): String {
+        Log.d(TAG, "Compressing document image. Original size: ${bitmap.width}x${bitmap.height}")
+        
+        // Resize document image to reasonable dimensions  
+        val resizedBitmap = resizeImage(bitmap, MAX_DOCUMENT_WIDTH, MAX_DOCUMENT_HEIGHT)
+        Log.d(TAG, "Resized document image to: ${resizedBitmap.width}x${resizedBitmap.height}")
+        
+        // Compress with adaptive quality to target file size
+        val compressedBase64 = compressToTargetSize(
+            resizedBitmap,
+            MAX_DOCUMENT_IMAGE_SIZE_KB,
+            "document"
+        )
+        
+        // Clean up if we created a new bitmap
+        if (resizedBitmap != bitmap) {
+            resizedBitmap.recycle()
+        }
+        
+        return compressedBase64
+    }
+    
+    /**
+     * Resize image while maintaining aspect ratio
+     */
+    private fun resizeImage(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        
+        // Calculate scale factor to fit within max dimensions
+        val scale = min(maxWidth.toFloat() / width, maxHeight.toFloat() / height)
+        
+        // If image is already smaller, don't upscale
+        if (scale >= 1.0f) {
+            return bitmap
+        }
+        
+        val newWidth = (width * scale).toInt()
+        val newHeight = (height * scale).toInt()
+        
+        Log.d(TAG, "Scaling image from ${width}x${height} to ${newWidth}x${newHeight} (scale: $scale)")
+        
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+    }
+    
+    /**
+     * Compress bitmap to target file size using adaptive quality
+     */
+    private fun compressToTargetSize(bitmap: Bitmap, targetSizeKB: Int, imageType: String): String {
+        var quality = 85 // Start with good quality
+        var attempt = 0
+        val maxAttempts = 8
+        
+        while (attempt < maxAttempts) {
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, quality, byteArrayOutputStream)
+            val byteArray = byteArrayOutputStream.toByteArray()
+            val sizeKB = byteArray.size / 1024
+            
+            Log.d(TAG, "Compression attempt $attempt for $imageType: quality=$quality, size=${sizeKB}KB, target=${targetSizeKB}KB")
+            
+            if (sizeKB <= targetSizeKB || quality <= MIN_IMAGE_QUALITY) {
+                // Target reached or minimum quality hit
+                val base64 = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+                val base64SizeKB = base64.length * 3 / 4 / 1024 // Approximate base64 size
+                Log.d(TAG, "Final $imageType compression: quality=$quality, JPEG=${sizeKB}KB, base64≈${base64SizeKB}KB")
+                return base64
+            }
+            
+            // Adjust quality for next attempt
+            quality = when {
+                sizeKB > targetSizeKB * 2 -> quality - 25  // Much too large, aggressive reduction
+                sizeKB > targetSizeKB * 1.5 -> quality - 15  // Too large, significant reduction
+                else -> quality - 10  // Slightly too large, moderate reduction
+            }
+            
+            quality = max(quality, MIN_IMAGE_QUALITY)
+            attempt++
+        }
+        
+        // Fallback: return whatever we have
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, MIN_IMAGE_QUALITY, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+        Log.w(TAG, "Could not reach target size for $imageType, using minimum quality")
+        return Base64.encodeToString(byteArray, Base64.NO_WRAP)
+    }
+    
+    /**
+     * Get estimated payload size for logging and monitoring
      */
     fun getEstimatedPayloadSizeKB(base64String: String): Int {
-        // Each base64 character represents 6 bits of data.
-        // So, 4 base64 characters represent 3 bytes of original data.
-        // Size in bytes = (base64String.length() / 4) * 3
-        // Size in KB = (size in bytes) / 1024
-        return (base64String.length / 4 * 3) / 1024
+        // Base64 encoding increases size by ~33%, so reverse that for JPEG size
+        return base64String.length * 3 / 4 / 1024
     }
-    
-    /**
-     * Convert base64 string to bitmap
-     */
-    fun base64ToBitmap(base64String: String?): Bitmap? {
-        return try {
-            if (base64String.isNullOrEmpty()) return null
-            val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
-            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-        } catch (e: Exception) {
-            Log.e("ImageUtils", "Error converting base64 to bitmap", e)
-            null
-        }
-    }
-    
-    /**
-     * Resize bitmap to specified dimensions
-     */
-    fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
-        return Bitmap.createScaledBitmap(bitmap, width, height, true)
-    }
-    
-    /**
-     * Rotate bitmap by specified degrees
-     */
-    fun rotateBitmap(bitmap: Bitmap, degrees: Float): Bitmap {
-        val matrix = Matrix()
-        matrix.postRotate(degrees)
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-    }
-    
-    /**
-     * Crop bitmap to specified rectangle
-     */
-    fun cropBitmap(bitmap: Bitmap, x: Int, y: Int, width: Int, height: Int): Bitmap {
-        val safeX = x.coerceAtLeast(0)
-        val safeY = y.coerceAtLeast(0)
-        val safeWidth = width.coerceAtMost(bitmap.width - safeX)
-        val safeHeight = height.coerceAtMost(bitmap.height - safeY)
-        
-        return Bitmap.createBitmap(bitmap, safeX, safeY, safeWidth, safeHeight)
-    }
-    
-    /**
-     * Calculate image quality score
-     */
-    fun calculateImageQuality(bitmap: Bitmap): Float {
-        // Simple quality calculation based on image properties
-        val pixels = bitmap.width * bitmap.height
-        val aspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
-        
-        var score = 0.5f
-        
-        // Size score
-        when {
-            pixels >= 1000000 -> score += 0.3f // 1MP+
-            pixels >= 500000 -> score += 0.2f  // 0.5MP+
-            else -> score += 0.1f
-        }
-        
-        // Aspect ratio score (prefer reasonable ratios)
-        when {
-            aspectRatio in 0.7f..1.5f -> score += 0.2f
-            aspectRatio in 0.5f..2.0f -> score += 0.1f
-        }
-        
-        return score.coerceIn(0f, 1f)
-    }
-    
-    /**
-     * Enhance image contrast and brightness
-     */
-    fun enhanceImage(bitmap: Bitmap, contrast: Float = 1.2f, brightness: Float = 10f): Bitmap {
-        val width = bitmap.width
-        val height = bitmap.height
-        val enhanced = Bitmap.createBitmap(width, height, bitmap.config)
-        
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-        
-        for (i in pixels.indices) {
-            val pixel = pixels[i]
-            val r = ((pixel shr 16) and 0xff)
-            val g = ((pixel shr 8) and 0xff)
-            val b = (pixel and 0xff)
-            
-            val newR = ((r - 128) * contrast + 128 + brightness).toInt().coerceIn(0, 255)
-            val newG = ((g - 128) * contrast + 128 + brightness).toInt().coerceIn(0, 255)
-            val newB = ((b - 128) * contrast + 128 + brightness).toInt().coerceIn(0, 255)
-            
-            pixels[i] = (0xff shl 24) or (newR shl 16) or (newG shl 8) or newB
-        }
-        
-        enhanced.setPixels(pixels, 0, width, 0, 0, width, height)
-        return enhanced
-    }
-    
-    /**
-     * Convert image to grayscale
-     */
-    fun toGrayscale(bitmap: Bitmap): Bitmap {
-        val width = bitmap.width
-        val height = bitmap.height
-        val grayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-        
-        for (i in pixels.indices) {
-            val pixel = pixels[i]
-            val r = (pixel shr 16) and 0xff
-            val g = (pixel shr 8) and 0xff
-            val b = pixel and 0xff
-            
-            val gray = (0.299 * r + 0.587 * g + 0.114 * b).toInt()
-            pixels[i] = (0xff shl 24) or (gray shl 16) or (gray shl 8) or gray
-        }
-        
-        grayscale.setPixels(pixels, 0, width, 0, 0, width, height)
-        return grayscale
-    }
-}
+} 

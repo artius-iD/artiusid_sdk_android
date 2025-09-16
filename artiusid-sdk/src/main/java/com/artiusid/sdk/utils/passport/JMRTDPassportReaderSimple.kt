@@ -186,31 +186,38 @@ class JMRTDPassportReaderSimple @Inject constructor(
         
         return PassportNFCData(
             // Basic document information
-            passportNumber = mrzData["documentNumber"] ?: "P12345678",
+            documentType = "P",
+            documentNumber = mrzData["documentNumber"] ?: "P12345678",
             issuingAuthority = "USA",
-            dateOfExpiry = mrzData["dateOfExpiry"] ?: "301215",
+            documentExpiryDate = mrzData["dateOfExpiry"] ?: "301215",
             dateOfBirth = mrzData["dateOfBirth"] ?: "901215",
-            sex = "F",
+            gender = "F",
             nationality = "USA",
             
             // Name information (will be extracted from chip in Phase 2)
-            surname = "DOE",
-            givenNames = "JANE",
+            lastName = "DOE",
+            firstName = "JANE",
             
             // Authentication status (simplified for Phase 1)
-            authenticationStatus = if (communicationSuccess) PassportAuthenticationStatus.SUCCESS else PassportAuthenticationStatus.FAILED,
+            bacStatus = if (communicationSuccess) PassportAuthenticationStatus.SUCCESS else PassportAuthenticationStatus.FAILED,
+            paceStatus = PassportAuthenticationStatus.NOT_DONE,
+            passiveAuthenticationStatus = PassportAuthenticationStatus.NOT_DONE,
+            activeAuthenticationStatus = PassportAuthenticationStatus.NOT_DONE,
             
             // Additional details (placeholders for Phase 1)
-            rawData = if (communicationSuccess) mapOf(
+            additionalPersonalDetails = if (communicationSuccess) mapOf(
                 "nfc_communication" to "successful",
-                "connection_type" to "ISO-DEP",
-                "phase" to "1",
-                "implementation" to "simplified_jmrtd"
+                "connection_type" to "ISO-DEP"
             ) else emptyMap(),
             
-            // Validation flags
-            isValid = communicationSuccess,
-            isAuthenticated = communicationSuccess
+            additionalDocumentDetails = mapOf(
+                "phase" to "1",
+                "implementation" to "simplified_jmrtd"
+            ),
+            
+            // Metadata
+            processingTimeMs = processingTime,
+            dataGroupsRead = if (communicationSuccess) listOf("BASIC_COMM") else emptyList()
         )
     }
 }

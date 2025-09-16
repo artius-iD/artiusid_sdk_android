@@ -6,8 +6,8 @@ package com.artiusid.sdk.services
 
 import android.content.Context
 import android.util.Log
-import com.artiusid.sdk.data.models.LoadCertificateRequest
-import com.artiusid.sdk.data.models.LoadCertificateResponse
+import com.artiusid.sdk.models.LoadCertificateRequest
+import com.artiusid.sdk.models.LoadCertificateResponse
 import com.artiusid.sdk.utils.CertificateManager
 import com.artiusid.sdk.utils.TLSSessionManager
 import kotlinx.coroutines.Dispatchers
@@ -36,12 +36,19 @@ class APIManager(private val context: Context) {
         if (certManager.loadCertificatePem() == null) {
             Log.d(TAG, "No certificate PEM found, generating Keystore keypair and CSR...")
             val csr = certManager.generateCSR(deviceId)
-            val response = loadCertificate(serviceUrl, LoadCertificateRequest(
-                clientId = deviceId.hashCode(), // Convert string to int
-                certificateType = "device",
-                sessionId = "cert_session_${System.currentTimeMillis()}"
-            ))
-            certManager.storeCertificatePem(response.certificate ?: "")
+            
+            // Use the correct certificate registration domain (not verification domain)
+            val certificateUrl = if (serviceUrl.contains("service-mobile")) {
+                // Convert verification URL to certificate URL
+                serviceUrl.replace("service-mobile", "service-registration")
+            } else {
+                // Fallback to original URL if not recognized
+                serviceUrl
+            }
+            
+            Log.d(TAG, "Using certificate URL: $certificateUrl (converted from verification URL: $serviceUrl)")
+            val response = loadCertificate(certificateUrl, LoadCertificateRequest(deviceId, csr))
+            certManager.storeCertificatePem(response.certificate)
             Log.d(TAG, "Certificate registration and PEM storage complete")
         } else {
             Log.d(TAG, "Existing certificate PEM found")
@@ -69,9 +76,8 @@ class APIManager(private val context: Context) {
                     .build()
 
                 val jsonBody = JSONObject().apply {
-                    put("certificateType", request.certificateType)
-                    put("clientId", request.clientId)
-                    put("sessionId", request.sessionId)
+                    put("deviceId", request.deviceId)
+                    put("csr", request.csr)
                 }.toString()
                 val body = jsonBody.toRequestBody("application/json".toMediaTypeOrNull())
 
@@ -111,10 +117,7 @@ class APIManager(private val context: Context) {
                 if (certificate.isEmpty()) {
                     throw IOException("Invalid certificate response: missing certificate")
                 }
-                return@withContext LoadCertificateResponse(
-                    success = true,
-                    certificate = certificate
-                )
+                return@withContext LoadCertificateResponse(certificate = certificate)
             } catch (e: Exception) {
                 Log.e(TAG, "Error in loadCertificate", e)
                 throw e

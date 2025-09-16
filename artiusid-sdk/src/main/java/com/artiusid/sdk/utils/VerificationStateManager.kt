@@ -44,9 +44,9 @@ class VerificationStateManager(private val context: Context) {
                 accountFullName?.let { putString(KEY_ACCOUNT_FULL_NAME, it) }
                 apply()
             }
-            Log.d(TAG, "Stored verification success: accountNumber=$accountNumber, isActive=$isAccountActive")
+            Log.d(TAG, "✅ Stored verification success in keychain: accountNumber=$accountNumber, isActive=$isAccountActive")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to store verification success", e)
+            Log.e(TAG, "❌ Failed to store verification success in keychain", e)
         }
     }
     
@@ -127,4 +127,4 @@ class VerificationStateManager(private val context: Context) {
             0L
         }
     }
-} 
+}

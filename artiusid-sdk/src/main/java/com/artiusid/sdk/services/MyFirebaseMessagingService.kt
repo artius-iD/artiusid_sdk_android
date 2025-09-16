@@ -17,10 +17,10 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.artiusid.sdk.ui.activities.SDKMainActivity
+import com.artiusid.sdk.standalone.StandaloneAppActivity
 import com.artiusid.sdk.utils.FirebaseTokenManager
 import com.artiusid.sdk.utils.NotificationStateManager
-import com.artiusid.sdk.models.AppNotificationState
+import com.artiusid.sdk.data.model.AppNotificationState
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     companion object {
@@ -35,8 +35,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "FCM registration token: $token")
         
         // Save token using FirebaseTokenManager (similar to iOS MessagingDelegate)
-        val tokenManager = FirebaseTokenManager.getInstance(applicationContext)
-        tokenManager.saveToken(token)
+        val tokenManager = FirebaseTokenManager.getInstance()
+        tokenManager?.saveToken(token)
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -67,7 +67,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             
             // Handle the approval message like iOS AppDelegate.handleNotification
             // Update AppNotificationState to trigger automatic navigation
-            AppNotificationState.handleApprovalNotification(requestId ?: 0, approvalTitle, approvalDescription)
+            AppNotificationState.handleApprovalNotification(requestId, approvalTitle, approvalDescription)
             
             Log.d(TAG, "AppNotificationState updated to APPROVAL - will trigger navigation")
         } else {
@@ -121,8 +121,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             )
             notificationManager.createNotificationChannel(channel)
         }
-        // Create a generic intent since this is an SDK - the host app will handle the activity
-        val intent = packageManager.getLaunchIntentForPackage(packageName) ?: Intent()
+        val intent = Intent(this, StandaloneAppActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)

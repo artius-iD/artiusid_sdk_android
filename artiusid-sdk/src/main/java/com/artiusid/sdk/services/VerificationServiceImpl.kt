@@ -10,9 +10,10 @@ import com.artiusid.sdk.utils.CertificateManager
 import com.artiusid.sdk.utils.TLSSessionManager
 import com.artiusid.sdk.utils.EnvironmentManager
 import com.artiusid.sdk.utils.UrlBuilder
-import com.artiusid.sdk.data.models.VerificationRequest
-import com.artiusid.sdk.data.models.VerificationResponse
-import com.artiusid.sdk.data.models.VerificationData
+import com.artiusid.sdk.ArtiusIDSDK
+import com.artiusid.sdk.data.model.VerificationRequest
+import com.artiusid.sdk.data.model.VerificationResponse
+import com.artiusid.sdk.data.model.VerificationData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -34,8 +35,17 @@ class VerificationServiceImpl(
     }
 
     private fun getClient(): OkHttpClient {
-        Log.d(TAG, "Creating OkHttpClient for verification with mTLS")
-        return tlsSessionManager.getOkHttpClient()
+        Log.d(TAG, "Creating OkHttpClient for verification with shared mTLS context")
+        
+        // Use shared context manager if available, otherwise fall back to local TLS manager
+        val sharedContextManager = ArtiusIDSDK.getSharedContextManager()
+        return if (sharedContextManager != null) {
+            Log.d(TAG, "✅ Using shared mTLS context from host application")
+            sharedContextManager.getSharedOkHttpClient()
+        } else {
+            Log.w(TAG, "⚠️ Shared context not available, using local TLS manager")
+            tlsSessionManager.getOkHttpClient()
+        }
     }
 
     override suspend fun submitVerification(verificationData: String): String = withContext(Dispatchers.IO) {

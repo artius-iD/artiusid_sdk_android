@@ -13,10 +13,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-/**
- * CustomInfoButton - EXACT STANDALONE APPLICATION IMPLEMENTATION
- * Orange instruction button used in face liveness screen
- */
 @Composable
 fun CustomInfoButton(
     buttonLabel: String,
@@ -28,8 +24,8 @@ fun CustomInfoButton(
             .fillMaxWidth()
             .height(59.dp)
             .background(
-                color = if (isSecondary) Color.White else Color(0xFFFF6B35), // iOS-like orange - EXACT STANDALONE COLOR
-                shape = RoundedCornerShape(12.58.dp) // EXACT STANDALONE CORNER RADIUS
+                color = if (isSecondary) Color.White else Color(0xFFFF6B35), // iOS-like orange
+                shape = RoundedCornerShape(12.58.dp)
             ),
         contentAlignment = Alignment.Center
     ) {
@@ -41,4 +37,4 @@ fun CustomInfoButton(
             textAlign = TextAlign.Center
         )
     }
-}
+} 

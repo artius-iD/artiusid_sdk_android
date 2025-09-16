@@ -5,7 +5,7 @@ import android.util.Log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import com.artiusid.sdk.models.FaceVerificationResult
+import com.artiusid.sdk.data.model.FaceVerificationResult
 
 class FaceVerificationServiceImpl(private val context: Context) : FaceVerificationService {
     companion object {
@@ -21,9 +21,9 @@ class FaceVerificationServiceImpl(private val context: Context) : FaceVerificati
         delay(1000) // Simulate processing time
         faceVerified = true
         return FaceVerificationResult(
-            isVerified = true,
+            success = true,
             confidence = 0.95f,
-            faceBitmap = null
+            message = "Face verification completed successfully"
         )
     }
 
@@ -33,17 +33,16 @@ class FaceVerificationServiceImpl(private val context: Context) : FaceVerificati
 
     override fun startVerification(): Flow<FaceVerificationResult> = flow {
         emit(FaceVerificationResult(
-            isVerified = false,
+            success = false,
             confidence = 0f,
-            faceBitmap = null,
-            errorMessage = "Verification in progress"
+            message = "Verification in progress"
         ))
         delay(1000) // Simulate processing time
         faceVerified = true
         emit(FaceVerificationResult(
-            isVerified = true,
+            success = true,
             confidence = 0.95f,
-            faceBitmap = null
+            message = "Face verification completed successfully"
         ))
     }
 } 

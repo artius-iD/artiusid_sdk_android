@@ -17,7 +17,7 @@
         android:theme="@style/Theme.ArtiusIDSample">
         
         <activity
-            android:name=".MainActivity"
+            android:name=".BridgeMainActivity"
             android:exported="true"
             android:theme="@style/Theme.ArtiusIDSample"
             android:launchMode="singleTop">

@@ -4,8 +4,8 @@
  */
 package com.artiusid.sdk.services
 
-import com.artiusid.sdk.data.models.VerificationRequest
-import com.artiusid.sdk.data.models.VerificationResponse
+import com.artiusid.sdk.data.model.VerificationRequest
+import com.artiusid.sdk.data.model.VerificationResponse
 
 interface VerificationService {
     suspend fun submitVerification(verificationData: String): String

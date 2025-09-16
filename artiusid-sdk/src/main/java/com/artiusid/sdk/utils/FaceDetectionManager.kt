@@ -1,7 +1,5 @@
 package com.artiusid.sdk.utils
 
-import com.artiusid.sdk.services.*
-
 import android.graphics.Bitmap
 import android.graphics.Rect
 import com.google.mlkit.vision.common.InputImage
