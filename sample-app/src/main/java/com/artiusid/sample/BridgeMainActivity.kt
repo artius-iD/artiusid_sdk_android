@@ -28,21 +28,27 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /**
- * Bridge Sample App demonstrating the ArtiusID SDK Bridge Architecture
+ * Sample App demonstrating the ArtiusID SDK Integration
  * 
- * This sample app shows how to integrate with the ArtiusID SDK bridge that
- * launches the complete standalone application in an isolated activity context.
+ * This sample app shows how to integrate with the ArtiusID SDK that
+ * launches the complete standalone application with full verification capabilities.
  */
 class BridgeMainActivity : ComponentActivity(), VerificationCallback, AuthenticationCallback {
     
     private var isLoading by mutableStateOf(false)
-    private var lastResult by mutableStateOf("")
+    private var lastResult by mutableStateOf("Application started - checking keychain status...")
     private var selectedTheme by mutableStateOf(ThemeOption.ARTIUSID_DEFAULT)
     private var verificationResultData by mutableStateOf<VerificationResultData?>(null)
     private var showResultsScreen by mutableStateOf(false)
+    private var fcmTokenStatus by mutableStateOf("❌ Not available")
+    private var fcmTokenPreview by mutableStateOf("")
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Check FCM token and certificate status on startup
+        checkFCMTokenStatus()
+        checkCertificateStatus()
         
         setContent {
             MaterialTheme {
@@ -93,34 +99,6 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                 modifier = Modifier.padding(bottom = 32.dp)
             )
             
-            // Architecture Info
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "🏗️ Bridge Architecture",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = "Host App → SDK Bridge → Standalone App Activity → Results → SDK Bridge → Host App",
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = "• Complete isolation of standalone app\n• Seamless theming and configuration\n• Full functionality preservation\n• Clean result communication",
-                        fontSize = 14.sp
-                    )
-                }
-            }
             
             // Theme Selection
             Card(
@@ -238,6 +216,73 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                             fontSize = 14.sp,
                             modifier = Modifier.padding(8.dp)
                         )
+                        
+                        // Add FCM Token and Certificate Info
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // FCM Token Section
+                        Text(
+                            text = "🔥 FCM Token Status",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        
+                        Text(
+                            text = "Status: $fcmTokenStatus",
+                            fontSize = 12.sp,
+                            color = if (fcmTokenStatus.contains("✅")) Color(0xFF4CAF50) else Color(0xFFF44336)
+                        )
+                        
+                        if (fcmTokenPreview.isNotEmpty()) {
+                            Text(
+                                text = "Token: $fcmTokenPreview",
+                                fontSize = 10.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // Certificate Section
+                        Text(
+                            text = "🔐 Client Certificate Status",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        
+                        val certManager = com.artiusid.sdk.utils.CertificateManager(this@BridgeMainActivity)
+                        val hasCertificate = try {
+                            certManager.loadCertificatePem() != null
+                        } catch (e: Exception) {
+                            false
+                        }
+                        
+                        val certStatus = if (hasCertificate) "✅ Loaded" else "❌ Not loaded"
+                        val certColor = if (hasCertificate) Color(0xFF4CAF50) else Color(0xFFF44336)
+                        
+                        Text(
+                            text = "Status: $certStatus",
+                            fontSize = 12.sp,
+                            color = certColor
+                        )
+                        
+                        if (hasCertificate) {
+                            val keyMatch = try {
+                                certManager.verifyCertificateKeyMatch()
+                            } catch (e: Exception) {
+                                false
+                            }
+                            
+                            Text(
+                                text = "Key Match: ${if (keyMatch) "✅ Valid" else "❌ Invalid"}",
+                                fontSize = 10.sp,
+                                color = if (keyMatch) Color(0xFF4CAF50) else Color(0xFFF44336),
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -288,6 +333,159 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 4.dp)
             )
+        }
+    }
+    
+    private fun checkFCMTokenStatus() {
+        android.util.Log.d("BridgeMainActivity", "🔍 Checking FCM token status...")
+        
+        try {
+            // Check Firebase initialization first
+            try {
+                val firebaseApp = com.google.firebase.FirebaseApp.getInstance()
+                android.util.Log.d("BridgeMainActivity", "🔥 Firebase app instance: ${firebaseApp.name}")
+            } catch (e: Exception) {
+                android.util.Log.e("BridgeMainActivity", "❌ Firebase not initialized properly", e)
+                fcmTokenStatus = "❌ Firebase not initialized"
+                lastResult = "❌ Firebase initialization error: ${e.message}"
+                return
+            }
+            
+            val fcmTokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this)
+            android.util.Log.d("BridgeMainActivity", "📱 FCM TokenManager instance: ${fcmTokenManager != null}")
+            
+            if (fcmTokenManager == null) {
+                fcmTokenStatus = "❌ Manager null"
+                lastResult = "❌ FCM TokenManager could not be created"
+                return
+            }
+            
+            val cachedToken = fcmTokenManager.getFCMToken() ?: ""
+            android.util.Log.d("BridgeMainActivity", "💾 Cached token length: ${cachedToken.length}")
+            
+            if (cachedToken.isNotEmpty()) {
+                fcmTokenStatus = "✅ Available"
+                fcmTokenPreview = cachedToken.take(20) + "..."
+                android.util.Log.d("BridgeMainActivity", "✅ FCM token found in cache: ${cachedToken.take(20)}...")
+                
+                // Update last result to show we found the token
+                lastResult = "✅ FCM Token found in keychain: ${cachedToken.take(20)}..."
+            } else {
+                android.util.Log.d("BridgeMainActivity", "⚠️ No cached FCM token, attempting to retrieve...")
+                fcmTokenStatus = "🔄 Retrieving..."
+                lastResult = "🔄 Retrieving FCM Token..."
+                
+                // Try to get token asynchronously using Firebase Messaging directly
+                Thread {
+                    try {
+                        android.util.Log.d("BridgeMainActivity", "🔄 Calling Firebase Messaging directly...")
+                        
+                        // Try direct Firebase Messaging call
+                        com.google.firebase.messaging.FirebaseMessaging.getInstance().token
+                            .addOnCompleteListener { task ->
+                                if (!task.isSuccessful) {
+                                    android.util.Log.w("BridgeMainActivity", "⚠️ Fetching FCM registration token failed", task.exception)
+                                    runOnUiThread {
+                                        fcmTokenStatus = "❌ Not available"
+                                        lastResult = "❌ FCM Token fetch failed: ${task.exception?.message}"
+                                    }
+                                    return@addOnCompleteListener
+                                }
+
+                                // Get new FCM registration token
+                                val token = task.result
+                                android.util.Log.d("BridgeMainActivity", "📥 Direct Firebase token result: ${token?.take(20) ?: "null"}")
+                                
+                                if (!token.isNullOrEmpty()) {
+                                    // Save token using FirebaseTokenManager
+                                    fcmTokenManager.saveToken(token)
+                                    
+                                    runOnUiThread {
+                                        fcmTokenStatus = "✅ Available"
+                                        fcmTokenPreview = token.take(20) + "..."
+                                        lastResult = "✅ FCM Token retrieved and cached: ${token.take(20)}..."
+                                    }
+                                    android.util.Log.d("BridgeMainActivity", "✅ FCM token retrieved directly: ${token.take(20)}...")
+                                } else {
+                                    runOnUiThread {
+                                        fcmTokenStatus = "❌ Not available"
+                                        lastResult = "❌ FCM Token is null/empty"
+                                    }
+                                    android.util.Log.w("BridgeMainActivity", "⚠️ FCM token is null or empty")
+                                }
+                            }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            fcmTokenStatus = "❌ Error"
+                            lastResult = "❌ FCM Token error: ${e.message}"
+                        }
+                        android.util.Log.e("BridgeMainActivity", "❌ Error retrieving FCM token", e)
+                    }
+                }.start()
+            }
+        } catch (e: Exception) {
+            fcmTokenStatus = "❌ Error"
+            lastResult = "❌ FCM Token check error: ${e.message}"
+            android.util.Log.e("BridgeMainActivity", "❌ Error checking FCM token status", e)
+        }
+    }
+    
+    private fun checkCertificateStatus() {
+        android.util.Log.d("BridgeMainActivity", "🔐 Checking certificate status...")
+        
+        try {
+            val certManager = com.artiusid.sdk.utils.CertificateManager(this)
+            android.util.Log.d("BridgeMainActivity", "📱 Certificate manager created for context: ${this.packageName}")
+            
+            val hasCertificate = try {
+                val cert = certManager.loadCertificatePem()
+                android.util.Log.d("BridgeMainActivity", "💾 Certificate PEM loaded: ${cert != null}, length: ${cert?.length ?: 0}")
+                cert != null && cert.isNotEmpty()
+            } catch (e: Exception) {
+                android.util.Log.w("BridgeMainActivity", "Certificate load failed: ${e.message}")
+                false
+            }
+            
+            if (hasCertificate) {
+                val keyMatch = try {
+                    val result = certManager.verifyCertificateKeyMatch()
+                    android.util.Log.d("BridgeMainActivity", "🔑 Key match verification result: $result")
+                    result
+                } catch (e: Exception) {
+                    android.util.Log.w("BridgeMainActivity", "Key match verification failed: ${e.message}")
+                    false
+                }
+                
+                val certStatus = if (keyMatch) "✅ Valid certificate with matching key" else "⚠️ Certificate found but key mismatch"
+                android.util.Log.d("BridgeMainActivity", "🔐 Certificate status: $certStatus")
+                
+                // Update last result to include certificate info
+                if (lastResult.contains("FCM Token")) {
+                    lastResult += "\n$certStatus"
+                } else {
+                    lastResult = certStatus
+                }
+            } else {
+                android.util.Log.d("BridgeMainActivity", "⚠️ No certificate found, this will be generated during verification")
+                val certStatus = "⚠️ No certificate - will generate during verification"
+                
+                // Update last result to include certificate info
+                if (lastResult.contains("FCM Token")) {
+                    lastResult += "\n$certStatus"
+                } else {
+                    lastResult = certStatus
+                }
+            }
+        } catch (e: Exception) {
+            val errorStatus = "❌ Certificate check error: ${e.message}"
+            android.util.Log.e("BridgeMainActivity", "❌ Error checking certificate status", e)
+            
+            // Update last result to include certificate error
+            if (lastResult.contains("FCM Token")) {
+                lastResult += "\n$errorStatus"
+            } else {
+                lastResult = errorStatus
+            }
         }
     }
     
@@ -361,6 +559,9 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         
         // Show the results screen
         showResultsScreen = true
+        
+        // Refresh FCM token status after verification
+        checkFCMTokenStatus()
         
         // Also update the text result for debugging
         lastResult = """

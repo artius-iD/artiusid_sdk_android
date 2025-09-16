@@ -153,7 +153,7 @@ object ArtiusIDSDK {
     fun startVerification(activity: Activity, callback: VerificationCallback) {
         try {
             android.util.Log.d(TAG, "🚀 Starting verification via standalone app bridge...")
-            
+
             if (!isInitialized) {
                 callback.onVerificationError(SDKError(
                     code = SDKErrorCode.INVALID_CONFIG,
@@ -161,28 +161,57 @@ object ArtiusIDSDK {
                 ))
                 return
             }
-            
+
             // Store callback for when verification completes
             verificationCallback = callback
-            
-            // Try to ensure certificate is ready, but don't block verification if it fails
+
+            // Ensure certificate is ready before starting verification
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     val deviceId = DeviceUtils.getDeviceId(activity)
+                    android.util.Log.d(TAG, "🔐 Ensuring mTLS certificate is ready for verification...")
+                    android.util.Log.d(TAG, "📱 Device ID: $deviceId")
+                    android.util.Log.d(TAG, "🏢 Host Package: ${activity.packageName}")
 
-                    android.util.Log.d(TAG, "🔐 Attempting to ensure shared mTLS certificate for verification...")
-                    sharedContextManager?.ensureSharedCertificate(deviceId)
-                    android.util.Log.d(TAG, "✅ Certificate ready for verification")
+                    // Force certificate check/generation before verification
+                    val certManager = sharedContextManager?.getSharedCertificateManager() 
+                        ?: com.artiusid.sdk.utils.CertificateManager(activity)
+                    
+                    val existingCert = certManager.loadCertificatePem()
+                    if (existingCert == null) {
+                        android.util.Log.w(TAG, "⚠️ No certificate found, will be generated during verification process")
+                    } else {
+                        android.util.Log.d(TAG, "✅ Certificate found, length: ${existingCert.length}")
+                        
+                        // Verify certificate-key match
+                        val keyMatch = try {
+                            certManager.verifyCertificateKeyMatch()
+                        } catch (e: Exception) {
+                            android.util.Log.w(TAG, "⚠️ Certificate key match verification failed: ${e.message}")
+                            false
+                        }
+                        
+                        if (!keyMatch) {
+                            android.util.Log.w(TAG, "⚠️ Certificate-key mismatch, will regenerate during verification")
+                        } else {
+                            android.util.Log.d(TAG, "✅ Certificate and key match verified")
+                        }
+                    }
+
+                    // Always launch verification - certificate will be handled by standalone app
+                    CoroutineScope(Dispatchers.Main).launch {
+                        standaloneAppBridge.startVerification(activity, callback)
+                        android.util.Log.d(TAG, "🚀 Launched standalone application for verification")
+                    }
 
                 } catch (e: Exception) {
-                    android.util.Log.w(TAG, "⚠️ Certificate not available for verification (${e.message}), but proceeding anyway")
-                    // Verification may work without mTLS depending on server configuration
-                }
-
-                // Always launch verification regardless of certificate status
-                CoroutineScope(Dispatchers.Main).launch {
-                    standaloneAppBridge.startVerification(activity, callback)
-                    android.util.Log.d(TAG, "🚀 Launched standalone application for verification")
+                    android.util.Log.e(TAG, "❌ Error during certificate check, but proceeding with verification", e)
+                    
+                    // Still launch verification - let standalone app handle certificate issues
+                    CoroutineScope(Dispatchers.Main).launch {
+                        standaloneAppBridge.startVerification(activity, callback)
+                        android.util.Log.d(TAG, "🚀 Launched standalone application for verification (with cert warning)")
+                    }
                 }
             }
             

@@ -12,6 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -53,7 +54,10 @@ fun PassportScanIntroScreen(
                 contentAlignment = Alignment.TopCenter
             ) {
                 AsyncImage(
-                    model = R.drawable.passport_animation,
+                    model = coil.request.ImageRequest.Builder(LocalContext.current)
+                        .data(R.drawable.passport_animation)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = "Passport Animation",
                     modifier = Modifier
                         .fillMaxWidth()

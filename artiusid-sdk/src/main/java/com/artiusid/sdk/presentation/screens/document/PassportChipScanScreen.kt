@@ -821,10 +821,6 @@ fun PassportChipScanScreen(
                 onRetry = { 
                     retryNfcScan()
                 },
-                onSkip = { 
-                    Log.d("PassportChipScan", "👤 User chose to skip NFC scanning")
-                    onChipScanComplete(null)
-                },
                 onComplete = { onChipScanComplete(null) }
             )
         }
@@ -962,7 +958,7 @@ private fun NFCStatusContent(state: NFCScanState, retryCount: Int, maxRetries: I
             is NFCScanState.Error -> {
                 val errorTitle = if (retryCount >= maxRetries) "NFC Reading Failed" else "Scan Failed"
                 val errorDesc = if (retryCount >= maxRetries) {
-                    "Unable to read passport after $maxRetries attempts. You can continue without NFC data."
+                    "Unable to read passport after $maxRetries attempts. Please try again or contact support."
                 } else {
                     state.message
                 }
@@ -1021,7 +1017,6 @@ private fun NFCActionButtons(
     retryCount: Int,
     maxRetries: Int,
     onRetry: () -> Unit,
-    onSkip: () -> Unit,
     onComplete: () -> Unit
 ) {
     when (nfcScanState) {
@@ -1057,23 +1052,6 @@ private fun NFCActionButtons(
                         )
                     }
                 }
-                
-                // Skip NFC button (always available)
-                Button(
-                    onClick = onSkip,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = WhiteA700
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, WhiteA700.copy(alpha = 0.5f))
-                ) {
-                    Text(
-                        text = if (retryCount >= maxRetries) "Continue Without NFC" else "Skip NFC Scan",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
             }
         }
         is NFCScanState.Success -> {
@@ -1093,22 +1071,7 @@ private fun NFCActionButtons(
             }
         }
         is NFCScanState.WaitingForNFC -> {
-            // Show skip option during waiting as well
-            Button(
-                onClick = onSkip,
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = WhiteA700
-                ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, WhiteA700.copy(alpha = 0.5f))
-            ) {
-                Text(
-                    text = "Skip NFC Scan",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            // No skip button - user must complete NFC scan
         }
         else -> {
             // No buttons for active scanning states (Connecting, Authenticating, ReadingData)

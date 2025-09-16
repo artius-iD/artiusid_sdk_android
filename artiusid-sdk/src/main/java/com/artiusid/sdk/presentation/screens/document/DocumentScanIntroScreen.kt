@@ -12,6 +12,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -19,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
+import coil.compose.AsyncImage
 import coil.compose.AsyncImage
 
 @Composable
@@ -53,7 +55,10 @@ fun DocumentScanIntroScreen(
                 contentAlignment = Alignment.TopCenter
             ) {
                 AsyncImage(
-                    model = R.drawable.stateid_animation,
+                    model = coil.request.ImageRequest.Builder(LocalContext.current)
+                        .data(R.drawable.stateid_animation)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = "State ID Animation",
                     modifier = Modifier
                         .fillMaxWidth()

@@ -126,8 +126,8 @@ fun DocumentScanScreen(
                         }
                     }
                     else -> {
-                        // Enhanced Camera Preview with Advanced Autofocus
-                        EnhancedDocumentCameraPreview(
+                        // Camera Preview with OCR and Image Capture
+                        DocumentCameraPreview(
                             modifier = Modifier.fillMaxSize(),
                             viewModel = viewModel
                         )

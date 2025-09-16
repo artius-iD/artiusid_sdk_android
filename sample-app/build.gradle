@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'com.google.dagger.hilt.android'
     id 'com.google.devtools.ksp'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -64,4 +65,18 @@ dependencies {
     implementation "com.google.dagger:hilt-android:${hilt_version}"
     ksp "com.google.dagger:hilt-android-compiler:${hilt_version}"
     implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
+    
+    // Coil - Required for GIF animations in SDK
+    implementation 'io.coil-kt:coil-compose:2.5.0'
+    implementation 'io.coil-kt:coil-gif:2.5.0'
+    implementation 'io.coil-kt:coil-base:2.5.0'
+    
+    // OkHttp - Required for Coil ImageLoader
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    
+    // Firebase - Required for FCM token functionality
+    implementation platform('com.google.firebase:firebase-bom:32.7.2')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-messaging:23.4.1'
 }
