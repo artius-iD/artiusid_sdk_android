@@ -31,7 +31,7 @@ fun PassportChipIntroScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Gray900)
+            .background(com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().background)
     ) {
         Column(
             modifier = Modifier
@@ -63,6 +63,7 @@ fun PassportChipIntroScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
+                        .background(Color.Transparent)
                 )
             }
             
@@ -71,7 +72,7 @@ fun PassportChipIntroScreen(
             // Title
             Text(
                 text = "Scan Passport Chip",
-                color = Yellow900,
+                color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -82,7 +83,7 @@ fun PassportChipIntroScreen(
             // Description
             Text(
                 text = "Continue your verification by scanning your passport chip. See animation above and when ready tap Scan My Passport Chip",
-                color = WhiteA700,
+                color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 lineHeight = 20.sp
@@ -97,13 +98,13 @@ fun PassportChipIntroScreen(
                     .fillMaxWidth()
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow900
+                    containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Scan My Passport Chip",
-                    color = Gray900,
+                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor(),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -127,14 +128,14 @@ private fun CustomBackButton(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
-                tint = WhiteA700
+                tint = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
             )
         }
         
         if (navTitle.isNotEmpty()) {
             Text(
                 text = navTitle,
-                color = WhiteA700,
+                color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = 8.dp)

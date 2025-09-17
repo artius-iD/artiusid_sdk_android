@@ -23,6 +23,11 @@ import com.artiusid.sdk.bridge.BridgeCallbackRegistry
 import com.artiusid.sdk.bridge.StandaloneAppBridge
 import com.artiusid.sdk.config.SDKConfiguration
 import com.artiusid.sdk.models.SDKThemeConfiguration
+import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
+import com.artiusid.sdk.ui.theme.EnhancedSDKTheme
+import com.artiusid.sdk.ui.theme.EnhancedThemeManager
+import com.artiusid.sdk.ui.theme.ColorManager
+import com.artiusid.sdk.ui.theme.ProvideAppColorScheme
 import com.artiusid.sdk.models.VerificationResult
 import com.artiusid.sdk.models.AuthenticationResult
 import com.artiusid.sdk.models.SDKError
@@ -49,6 +54,7 @@ class StandaloneAppActivity : ComponentActivity() {
     private var flowType: String? = null
     private var sdkConfiguration: SDKConfiguration? = null
     private var themeConfiguration: SDKThemeConfiguration? = null
+    private var enhancedThemeConfiguration: EnhancedSDKThemeConfiguration? = null
     
     // NFC handling
     private var nfcAdapter: NfcAdapter? = null
@@ -75,24 +81,43 @@ class StandaloneAppActivity : ComponentActivity() {
         // Initialize NFC
         initializeNFC()
         
-        // Launch the complete standalone application with theming
+        // Launch the complete standalone application with enhanced theming
         setContent {
-            StandaloneAppTheme(themeConfiguration) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    // Launch the COMPLETE standalone application with all functionality
-                    val navController = rememberNavController()
-                    
-                    AppNavigation(
-                        navController = navController,
-                        startDestination = if (flowType == "verification") "verification_steps" else "authentication",
-                        onVerificationComplete = { result -> handleVerificationSuccess(result) },
-                        onAuthenticationComplete = { result -> handleAuthenticationSuccess(result) },
-                        onError = { errorMessage -> handleError(errorMessage) },
-                        onCancel = { handleCancel() }
-                    )
+            val themeToUse = enhancedThemeConfiguration ?: createDefaultEnhancedTheme(themeConfiguration)
+            
+            android.util.Log.d(TAG, "🎨 Applying enhanced theme: ${themeToUse.brandName}")
+            
+            // Apply enhanced theme to ColorManager for backward compatibility
+            ColorManager.setEnhancedTheme(themeToUse)
+            
+            EnhancedSDKTheme(themeToUse) {
+                // Apply Material3 theme with enhanced configuration
+                val colorScheme = EnhancedThemeManager.createColorScheme(themeToUse.colorScheme)
+                val typography = EnhancedThemeManager.createTypography(this@StandaloneAppActivity, themeToUse.typography)
+                
+                // Provide both enhanced theming and legacy color scheme support
+                ProvideAppColorScheme(ColorManager.getCurrentScheme()) {
+                    MaterialTheme(
+                        colorScheme = colorScheme,
+                        typography = typography
+                    ) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            // Launch the COMPLETE standalone application with all functionality
+                            val navController = rememberNavController()
+                            
+                            AppNavigation(
+                                navController = navController,
+                                startDestination = if (flowType == "verification") "verification_steps" else "authentication",
+                                onVerificationComplete = { result -> handleVerificationSuccess(result) },
+                                onAuthenticationComplete = { result -> handleAuthenticationSuccess(result) },
+                                onError = { errorMessage -> handleError(errorMessage) },
+                                onCancel = { handleCancel() }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -102,6 +127,7 @@ class StandaloneAppActivity : ComponentActivity() {
         flowType = intent.getStringExtra(StandaloneAppBridge.EXTRA_FLOW_TYPE)
         sdkConfiguration = intent.getParcelableExtra(StandaloneAppBridge.EXTRA_SDK_CONFIG)
         themeConfiguration = intent.getParcelableExtra(StandaloneAppBridge.EXTRA_THEME_CONFIG)
+        enhancedThemeConfiguration = intent.getParcelableExtra(StandaloneAppBridge.EXTRA_ENHANCED_THEME_CONFIG)
         
         android.util.Log.d(TAG, "📋 Configuration extracted:")
         android.util.Log.d(TAG, "   Flow Type: $flowType")
@@ -341,6 +367,38 @@ class StandaloneAppActivity : ComponentActivity() {
             }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "❌ Failed to handle NFC tag", e)
+        }
+    }
+    
+    /**
+     * Create a default enhanced theme from basic theme configuration
+     */
+    private fun createDefaultEnhancedTheme(basicTheme: SDKThemeConfiguration?): EnhancedSDKThemeConfiguration {
+        return if (basicTheme != null) {
+            EnhancedSDKThemeConfiguration(
+                brandName = basicTheme.brandName,
+                brandLogoUrl = basicTheme.brandLogoUrl,
+                colorScheme = com.artiusid.sdk.models.SDKColorScheme(
+                    primaryColorHex = basicTheme.primaryColorHex,
+                    secondaryColorHex = basicTheme.secondaryColorHex,
+                    backgroundColorHex = basicTheme.backgroundColorHex,
+                    surfaceColorHex = basicTheme.surfaceColorHex,
+                    onPrimaryColorHex = basicTheme.onPrimaryColorHex,
+                    onSecondaryColorHex = basicTheme.onSecondaryColorHex,
+                    onBackgroundColorHex = basicTheme.onBackgroundColorHex,
+                    onSurfaceColorHex = basicTheme.onSurfaceColorHex,
+                    successColorHex = basicTheme.successColorHex,
+                    errorColorHex = basicTheme.errorColorHex,
+                    warningColorHex = basicTheme.warningColorHex,
+                    faceDetectionOverlayColorHex = basicTheme.faceDetectionOverlayColorHex,
+                    documentScanOverlayColorHex = basicTheme.documentScanOverlayColorHex,
+                    pendingStepColorHex = basicTheme.pendingStepColorHex,
+                    completedStepColorHex = basicTheme.completedStepColorHex
+                )
+            )
+        } else {
+            // Return default enhanced theme
+            EnhancedSDKThemeConfiguration()
         }
     }
 }

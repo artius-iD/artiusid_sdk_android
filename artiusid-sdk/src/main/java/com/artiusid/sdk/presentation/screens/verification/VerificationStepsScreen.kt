@@ -16,6 +16,9 @@ import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.R
 import com.artiusid.sdk.presentation.components.AppTopBar
 import com.artiusid.sdk.ui.theme.*
+import com.artiusid.sdk.utils.LocalizationManager
+import androidx.compose.ui.platform.LocalContext
+import com.artiusid.sdk.ui.components.ThemedInstructionIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,11 +26,13 @@ fun VerificationStepsScreen(
     onNavigateToFaceScan: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    
     GradientBackground {
         Scaffold(
             topBar = {
                 AppTopBar(
-                    title = "Verification Steps",
+                    title = LocalizationManager.getString(context, "verification_steps_title", "Verification Steps"),
                     onBackClick = onNavigateBack
                 )
             }
@@ -42,10 +47,10 @@ fun VerificationStepsScreen(
                 Spacer(modifier = Modifier.height(20.dp))
                 
                 Text(
-                    text = "Follow these steps to verify your identity",
+                    text = LocalizationManager.getString(context, "verification_steps_subtitle", "Follow these steps to verify your identity"),
                     fontSize = getRelativeFontSize(18f).sp,
                     fontWeight = FontWeight.Bold,
-                    color = Gray500,
+                    color = com.artiusid.sdk.ui.theme.ThemedTextColors.getSecondaryTextColor(),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -61,8 +66,8 @@ fun VerificationStepsScreen(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.scan_face_icon),
+                    ThemedInstructionIcon(
+                        iconRes = R.drawable.scan_face_icon,
                         contentDescription = "Face Scan",
                         modifier = Modifier
                             .size(64.dp)
@@ -74,15 +79,15 @@ fun VerificationStepsScreen(
                             .padding(start = 16.dp)
                     ) {
                         Text(
-                            text = "Face Scan",
+                            text = LocalizationManager.getString(context, "step_face_scan", "Face Scan"),
                             fontSize = getRelativeFontSize(18f).sp,
                             fontWeight = FontWeight.Bold,
-                            color = Yellow900
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                         )
                         Text(
-                            text = "Scan your face for verification",
+                            text = LocalizationManager.getString(context, "step_face_scan_description", "Scan your face for verification"),
                             fontSize = getRelativeFontSize(14f).sp,
-                            color = WhiteA700
+                            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
                         )
                     }
                 }
@@ -94,8 +99,8 @@ fun VerificationStepsScreen(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.doc_scan_icon),
+                    ThemedInstructionIcon(
+                        iconRes = R.drawable.doc_scan_icon,
                         contentDescription = "Document Scan",
                         modifier = Modifier
                             .size(64.dp)
@@ -107,15 +112,15 @@ fun VerificationStepsScreen(
                             .padding(start = 16.dp)
                     ) {
                         Text(
-                            text = "Document Scan",
+                            text = LocalizationManager.getString(context, "step_document_scan", "Document Scan"),
                             fontSize = getRelativeFontSize(18f).sp,
                             fontWeight = FontWeight.Bold,
-                            color = Yellow900
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                         )
                         Text(
-                            text = "Scan your ID document",
+                            text = LocalizationManager.getString(context, "step_document_scan_description", "Scan your ID document"),
                             fontSize = getRelativeFontSize(14f).sp,
-                            color = WhiteA700
+                            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
                         )
                     }
                 }
@@ -127,8 +132,8 @@ fun VerificationStepsScreen(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.done_icon),
+                    ThemedInstructionIcon(
+                        iconRes = R.drawable.done_icon,
                         contentDescription = "Completion",
                         modifier = Modifier
                             .size(64.dp)
@@ -140,15 +145,15 @@ fun VerificationStepsScreen(
                             .padding(start = 16.dp)
                     ) {
                         Text(
-                            text = "Completion",
+                            text = LocalizationManager.getString(context, "step_processing", "Completion"),
                             fontSize = getRelativeFontSize(18f).sp,
                             fontWeight = FontWeight.Bold,
-                            color = Yellow900
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                         )
                         Text(
-                            text = "Complete the verification process",
+                            text = LocalizationManager.getString(context, "step_processing_description", "Complete the verification process"),
                             fontSize = getRelativeFontSize(14f).sp,
-                            color = WhiteA700
+                            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
                         )
                     }
                 }
@@ -163,12 +168,12 @@ fun VerificationStepsScreen(
                         .height(56.dp)
                         .padding(horizontal = 16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Yellow900
+                        containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "Start Now",
+                        text = LocalizationManager.getString(context, "button_start_now", "Start Now"),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )

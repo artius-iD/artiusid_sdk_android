@@ -95,7 +95,7 @@ fun VerificationProcessingScreen(
             Card(
                 modifier = Modifier.padding(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.Red.copy(alpha = 0.9f)
+                    containerColor = com.artiusid.sdk.ui.theme.ThemedStatusColors.getErrorColor().copy(alpha = 0.9f)
                 )
             ) {
                 Text(
@@ -150,7 +150,7 @@ fun VerificationProcessingScreen(
                         Text(
                             text = currentStep,
                             style = MaterialTheme.typography.titleMedium,
-                            color = Yellow900,
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(bottom = 20.dp)
                         )
@@ -160,7 +160,7 @@ fun VerificationProcessingScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(8.dp),
-                            color = Yellow900
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                         )
 
                         Text(

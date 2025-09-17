@@ -151,7 +151,7 @@ fun ApprovalRequestScreen(
             Text(
                 text = notificationDescription,
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFF8d969e), // iOS gray color
+                color = com.artiusid.sdk.ui.theme.ThemedTextColors.getSecondaryTextColor(),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()

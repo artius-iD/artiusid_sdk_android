@@ -111,7 +111,7 @@ fun AuthenticationScreen(
                         CircularProgressIndicator(
                             progress = progress,
                             modifier = Modifier.size(100.dp),
-                            color = Yellow900,
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                             strokeWidth = 8.dp
                         )
                         
@@ -139,7 +139,7 @@ fun AuthenticationScreen(
                         // Biometric prompt state - show waiting for biometric
                         Image(
                             painter = painterResource(id = R.drawable.img_artiusid_ios),
-                            contentDescription = "ArtiusID",
+                            contentDescription = "artius.iD",
                             modifier = Modifier
                                 .size(120.dp)
                                 .padding(vertical = 20.dp)
@@ -149,7 +149,7 @@ fun AuthenticationScreen(
                             text = "Biometric Authentication Required",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
-                            color = Yellow900,
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                             textAlign = TextAlign.Center
                         )
                         
@@ -177,7 +177,7 @@ fun AuthenticationScreen(
                             text = "Authentication Successful",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Yellow900,
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(vertical = 20.dp)
                         )
@@ -210,7 +210,7 @@ fun AuthenticationScreen(
                             text = "Authentication Failed",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Red,
+                            color = com.artiusid.sdk.ui.theme.ThemedStatusColors.getErrorColor(),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(vertical = 20.dp)
                         )
@@ -230,7 +230,7 @@ fun AuthenticationScreen(
                                 .fillMaxWidth()
                                 .height(50.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Yellow900
+                                containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                             ),
                             shape = RoundedCornerShape(25.dp)
                         ) {

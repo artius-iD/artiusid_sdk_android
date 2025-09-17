@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.artiusid.sdk.ui.theme.Yellow900
 import kotlinx.coroutines.launch
 import android.content.Intent
 import android.net.Uri
@@ -48,9 +47,7 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF232946), Color(0xFF121629))
-                )
+                com.artiusid.sdk.ui.theme.ColorManager.getGradientBrush()
             )
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -84,9 +81,9 @@ fun SettingsScreen(
                 environments = uiState.environmentOptions
             )
             if (uiState.isCertCleared) {
-                Text("Certificate Cleared", color = Yellow900, fontSize = MaterialTheme.typography.bodySmall.fontSize)
+                Text("Certificate Cleared", color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(), fontSize = MaterialTheme.typography.bodySmall.fontSize)
             } else if (uiState.isCertClearing) {
-                CircularProgressIndicator(color = Yellow900, modifier = Modifier.size(20.dp))
+                CircularProgressIndicator(color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(), modifier = Modifier.size(20.dp))
             }
         }
 
@@ -159,18 +156,18 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                border = androidx.compose.foundation.BorderStroke(2.dp, Yellow900),
+                border = androidx.compose.foundation.BorderStroke(2.dp, com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Yellow900,
+                    contentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     containerColor = Color.Transparent
                 )
             ) {
                 if (uiState.isApprovalLoading) {
-                    CircularProgressIndicator(color = Yellow900, modifier = Modifier.size(20.dp))
+                    CircularProgressIndicator(color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(), modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Sending...", color = Yellow900)
+                    Text("Sending...", color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor())
                 } else {
-                    Text("Send Approval Request", color = Yellow900)
+                    Text("Send Approval Request", color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor())
                 }
             }
             // Show result message automatically when available (like iOS)
@@ -229,13 +226,13 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .height(50.dp)
                         .padding(vertical = 2.dp),
-                    border = androidx.compose.foundation.BorderStroke(2.dp, Yellow900),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Yellow900,
+                        contentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                         containerColor = Color.Transparent
                     )
                 ) {
-                    Text("View Logs", color = Yellow900)
+                    Text("View Logs", color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor())
                 }
                 
                 // Share Logs Button
@@ -245,13 +242,13 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .height(50.dp)
                         .padding(vertical = 2.dp),
-                    border = androidx.compose.foundation.BorderStroke(2.dp, Yellow900),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Yellow900,
+                        contentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                         containerColor = Color.Transparent
                     )
                 ) {
-                    Text("Share Logs", color = Yellow900)
+                    Text("Share Logs", color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor())
                 }
                 
                 // Clear Logs Button
@@ -261,13 +258,13 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .height(50.dp)
                         .padding(vertical = 2.dp),
-                    border = androidx.compose.foundation.BorderStroke(2.dp, Yellow900),
+                    border = androidx.compose.foundation.BorderStroke(2.dp, com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Yellow900,
+                        contentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                         containerColor = Color.Transparent
                     )
                 ) {
-                    Text("Clear Logs", color = Yellow900)
+                    Text("Clear Logs", color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor())
                 }
             }
             Text("Log count: ${uiState.logCount}", color = Color.White, fontSize = MaterialTheme.typography.bodySmall.fontSize)
@@ -311,7 +308,7 @@ fun SettingsScreen(
         LaunchedEffect(Unit) {
             try {
                 // Create a temporary file with logs using enhanced export functionality
-                val logFile = File(context.cacheDir, "ArtiusID_Debug_Logs.txt")
+                val logFile = File(context.cacheDir, "artius.iD_Debug_Logs.txt")
                 FileWriter(logFile).use { writer ->
                     // Use LogManager's export functionality for better formatting
                     val exportedLogs = LogManager.exportLogs()
@@ -327,8 +324,8 @@ fun SettingsScreen(
                 
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "ArtiusID Debug Logs")
-                    putExtra(Intent.EXTRA_TEXT, "Debug logs from ArtiusID app")
+                    putExtra(Intent.EXTRA_SUBJECT, "artius.iD Debug Logs")
+                    putExtra(Intent.EXTRA_TEXT, "Debug logs from artius.iD app")
                     putExtra(Intent.EXTRA_STREAM, uri)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
@@ -373,8 +370,8 @@ fun SettingSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) ->
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = Yellow900,
-                checkedTrackColor = Yellow900.copy(alpha = 0.5f),
+                checkedThumbColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
+                checkedTrackColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor().copy(alpha = 0.5f),
                 uncheckedThumbColor = Color.White,
                 uncheckedTrackColor = Color.White.copy(alpha = 0.5f)
             )
@@ -387,8 +384,8 @@ fun EnvironmentDropdown(selected: String, onSelected: (String) -> Unit, environm
     var expanded by remember { mutableStateOf(false) }
     Box {
         OutlinedButton(onClick = { expanded = true }) {
-            Text(selected, color = Yellow900)
-            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Yellow900)
+            Text(selected, color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor())
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor())
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             environments.forEach { env ->
@@ -409,8 +406,8 @@ fun LogLevelDropdown(selected: String, onSelected: (String) -> Unit, logLevels: 
     var expanded by remember { mutableStateOf(false) }
     Box {
         OutlinedButton(onClick = { expanded = true }) {
-            Text(selected, color = Yellow900)
-            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Yellow900)
+            Text(selected, color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor())
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor())
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             logLevels.forEach { level ->

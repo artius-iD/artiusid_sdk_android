@@ -3,12 +3,12 @@
   Author: Todd Bryant
   Company: artius.iD
   
-  Comprehensive Spanish string resources for ArtiusID Android application
+  Comprehensive Spanish string resources for artius.iD Android application
   Organized by feature/screen sections for maintainability
 -->
 <resources>
     <!-- App Name -->
-    <string name="app_name">ArtiusID</string>
+    <string name="app_name">artius.iD</string>
     <string name="app_name_artius">Artius</string>
     <string name="app_name_id">ID</string>
     
@@ -261,7 +261,7 @@
     <string name="content_desc_face_overlay">Superposición Facial</string>
     <string name="content_desc_document_overlay">Superposición de Documento</string>
     <string name="content_desc_passport_overlay">Superposición de Pasaporte</string>
-    <string name="content_desc_logo">Logo de ArtiusID</string>
+    <string name="content_desc_logo">Logo de artius.iD</string>
     <string name="content_desc_success_icon">Icono de Éxito</string>
     <string name="content_desc_error_icon">Icono de Error</string>
     <string name="content_desc_warning_icon">Icono de Advertencia</string>

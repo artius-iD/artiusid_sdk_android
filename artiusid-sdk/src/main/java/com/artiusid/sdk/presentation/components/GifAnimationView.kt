@@ -6,10 +6,12 @@
 
 package com.artiusid.sdk.presentation.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,7 +35,7 @@ fun GifAnimationView(
             .build(),
         contentDescription = contentDescription,
         contentScale = ContentScale.Fit,
-        modifier = modifier
+        modifier = modifier.background(Color.Transparent)
     )
 }
 
@@ -56,7 +58,7 @@ fun FacePositioningAnimationView(
     if (gifResourceId != null) {
         GifAnimationView(
             gifResourceId = gifResourceId,
-            modifier = modifier.size(300.dp),
+            modifier = modifier,
             contentDescription = "Face positioning guidance: $direction"
         )
     } else if (direction.isNotEmpty()) {
@@ -64,7 +66,7 @@ fun FacePositioningAnimationView(
         // Show a directional indicator similar to iOS DirectionalIndicatorView
         DirectionalIndicatorView(
             direction = direction,
-            modifier = modifier.size(300.dp)
+            modifier = modifier
         )
     }
 }

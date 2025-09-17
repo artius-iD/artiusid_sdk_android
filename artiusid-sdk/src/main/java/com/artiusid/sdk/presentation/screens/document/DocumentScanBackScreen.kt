@@ -108,7 +108,7 @@ fun DocumentScanBackScreen(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Back",
-                    tint = WhiteA700
+                    tint = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
                 )
             }
         } else {
@@ -127,6 +127,7 @@ fun DocumentScanBackScreen(
 private fun DocumentOverlay(
     modifier: Modifier = Modifier
 ) {
+    val overlayColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
     Canvas(modifier = modifier) {
         val centerX = size.width / 2
         val centerY = size.height / 2
@@ -144,7 +145,7 @@ private fun DocumentOverlay(
         
         drawPath(
             path = documentPath,
-            color = Yellow900,
+            color = overlayColor,
             style = Stroke(width = 4f)
         )
         
@@ -154,13 +155,13 @@ private fun DocumentOverlay(
         
         // Top-left corner
         drawLine(
-            color = Yellow900,
+            color = overlayColor,
             start = Offset(centerX - rectWidth / 2, centerY - rectHeight / 2 + cornerSize),
             end = Offset(centerX - rectWidth / 2, centerY - rectHeight / 2),
             strokeWidth = cornerStroke
         )
         drawLine(
-            color = Yellow900,
+            color = overlayColor,
             start = Offset(centerX - rectWidth / 2, centerY - rectHeight / 2),
             end = Offset(centerX - rectWidth / 2 + cornerSize, centerY - rectHeight / 2),
             strokeWidth = cornerStroke
@@ -168,13 +169,13 @@ private fun DocumentOverlay(
         
         // Top-right corner
         drawLine(
-            color = Yellow900,
+            color = overlayColor,
             start = Offset(centerX + rectWidth / 2 - cornerSize, centerY - rectHeight / 2),
             end = Offset(centerX + rectWidth / 2, centerY - rectHeight / 2),
             strokeWidth = cornerStroke
         )
         drawLine(
-            color = Yellow900,
+            color = overlayColor,
             start = Offset(centerX + rectWidth / 2, centerY - rectHeight / 2),
             end = Offset(centerX + rectWidth / 2, centerY - rectHeight / 2 + cornerSize),
             strokeWidth = cornerStroke
@@ -182,13 +183,13 @@ private fun DocumentOverlay(
         
         // Bottom-left corner
         drawLine(
-            color = Yellow900,
+            color = overlayColor,
             start = Offset(centerX - rectWidth / 2, centerY + rectHeight / 2 - cornerSize),
             end = Offset(centerX - rectWidth / 2, centerY + rectHeight / 2),
             strokeWidth = cornerStroke
         )
         drawLine(
-            color = Yellow900,
+            color = overlayColor,
             start = Offset(centerX - rectWidth / 2, centerY + rectHeight / 2),
             end = Offset(centerX - rectWidth / 2 + cornerSize, centerY + rectHeight / 2),
             strokeWidth = cornerStroke
@@ -196,13 +197,13 @@ private fun DocumentOverlay(
         
         // Bottom-right corner
         drawLine(
-            color = Yellow900,
+            color = overlayColor,
             start = Offset(centerX + rectWidth / 2 - cornerSize, centerY + rectHeight / 2),
             end = Offset(centerX + rectWidth / 2, centerY + rectHeight / 2),
             strokeWidth = cornerStroke
         )
         drawLine(
-            color = Yellow900,
+            color = overlayColor,
             start = Offset(centerX + rectWidth / 2, centerY + rectHeight / 2),
             end = Offset(centerX + rectWidth / 2, centerY + rectHeight / 2 - cornerSize),
             strokeWidth = cornerStroke
@@ -225,7 +226,7 @@ private fun InstructionsOverlay(
     ) {
         Text(
             text = "ALIGN ID BACK IN FRAME AS SHOWN",
-            color = WhiteA700,
+            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
@@ -247,7 +248,7 @@ private fun PermissionRequest(
     ) {
         Text(
             text = "Camera Permission Required",
-            color = WhiteA700,
+            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -257,7 +258,7 @@ private fun PermissionRequest(
         
         Text(
             text = "This app needs camera access to scan your document",
-            color = WhiteA700.copy(alpha = 0.8f),
+            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor().copy(alpha = 0.8f),
             fontSize = 16.sp,
             textAlign = TextAlign.Center
         )
@@ -267,7 +268,7 @@ private fun PermissionRequest(
         Button(
             onClick = onRequestPermission,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Yellow900
+                containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
             )
         ) {
             Text("Grant Permission")

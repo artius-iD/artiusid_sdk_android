@@ -8,6 +8,7 @@ import com.artiusid.sdk.callbacks.VerificationCallback
 import com.artiusid.sdk.callbacks.AuthenticationCallback
 import com.artiusid.sdk.config.SDKConfiguration
 import com.artiusid.sdk.models.SDKThemeConfiguration
+import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
 import com.artiusid.sdk.standalone.StandaloneAppActivity
 
 /**
@@ -22,6 +23,7 @@ class StandaloneAppBridge(private val context: Context) {
     
     private var sdkConfiguration: SDKConfiguration? = null
     private var themeConfiguration: SDKThemeConfiguration? = null
+    private var enhancedThemeConfiguration: EnhancedSDKThemeConfiguration? = null
     
     /**
      * Initialize the bridge with configuration and theming
@@ -36,6 +38,14 @@ class StandaloneAppBridge(private val context: Context) {
     }
     
     /**
+     * Set enhanced theme configuration
+     */
+    fun setEnhancedTheme(enhancedTheme: EnhancedSDKThemeConfiguration) {
+        enhancedThemeConfiguration = enhancedTheme
+        android.util.Log.d(TAG, "🎨 Enhanced theme set: ${enhancedTheme.brandName}")
+    }
+    
+    /**
      * Start verification flow in standalone application
      */
     fun startVerification(activity: Activity, callback: VerificationCallback) {
@@ -45,6 +55,7 @@ class StandaloneAppBridge(private val context: Context) {
             putExtra(EXTRA_FLOW_TYPE, FLOW_TYPE_VERIFICATION)
             putExtra(EXTRA_SDK_CONFIG, sdkConfiguration)
             putExtra(EXTRA_THEME_CONFIG, themeConfiguration)
+            putExtra(EXTRA_ENHANCED_THEME_CONFIG, enhancedThemeConfiguration)
             putExtra(EXTRA_START_TIME, System.currentTimeMillis())
         }
         
@@ -64,6 +75,7 @@ class StandaloneAppBridge(private val context: Context) {
             putExtra(EXTRA_FLOW_TYPE, FLOW_TYPE_AUTHENTICATION)
             putExtra(EXTRA_SDK_CONFIG, sdkConfiguration)
             putExtra(EXTRA_THEME_CONFIG, themeConfiguration)
+            putExtra(EXTRA_ENHANCED_THEME_CONFIG, enhancedThemeConfiguration)
             putExtra(EXTRA_START_TIME, System.currentTimeMillis())
         }
         
@@ -78,6 +90,7 @@ class StandaloneAppBridge(private val context: Context) {
         const val EXTRA_FLOW_TYPE = "flow_type"
         const val EXTRA_SDK_CONFIG = "sdk_config"
         const val EXTRA_THEME_CONFIG = "theme_config"
+        const val EXTRA_ENHANCED_THEME_CONFIG = "enhanced_theme_config"
         const val EXTRA_START_TIME = "start_time"
         
         // Flow types

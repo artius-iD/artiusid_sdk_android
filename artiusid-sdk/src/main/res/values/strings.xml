@@ -3,12 +3,12 @@
   Author: Todd Bryant
   Company: artius.iD
   
-  Comprehensive English string resources for ArtiusID Android application
+  Comprehensive English string resources for artius.iD Android application
   Organized by feature/screen sections for maintainability
 -->
 <resources>
     <!-- App Name -->
-    <string name="app_name">ArtiusID</string>
+    <string name="app_name">artius.iD</string>
     <string name="app_name_artius">Artius</string>
     <string name="app_name_id">ID</string>
     

@@ -293,7 +293,7 @@ fun FaceCameraPreview(
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    color = Yellow900,
+                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     modifier = Modifier.size(48.dp)
                 )
             }

@@ -22,6 +22,9 @@ import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.R
 import com.artiusid.sdk.presentation.components.AppTopBar
 import com.artiusid.sdk.ui.theme.*
+import com.artiusid.sdk.ui.components.ThemedDocumentIcon
+import com.artiusid.sdk.ui.components.ThemedActionIcon
+import com.artiusid.sdk.ui.components.ThemedSecurityIcon
 
 @Composable
 fun SelectDocumentTypeScreen(
@@ -44,7 +47,7 @@ fun SelectDocumentTypeScreen(
             // Title matching iOS exact styling
             Text(
                 text = "Please select the type of document you want to scan",
-                color = WhiteA700,
+                color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
@@ -65,7 +68,7 @@ fun SelectDocumentTypeScreen(
                     .padding(8.dp)
                     .border(
                         width = 0.4.dp,
-                        color = Color.Blue,
+                        color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                         shape = RoundedCornerShape(30.dp)
                     )
                     .clickable { onNavigateToDocumentScan("id") }
@@ -77,8 +80,8 @@ fun SelectDocumentTypeScreen(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.stateid_icon),
+                    ThemedDocumentIcon(
+                        iconRes = R.drawable.stateid_icon,
                         contentDescription = "State ID",
                         modifier = Modifier
                             .size(width = 50.dp, height = 35.dp)
@@ -92,18 +95,18 @@ fun SelectDocumentTypeScreen(
                             text = "State ID",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Yellow900,
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                             modifier = Modifier.padding(vertical = 2.dp)
                         )
                         Text(
                             text = "Need to scan the front and back of your ID",
                             fontSize = 16.sp,
-                            color = WhiteA700,
+                            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                             modifier = Modifier.padding(vertical = 2.dp)
                         )
                     }
-                    Image(
-                        painter = painterResource(id = R.drawable.document_right_arrow),
+                    ThemedActionIcon(
+                        iconRes = R.drawable.document_right_arrow,
                         contentDescription = "Arrow",
                         modifier = Modifier
                             .size(24.dp)
@@ -119,7 +122,7 @@ fun SelectDocumentTypeScreen(
                     .padding(8.dp)
                     .border(
                         width = 0.4.dp,
-                        color = Color.Blue,
+                        color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                         shape = RoundedCornerShape(30.dp)
                     )
                     .clickable { onNavigateToDocumentScan("passport") }
@@ -131,8 +134,8 @@ fun SelectDocumentTypeScreen(
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.passport_icon),
+                    ThemedDocumentIcon(
+                        iconRes = R.drawable.passport_icon,
                         contentDescription = "Passport",
                         modifier = Modifier
                             .size(width = 35.dp, height = 50.dp)
@@ -146,18 +149,18 @@ fun SelectDocumentTypeScreen(
                             text = "Passport",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Yellow900,
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                             modifier = Modifier.padding(vertical = 2.dp)
                         )
                         Text(
                             text = "Need to scan your passport document",
                             fontSize = 16.sp,
-                            color = WhiteA700,
+                            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                             modifier = Modifier.padding(vertical = 2.dp)
                         )
                     }
-                    Image(
-                        painter = painterResource(id = R.drawable.document_right_arrow),
+                    ThemedActionIcon(
+                        iconRes = R.drawable.document_right_arrow,
                         contentDescription = "Arrow",
                         modifier = Modifier
                             .size(24.dp)
@@ -176,15 +179,15 @@ fun SelectDocumentTypeScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.lock_icon),
+                ThemedSecurityIcon(
+                    iconRes = R.drawable.lock_icon,
                     contentDescription = "Lock",
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "This is just to validate your identity in the verification process, your information will not be saved anywhere.",
-                    color = Gray500,
+                    color = com.artiusid.sdk.ui.theme.ThemedTextColors.getSecondaryTextColor(),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
@@ -210,13 +213,13 @@ private fun CustomBackButton(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
-                tint = WhiteA700
+                tint = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
             )
         }
         
         Text(
             text = navTitle,
-            color = WhiteA700,
+            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(start = 8.dp)

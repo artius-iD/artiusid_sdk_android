@@ -15,9 +15,9 @@ fun FaceDetectionOverlay(
     isAligned: Boolean = true
 ) {
     val faceColor = if (isAligned) {
-        Color(0xFF4CAF50) // Green for detected faces
+        com.artiusid.sdk.ui.theme.ThemedFaceDetection.getAlignedColor()
     } else {
-        Color(0xFFE53935) // Red for misaligned faces
+        com.artiusid.sdk.ui.theme.ThemedFaceDetection.getMisalignedColor()
     }
     
     Canvas(modifier = modifier.fillMaxSize()) {

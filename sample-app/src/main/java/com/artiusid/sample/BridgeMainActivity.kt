@@ -19,6 +19,10 @@ import com.artiusid.sdk.ArtiusIDSDK
 import com.artiusid.sdk.config.SDKConfiguration
 import com.artiusid.sdk.config.Environment
 import com.artiusid.sdk.models.SDKThemeConfiguration
+import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
+import com.artiusid.sample.theme.SampleAppThemes
+import com.artiusid.sample.theme.EnhancedThemeOption
+import com.artiusid.sample.localization.SampleAppLocalization
 import com.artiusid.sdk.callbacks.VerificationCallback
 import com.artiusid.sdk.callbacks.AuthenticationCallback
 import com.artiusid.sdk.models.VerificationResult
@@ -28,16 +32,16 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /**
- * Sample App demonstrating the ArtiusID SDK Integration
+ * Sample App demonstrating the artius.iD SDK Integration
  * 
- * This sample app shows how to integrate with the ArtiusID SDK that
+ * This sample app shows how to integrate with the artius.iD SDK that
  * launches the complete standalone application with full verification capabilities.
  */
 class BridgeMainActivity : ComponentActivity(), VerificationCallback, AuthenticationCallback {
     
     private var isLoading by mutableStateOf(false)
     private var lastResult by mutableStateOf("Application started - checking keychain status...")
-    private var selectedTheme by mutableStateOf(ThemeOption.ARTIUSID_DEFAULT)
+    private var selectedTheme by mutableStateOf(EnhancedThemeOption.ARTIUSID_DEFAULT)
     private var verificationResultData by mutableStateOf<VerificationResultData?>(null)
     private var showResultsScreen by mutableStateOf(false)
     private var fcmTokenStatus by mutableStateOf("❌ Not available")
@@ -84,7 +88,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         ) {
             // Header
             Text(
-                text = "ArtiusID SDK Bridge Demo",
+                text = "artius.iD SDK Demo",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -117,32 +121,10 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     
-                    ThemeOption.values().forEach { theme ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = selectedTheme == theme,
-                                onClick = { selectedTheme = theme }
-                            )
-                            Column(
-                                modifier = Modifier.padding(start = 8.dp)
-                            ) {
-                                Text(
-                                    text = theme.displayName,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = theme.description,
-                                    fontSize = 12.sp,
-                                    color = Color.Gray
-                                )
-                            }
-                        }
-                    }
+                    ThemeDropdown(
+                        selectedTheme = selectedTheme,
+                        onThemeSelected = { selectedTheme = it }
+                    )
                 }
             }
             
@@ -156,20 +138,20 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.primaryColorHex))
+                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.primaryColorHex))
                 )
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.onPrimaryColorHex))
+                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
                     )
                 } else {
                     Text(
                         text = "🔍 Start Verification (Bridge)",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.onPrimaryColorHex))
+                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
                     )
                 }
             }
@@ -183,14 +165,14 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.secondaryColorHex))
+                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.secondaryColorHex))
                 )
             ) {
                 Text(
                     text = "🔐 Start Authentication (Bridge)",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.onSecondaryColorHex))
+                    color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onSecondaryColorHex))
                 )
             }
             
@@ -308,9 +290,9 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        ColorSwatch("Primary", selectedTheme.themeConfig.primaryColorHex)
-                        ColorSwatch("Secondary", selectedTheme.themeConfig.secondaryColorHex)
-                        ColorSwatch("Background", selectedTheme.themeConfig.backgroundColorHex)
+                        ColorSwatch("Primary", selectedTheme.themeConfig.colorScheme.primaryColorHex)
+                        ColorSwatch("Secondary", selectedTheme.themeConfig.colorScheme.secondaryColorHex)
+                        ColorSwatch("Background", selectedTheme.themeConfig.colorScheme.backgroundColorHex)
                     }
                 }
             }
@@ -493,7 +475,10 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         try {
             isLoading = true
             
-            // Initialize SDK Bridge with selected theme and shared context
+            // Initialize SDK Bridge with selected theme, shared context, and localization overrides
+            val localizationOverrides = SampleAppLocalization.getStringOverrides(this)
+            android.util.Log.d("BridgeMainActivity", "🌐 Localization overrides: ${localizationOverrides.size} strings")
+            
             val sdkConfig = SDKConfiguration(
                 apiKey = "demo_api_key_12345",
                 baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
@@ -501,13 +486,14 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                 enableLogging = true,
                 hostAppPackageName = packageName,
                 sharedCertificateContext = true,
-                sharedFirebaseContext = true
+                sharedFirebaseContext = true,
+                localizationOverrides = localizationOverrides
             )
             
-            ArtiusIDSDK.initialize(
+            ArtiusIDSDK.initializeWithEnhancedTheme(
                 context = this,
                 configuration = sdkConfig,
-                theme = selectedTheme.themeConfig
+                enhancedTheme = selectedTheme.themeConfig
             )
             
             // Start verification via bridge to standalone app
@@ -523,7 +509,10 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         try {
             isLoading = true
             
-            // Initialize SDK Bridge with selected theme and shared context
+            // Initialize SDK Bridge with selected theme, shared context, and localization overrides
+            val localizationOverrides = SampleAppLocalization.getStringOverrides(this)
+            android.util.Log.d("BridgeMainActivity", "🌐 Localization overrides: ${localizationOverrides.size} strings")
+            
             val sdkConfig = SDKConfiguration(
                 apiKey = "demo_api_key_12345",
                 baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
@@ -531,13 +520,14 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                 enableLogging = true,
                 hostAppPackageName = packageName,
                 sharedCertificateContext = true,
-                sharedFirebaseContext = true
+                sharedFirebaseContext = true,
+                localizationOverrides = localizationOverrides
             )
             
-            ArtiusIDSDK.initialize(
+            ArtiusIDSDK.initializeWithEnhancedTheme(
                 context = this,
                 configuration = sdkConfig,
-                theme = selectedTheme.themeConfig
+                enhancedTheme = selectedTheme.themeConfig
             )
             
             // Start authentication via bridge to standalone app
@@ -625,75 +615,53 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
 }
 
 /**
- * Theme options for the bridge to standalone application
+ * Theme selection dropdown composable
  */
-enum class ThemeOption(
-    val displayName: String,
-    val description: String,
-    val themeConfig: SDKThemeConfiguration
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThemeDropdown(
+    selectedTheme: EnhancedThemeOption,
+    onThemeSelected: (EnhancedThemeOption) -> Unit
 ) {
-    ARTIUSID_DEFAULT(
-        "ArtiusID Default",
-        "Standard ArtiusID branding",
-        SDKThemeConfiguration(
-            brandName = "ArtiusID",
-            primaryColorHex = "#263238", // Bluegray900
-            secondaryColorHex = "#F57C00", // Yellow900
-            backgroundColorHex = "#263238",
-            surfaceColorHex = "#37474F",
-            onPrimaryColorHex = "#FFFFFF",
-            onSecondaryColorHex = "#263238",
-            onBackgroundColorHex = "#FFFFFF",
-            onSurfaceColorHex = "#FFFFFF",
-            successColorHex = "#4CAF50",
-            errorColorHex = "#D32F2F",
-            warningColorHex = "#FF9800",
-            faceDetectionOverlayColorHex = "#4CAF50",
-            documentScanOverlayColorHex = "#F57C00"
-        )
-    ),
+    var expanded by remember { mutableStateOf(false) }
     
-    DARK_MODE(
-        "Dark Professional",
-        "Modern dark theme for professional applications",
-        SDKThemeConfiguration(
-            brandName = "Dark Professional",
-            primaryColorHex = "#121212", // True dark
-            secondaryColorHex = "#03DAC6", // Teal accent
-            backgroundColorHex = "#121212",
-            surfaceColorHex = "#1E1E1E",
-            onPrimaryColorHex = "#FFFFFF",
-            onSecondaryColorHex = "#000000",
-            onBackgroundColorHex = "#FFFFFF",
-            onSurfaceColorHex = "#FFFFFF",
-            successColorHex = "#4CAF50",
-            errorColorHex = "#CF6679",
-            warningColorHex = "#FFB74D",
-            faceDetectionOverlayColorHex = "#03DAC6",
-            documentScanOverlayColorHex = "#03DAC6",
-            pendingStepColorHex = "#666666",
-            isDarkMode = true
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedTheme.displayName,
+            onValueChange = { },
+            readOnly = true,
+            label = { Text("Select Theme") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
         )
-    ),
-    
-    CORPORATE_BLUE(
-        "Corporate Blue",
-        "Professional blue theme for enterprise applications",
-        SDKThemeConfiguration(
-            brandName = "Corporate",
-            primaryColorHex = "#1976D2", // Blue 700
-            secondaryColorHex = "#42A5F5", // Blue 400
-            backgroundColorHex = "#F5F5F5",
-            surfaceColorHex = "#FFFFFF",
-            onPrimaryColorHex = "#FFFFFF",
-            onSecondaryColorHex = "#000000",
-            onBackgroundColorHex = "#212121",
-            onSurfaceColorHex = "#212121",
-            successColorHex = "#388E3C",
-            errorColorHex = "#D32F2F",
-            warningColorHex = "#F57C00",
-            faceDetectionOverlayColorHex = "#42A5F5",
-            documentScanOverlayColorHex = "#42A5F5"
-        )
-    )
+        
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            EnhancedThemeOption.values().forEach { theme ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = theme.displayName,
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
+                    onClick = {
+                        onThemeSelected(theme)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }
+

@@ -42,7 +42,7 @@ fun VerificationFailureScreen(
             .fillMaxSize()
             .background(
                 brush = Brush.linearGradient(
-                    colors = listOf(Bluegray900, Gray900),
+                    colors = listOf(com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().background, com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().surface),
                     start = androidx.compose.ui.geometry.Offset(0f, 0f),
                     end = androidx.compose.ui.geometry.Offset(1f, 1f)
                 )
@@ -63,7 +63,7 @@ fun VerificationFailureScreen(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(Color.Red),
+                    .background(com.artiusid.sdk.ui.theme.ThemedStatusColors.getErrorColor()),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -110,7 +110,7 @@ fun VerificationFailureScreen(
                     .fillMaxWidth()
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow900
+                    containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                 ),
                 shape = RoundedCornerShape(25.dp)
             ) {

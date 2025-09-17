@@ -19,6 +19,7 @@ import com.artiusid.sdk.R
 import com.artiusid.sdk.presentation.components.AppTopBar
 import com.artiusid.sdk.ui.theme.GradientBackground
 import com.artiusid.sdk.ui.theme.Yellow900
+import com.artiusid.sdk.ui.components.ThemedDocumentIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,8 +94,8 @@ private fun DocumentTypeOption(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = icon),
+            ThemedDocumentIcon(
+                iconRes = icon,
                 contentDescription = title,
                 modifier = Modifier.size(48.dp)
             )
@@ -137,8 +138,8 @@ private fun DocumentTypeCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = iconResId),
+            ThemedDocumentIcon(
+                iconRes = iconResId,
                 contentDescription = title,
                 modifier = Modifier.size(48.dp)
             )

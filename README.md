@@ -1,4 +1,4 @@
-# ArtiusID Android SDK
+# artius.iD Android SDK
 
 A comprehensive Android SDK for identity verification, face liveness detection, document scanning, and NFC passport reading.
 

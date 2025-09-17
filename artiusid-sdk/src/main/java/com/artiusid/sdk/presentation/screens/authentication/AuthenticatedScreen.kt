@@ -55,7 +55,7 @@ fun AuthenticatedScreen(
                 text = "Authentication Successful",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = Yellow900,
+                color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 20.dp)
             )
@@ -83,7 +83,7 @@ fun AuthenticatedScreen(
                     .fillMaxWidth()
                     .height(59.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow900
+                    containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                 ),
                 shape = RoundedCornerShape(12.58.dp)
             ) {

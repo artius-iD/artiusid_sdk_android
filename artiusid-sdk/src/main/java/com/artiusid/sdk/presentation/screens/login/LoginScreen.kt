@@ -45,11 +45,11 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Yellow900,
+                    focusedBorderColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                    focusedLabelColor = Yellow900,
+                    focusedLabelColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
-                    cursorColor = Yellow900,
+                    cursorColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White
                 )
@@ -63,11 +63,11 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .padding(bottom = 32.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Yellow900,
+                    focusedBorderColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     unfocusedBorderColor = Color.White.copy(alpha = 0.5f),
-                    focusedLabelColor = Yellow900,
+                    focusedLabelColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
-                    cursorColor = Yellow900,
+                    cursorColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White
                 )
@@ -81,7 +81,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow900,
+                    containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     contentColor = Color.White
                 )
             ) {

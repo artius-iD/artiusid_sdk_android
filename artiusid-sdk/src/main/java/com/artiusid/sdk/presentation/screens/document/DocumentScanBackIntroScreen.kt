@@ -31,7 +31,7 @@ fun DocumentScanBackIntroScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Gray900)
+            .background(com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().background)
     ) {
         Column(
             modifier = Modifier
@@ -63,6 +63,7 @@ fun DocumentScanBackIntroScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
+                        .background(Color.Transparent)
                 )
             }
             
@@ -71,7 +72,7 @@ fun DocumentScanBackIntroScreen(
             // Title
             Text(
                 text = "Scan Back ID",
-                color = Yellow900,
+                color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -82,7 +83,7 @@ fun DocumentScanBackIntroScreen(
             // Description
             Text(
                 text = "Continue your verification by scanning the back of your document. See animation above and when ready tap Scan My ID",
-                color = WhiteA700,
+                color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
                 lineHeight = 20.sp
@@ -97,13 +98,13 @@ fun DocumentScanBackIntroScreen(
                     .fillMaxWidth()
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow900
+                    containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = "Scan Back of My ID",
-                    color = Gray900,
+                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor(),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -127,13 +128,13 @@ private fun CustomBackButton(
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
-                tint = WhiteA700
+                tint = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
             )
         }
         
         Text(
             text = navTitle,
-            color = WhiteA700,
+            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(start = 8.dp)

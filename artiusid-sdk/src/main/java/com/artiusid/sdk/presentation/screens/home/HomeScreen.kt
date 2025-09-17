@@ -94,7 +94,7 @@ fun HomeScreen(
                     text = stringResource(R.string.app_name_id),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Yellow900
+                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                 )
             }
 
@@ -129,7 +129,7 @@ fun HomeScreen(
                     stringResource(R.string.button_verify_now),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Yellow900
+                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                 )
             }
 
@@ -148,7 +148,7 @@ fun HomeScreen(
                     .height(56.dp)
                     .padding(horizontal = 20.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isAuthenticationEnabled) Yellow900 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    containerColor = if (isAuthenticationEnabled) com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor() else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
                     contentColor = if (isAuthenticationEnabled) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 ),
                 shape = RoundedCornerShape(12.dp)
@@ -174,7 +174,7 @@ fun HomeScreen(
                 Text(
                     text = stringResource(R.string.welcome_user, accountFullName ?: stringResource(R.string.unknown_user)),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Yellow900,
+                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     textAlign = TextAlign.Center
                 )
             }

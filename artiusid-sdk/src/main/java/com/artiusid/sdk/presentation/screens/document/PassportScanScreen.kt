@@ -209,7 +209,7 @@ fun PassportScanScreen(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Back",
-                    tint = WhiteA700
+                    tint = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
                 )
             }
         } else {
@@ -324,7 +324,7 @@ private fun PermissionRequest(
     ) {
         Text(
             text = "Camera Permission Required",
-            color = WhiteA700,
+            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -334,7 +334,7 @@ private fun PermissionRequest(
         
         Text(
             text = "This app needs camera access to scan your passport",
-            color = WhiteA700.copy(alpha = 0.8f),
+            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor().copy(alpha = 0.8f),
             fontSize = 16.sp,
             textAlign = TextAlign.Center
         )
@@ -344,7 +344,7 @@ private fun PermissionRequest(
         Button(
             onClick = onRequestPermission,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Yellow900
+                containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
             )
         ) {
             Text("Grant Permission")

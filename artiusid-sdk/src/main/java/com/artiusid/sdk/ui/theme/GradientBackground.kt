@@ -9,16 +9,13 @@ import androidx.compose.ui.graphics.Brush
 
 @Composable
 fun GradientBackground(content: @Composable () -> Unit) {
+    // Use ColorManager's enhanced theming-aware gradient
+    val gradientBrush = ColorManager.getGradientBrush()
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(Bluegray900, Gray900),
-                    start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                    end = androidx.compose.ui.geometry.Offset(1f, 1f)
-                )
-            )
+            .background(brush = gradientBrush)
     ) {
         content()
     }

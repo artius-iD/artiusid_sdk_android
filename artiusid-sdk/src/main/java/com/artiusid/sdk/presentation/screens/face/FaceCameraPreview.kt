@@ -97,11 +97,11 @@ fun FaceCameraPreview(
         )
 
         // Draw face detection rectangles
+        val faceColor = com.artiusid.sdk.ui.theme.ThemedFaceDetection.getAlignedColor()
         Canvas(modifier = Modifier.fillMaxSize()) {
             detectedFaces.forEach { face ->
                 val width = face.width().toFloat()
                 val height = face.height().toFloat()
-                val faceColor = Color(0xFF4CAF50) // Consistent green for face detection
                 drawRect(
                     color = faceColor,
                     topLeft = Offset(face.left.toFloat(), face.top.toFloat()),

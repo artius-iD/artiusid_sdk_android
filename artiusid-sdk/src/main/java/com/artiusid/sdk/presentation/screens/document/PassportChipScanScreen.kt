@@ -771,7 +771,7 @@ fun PassportChipScanScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Gray900)
+            .background(com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().background)
     ) {
         Column(
             modifier = Modifier
@@ -789,7 +789,7 @@ fun PassportChipScanScreen(
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = WhiteA700
+                        tint = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
                     )
                 }
             }
@@ -850,16 +850,16 @@ private fun NFCStatusIcon(state: NFCScanState) {
         is NFCScanState.WaitingForNFC,
         is NFCScanState.Connecting,
         is NFCScanState.Authenticating,
-        is NFCScanState.ReadingData -> Icons.Default.Nfc to Yellow900
-        is NFCScanState.Success -> Icons.Default.CheckCircle to LightGreen900
-        is NFCScanState.Error -> Icons.Default.Error to Color.Red
+        is NFCScanState.ReadingData -> Icons.Default.Nfc to com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
+        is NFCScanState.Success -> Icons.Default.CheckCircle to com.artiusid.sdk.ui.theme.ThemedStatusColors.getSuccessColor()
+        is NFCScanState.Error -> Icons.Default.Error to com.artiusid.sdk.ui.theme.ThemedStatusColors.getErrorColor()
     }
     
     Box(
         modifier = Modifier
             .size(200.dp)
             .background(
-                color = Bluegray900,
+                color = com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().surface,
                 shape = RoundedCornerShape(16.dp)
             )
             .then(
@@ -889,27 +889,27 @@ private fun NFCStatusContent(state: NFCScanState) {
         is NFCScanState.Initial -> Triple(
             "Preparing NFC", 
             "Initializing passport chip reader...", 
-            WhiteA700
+            com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
         )
         is NFCScanState.WaitingForNFC -> Triple(
             "Ready to Scan", 
             "Hold your device near the passport chip", 
-            Yellow900
+            com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
         )
         is NFCScanState.Connecting -> Triple(
             "Connecting", 
             "Establishing connection with passport chip...", 
-            Yellow900
+            com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
         )
         is NFCScanState.Authenticating -> Triple(
             "Authenticating", 
             "Keep passport steady on NFC area! Do not move until complete.", 
-            Yellow900
+            com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
         )
         is NFCScanState.ReadingData -> Triple(
             "Reading Data", 
             "Keep passport steady! Reading passport data from chip...", 
-            Yellow900
+            com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
         )
         is NFCScanState.Success -> Triple(
             "Scan Complete!", 
@@ -919,7 +919,7 @@ private fun NFCStatusContent(state: NFCScanState) {
         is NFCScanState.Error -> Triple(
             "Scan Failed", 
             state.message, 
-            Color.Red
+            com.artiusid.sdk.ui.theme.ThemedStatusColors.getErrorColor()
         )
     }
     
@@ -935,7 +935,7 @@ private fun NFCStatusContent(state: NFCScanState) {
     
     Text(
         text = description,
-        color = WhiteA700,
+        color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
         fontSize = 16.sp,
         textAlign = TextAlign.Center,
         lineHeight = 24.sp
@@ -968,7 +968,7 @@ private fun NFCStatusContent(state: NFCScanState, retryCount: Int, maxRetries: I
         
         Text(
             text = title,
-            color = WhiteA700,
+            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
@@ -976,7 +976,7 @@ private fun NFCStatusContent(state: NFCScanState, retryCount: Int, maxRetries: I
         
         Text(
             text = description,
-            color = WhiteA700.copy(alpha = 0.8f),
+            color = com.artiusid.sdk.ui.theme.ThemedTextColors.getSecondaryTextColor(),
             fontSize = 16.sp,
             textAlign = TextAlign.Center,
             lineHeight = 22.sp
@@ -1006,8 +1006,8 @@ private fun NFCProgressIndicator(state: NFCScanState) {
         modifier = Modifier
             .fillMaxWidth()
             .height(8.dp),
-        color = Yellow900,
-        trackColor = Bluegray900
+        color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
+        trackColor = com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().surface
     )
 }
 
@@ -1029,7 +1029,7 @@ private fun NFCActionButtons(
                 if (retryCount > 0) {
                     Text(
                         text = "Attempt $retryCount of $maxRetries failed",
-                        color = WhiteA700.copy(alpha = 0.7f),
+                        color = com.artiusid.sdk.ui.theme.ThemedTextColors.getSecondaryTextColor(),
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center
                     )
@@ -1041,8 +1041,8 @@ private fun NFCActionButtons(
                         onClick = onRetry,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Yellow900,
-                            contentColor = Gray900
+                            containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
+                            contentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor()
                         )
                     ) {
                         Text(
@@ -1060,7 +1060,7 @@ private fun NFCActionButtons(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = LightGreen900,
-                    contentColor = WhiteA700
+                    contentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getSecondaryButtonTextColor()
                 )
             ) {
                 Text(
@@ -1090,7 +1090,7 @@ private fun NFCInstructionsOverlay() {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = Bluegray900.copy(alpha = 0.9f)
+                containerColor = com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().surface.copy(alpha = 0.9f)
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -1100,7 +1100,7 @@ private fun NFCInstructionsOverlay() {
             ) {
                 Text(
                     text = "📱 NFC Instructions",
-                    color = Yellow900,
+                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1109,7 +1109,7 @@ private fun NFCInstructionsOverlay() {
                 
                 Text(
                     text = "• Make sure NFC is enabled on your device\n• Hold your device flat against the passport\n• Keep steady until scan completes",
-                    color = WhiteA700,
+                    color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                     fontSize = 14.sp,
                     lineHeight = 20.sp
                 )

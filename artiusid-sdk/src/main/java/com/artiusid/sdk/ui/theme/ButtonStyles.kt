@@ -84,14 +84,14 @@ fun CustomInfoButton(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = AppColors.overlay
+            containerColor = ColorManager.getCurrentScheme().surface
         ),
         shape = RoundedCornerShape(8.dp)
     ) {
         Text(
             text = buttonLabel,
             modifier = Modifier.padding(12.dp),
-            color = AppColors.textPrimary,
+            color = ColorManager.getCurrentScheme().textPrimary,
             fontSize = getRelativeFontSize(16.0f).sp,
             fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center

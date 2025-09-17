@@ -12,6 +12,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.artiusid.sdk.ui.theme.ThemedButtonColors
+import com.artiusid.sdk.ui.theme.ThemedTextColors
 
 @Composable
 fun CustomInfoButton(
@@ -19,19 +21,31 @@ fun CustomInfoButton(
     isSecondary: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val backgroundColor = if (isSecondary) {
+        ThemedButtonColors.getSecondaryButtonColor()
+    } else {
+        ThemedButtonColors.getPrimaryButtonColor()
+    }
+    
+    val textColor = if (isSecondary) {
+        ThemedButtonColors.getSecondaryButtonTextColor()
+    } else {
+        ThemedButtonColors.getPrimaryButtonTextColor()
+    }
+    
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(59.dp)
             .background(
-                color = if (isSecondary) Color.White else Color(0xFFFF6B35), // iOS-like orange
+                color = backgroundColor,
                 shape = RoundedCornerShape(12.58.dp)
             ),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = buttonLabel,
-            color = if (isSecondary) Color(0xFFFF6B35) else Color.White,
+            color = textColor,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center

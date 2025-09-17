@@ -135,7 +135,13 @@ fun AppNavigation(
                     navController.navigate(Screen.FaceScanIntro.route)
                 },
                 onNavigateBack = {
-                    navController.popBackStack()
+                    // If this is the start destination, call onCancel to exit the SDK
+                    if (startDestination == Screen.VerificationSteps.route) {
+                        android.util.Log.d("AppNavigation", "🔙 Back pressed on start screen, calling onCancel")
+                        onCancel?.invoke()
+                    } else {
+                        navController.popBackStack()
+                    }
                 }
             )
         }
@@ -310,7 +316,13 @@ fun AppNavigation(
                     }
                 },
                 onNavigateBack = {
-                    navController.popBackStack()
+                    // If this is the start destination, call onCancel to exit the SDK
+                    if (startDestination == Screen.Authentication.route) {
+                        android.util.Log.d("AppNavigation", "🔙 Back pressed on start screen, calling onCancel")
+                        onCancel?.invoke()
+                    } else {
+                        navController.popBackStack()
+                    }
                 }
             )
         }

@@ -37,7 +37,7 @@ fun VerificationResultsScreen(
             .fillMaxSize()
             .background(
                 brush = Brush.linearGradient(
-                    colors = listOf(Bluegray900, Gray900),
+                    colors = listOf(com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().background, com.artiusid.sdk.ui.theme.ColorManager.getCurrentScheme().surface),
                     start = androidx.compose.ui.geometry.Offset(0f, 0f),
                     end = androidx.compose.ui.geometry.Offset(1f, 1f)
                 )
@@ -205,7 +205,7 @@ fun VerificationResultsScreen(
                                 label = "Person Search Rating",
                                 value = verificationData.personRating ?: "N/A",
                                 isScore = false,
-                                valueColor = Yellow900
+                                valueColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                             )
                         }
                     }
@@ -220,7 +220,7 @@ fun VerificationResultsScreen(
                         .fillMaxWidth()
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Yellow900
+                        containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                     ),
                     shape = RoundedCornerShape(25.dp)
                 ) {
@@ -243,7 +243,7 @@ private fun StatusBadge(status: String) {
     val isPass = status.lowercase() == "pass"
     
     Surface(
-        color = if (isPass) LightGreen900 else Color.Red,
+        color = if (isPass) com.artiusid.sdk.ui.theme.ThemedStatusColors.getSuccessColor() else com.artiusid.sdk.ui.theme.ThemedStatusColors.getErrorColor(),
         shape = RoundedCornerShape(15.dp),
         modifier = Modifier.padding(horizontal = 4.dp)
     ) {

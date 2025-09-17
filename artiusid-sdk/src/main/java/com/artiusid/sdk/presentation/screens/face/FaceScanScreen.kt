@@ -215,7 +215,7 @@ fun FaceScanScreen(
                     Card(
                         modifier = Modifier.padding(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.Red.copy(alpha = 0.9f)
+                            containerColor = com.artiusid.sdk.ui.theme.ThemedStatusColors.getErrorColor().copy(alpha = 0.9f)
                         )
                     ) {
                         Text(

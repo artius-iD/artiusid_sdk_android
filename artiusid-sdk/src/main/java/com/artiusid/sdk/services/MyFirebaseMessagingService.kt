@@ -116,7 +116,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "ArtiusID Notifications",
+                "artius.iD Notifications",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             notificationManager.createNotificationChannel(channel)
@@ -126,7 +126,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(remoteMessage.notification?.title ?: "ArtiusID")
+            .setContentTitle(remoteMessage.notification?.title ?: "artius.iD")
             .setContentText(remoteMessage.notification?.body ?: "You have a new notification.")
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)

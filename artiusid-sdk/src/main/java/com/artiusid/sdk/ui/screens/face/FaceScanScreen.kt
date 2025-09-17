@@ -57,6 +57,8 @@ import com.artiusid.sdk.presentation.screens.face.FaceVerificationViewModel
 import com.artiusid.sdk.R
 import kotlinx.coroutines.delay
 import kotlin.math.*
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 
 @Composable
 fun FaceScanScreen(
@@ -183,12 +185,7 @@ fun FaceScanScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF1A1A2E), // Bluegray900
-                        Color(0xFF16213E)  // Gray900
-                    )
-                )
+                brush = com.artiusid.sdk.ui.theme.ColorManager.getGradientBrush()
             )
     ) {
         Column(
@@ -257,7 +254,7 @@ fun FaceScanScreen(
                             Button(
                                 onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFFF6B35)
+                                    containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                                 )
                             ) {
                                 Text(stringResource(R.string.grant_permission))
@@ -267,23 +264,27 @@ fun FaceScanScreen(
                 }
                 // Face overlay and positioning animations (iOS-like)
                 if (faceResult?.processingStage == ProcessingStage.INITIAL_INSTRUCTIONS) {
-                    // Face overlay background
-                    Image(
-                        painter = painterResource(id = R.drawable.face_overlay),
-                        contentDescription = "Face Overlay",
-                        modifier = Modifier
-                            .size(450.dp)
-                            .alpha(0.5f)
-                    )
+                    // Face overlay background - removed to avoid visible box on themed backgrounds
+                    // Image(
+                    //     painter = painterResource(id = R.drawable.face_overlay),
+                    //     contentDescription = "Face Overlay",
+                    //     modifier = Modifier
+                    //         .size(450.dp)
+                    //         .alpha(0.0f)
+                    // )
                     
-                    // Positioning animation overlay (iOS-like GIF animations)
+                    // Show positioning guidance GIF based on face detection results
                     faceResult?.let { result ->
                         if (result.alignmentDirection.isNotEmpty()) {
+                            // Show specific positioning guidance GIF
                             com.artiusid.sdk.presentation.components.FacePositioningAnimationView(
                                 direction = result.alignmentDirection,
-                                modifier = Modifier.size(300.dp)
+                                modifier = Modifier
+                                    .size(450.dp)
+                                    .clip(CircleShape)
                             )
                         }
+                        // Note: No fallback GIF - positioning guidance only shows when needed
                     }
                 } else {
                     // Show progress circle for segment capture

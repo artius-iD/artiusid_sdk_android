@@ -8,19 +8,21 @@ import com.artiusid.sdk.callbacks.VerificationCallback
 import com.artiusid.sdk.callbacks.AuthenticationCallback
 import com.artiusid.sdk.config.SDKConfiguration
 import com.artiusid.sdk.models.SDKThemeConfiguration
+import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
 import com.artiusid.sdk.models.SDKError
 import com.artiusid.sdk.models.SDKErrorCode
 import com.artiusid.sdk.services.APIManager
 import com.artiusid.sdk.util.DeviceUtils
 import com.artiusid.sdk.utils.SharedContextManager
+import com.artiusid.sdk.localization.LocalizationManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * ArtiusID SDK - Bridge to Complete Standalone Application
+ * artius.iD SDK - Bridge to Complete Standalone Application
  * 
- * This SDK provides a bridge interface to the complete standalone ArtiusID application.
+ * This SDK provides a bridge interface to the complete standalone artius.iD application.
  * The standalone app runs in its own activity context with full isolation, while the
  * SDK provides seamless integration, theming, and result communication.
  * 
@@ -41,6 +43,7 @@ object ArtiusIDSDK {
     // SDK Configuration
     private var sdkConfiguration: SDKConfiguration? = null
     private var themeConfiguration: SDKThemeConfiguration? = null
+    private var enhancedThemeConfiguration: EnhancedSDKThemeConfiguration? = null
     private var isInitialized = false
     
     // Shared context management for mTLS and Firebase
@@ -59,13 +62,16 @@ object ArtiusIDSDK {
         theme: SDKThemeConfiguration
     ) {
         try {
-            android.util.Log.i(TAG, "🌉 Initializing ArtiusID SDK Bridge...")
+            android.util.Log.i(TAG, "🌉 Initializing artius.iD SDK Bridge...")
 
             // Store configurations
             sdkConfiguration = configuration.copy(
                 hostAppPackageName = context.packageName
             )
             themeConfiguration = theme
+            
+            // Initialize localization with overrides from host app
+            com.artiusid.sdk.utils.LocalizationManager.initialize(configuration.localizationOverrides)
 
             // Set up environment in SharedPreferences for UrlBuilder
             val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
@@ -98,15 +104,109 @@ object ArtiusIDSDK {
 
             isInitialized = true
 
-            android.util.Log.i(TAG, "✅ ArtiusID SDK Bridge initialized successfully")
+            android.util.Log.i(TAG, "✅ artius.iD SDK Bridge initialized successfully")
             android.util.Log.i(TAG, "🎨 Theme: ${theme.brandName}")
             android.util.Log.i(TAG, "🏢 Environment: ${configuration.environment}")
             android.util.Log.i(TAG, "🌉 Bridge ready to launch standalone application")
 
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "❌ Failed to initialize ArtiusID SDK Bridge", e)
+            android.util.Log.e(TAG, "❌ Failed to initialize artius.iD SDK Bridge", e)
             throw e
         }
+    }
+    
+    /**
+     * Initialize the SDK with enhanced theming configuration
+     * @param context Application context
+     * @param configuration SDK configuration (API keys, environment, etc.)
+     * @param enhancedTheme Enhanced theme configuration with comprehensive theming options
+     */
+    fun initializeWithEnhancedTheme(
+        context: Context, 
+        configuration: SDKConfiguration,
+        enhancedTheme: EnhancedSDKThemeConfiguration
+    ) {
+        try {
+            android.util.Log.i(TAG, "🌉 Initializing artius.iD SDK Bridge with Enhanced Theming...")
+
+            // Store configurations
+            sdkConfiguration = configuration
+            enhancedThemeConfiguration = enhancedTheme
+            
+            // Initialize localization with overrides from host app
+            com.artiusid.sdk.utils.LocalizationManager.initialize(configuration.localizationOverrides)
+            
+            // Convert enhanced theme to basic theme for backward compatibility
+            themeConfiguration = convertToBasicTheme(enhancedTheme)
+            
+            // Set environment name for logging
+            val environmentName = when (configuration.environment) {
+                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
+                com.artiusid.sdk.config.Environment.STAGING -> "Staging"
+                com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
+            }
+            android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
+
+            // Initialize shared context manager for mTLS and Firebase
+            sharedContextManager = SharedContextManager(context, sdkConfiguration!!)
+            sharedContextManager!!.logSharedContextStatus()
+
+            // Initialize mTLS certificate using shared context (non-blocking)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    initializeSharedCertificate(context, sdkConfiguration!!)
+                } catch (e: Exception) {
+                    android.util.Log.e(TAG, "❌ Certificate initialization failed, but continuing with SDK initialization", e)
+                }
+            }
+
+            // Initialize the bridge to standalone application
+            standaloneAppBridge = StandaloneAppBridge(context)
+            standaloneAppBridge.initialize(sdkConfiguration!!, themeConfiguration!!)
+            
+            // Set enhanced theme if available
+            if (enhancedThemeConfiguration != null) {
+                standaloneAppBridge.setEnhancedTheme(enhancedThemeConfiguration!!)
+            }
+            
+            android.util.Log.d(TAG, "🎨 Enhanced theme applied: ${enhancedTheme.brandName}")
+            android.util.Log.d(TAG, "📱 Host package: ${context.packageName}")
+            android.util.Log.d(TAG, "🔧 Environment: ${configuration.environment}")
+            
+            isInitialized = true
+            android.util.Log.i(TAG, "✅ ArtiusID SDK Bridge initialized successfully with Enhanced Theming")
+            
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "❌ Failed to initialize ArtiusID SDK Bridge with Enhanced Theming", e)
+            throw e
+        }
+    }
+    
+    /**
+     * Convert enhanced theme configuration to basic theme for backward compatibility
+     */
+    private fun convertToBasicTheme(enhancedTheme: EnhancedSDKThemeConfiguration): SDKThemeConfiguration {
+        return SDKThemeConfiguration(
+            brandName = enhancedTheme.brandName,
+            brandLogoUrl = enhancedTheme.brandLogoUrl,
+            primaryColorHex = enhancedTheme.colorScheme.primaryColorHex,
+            secondaryColorHex = enhancedTheme.colorScheme.secondaryColorHex,
+            backgroundColorHex = enhancedTheme.colorScheme.backgroundColorHex,
+            surfaceColorHex = enhancedTheme.colorScheme.surfaceColorHex,
+            onPrimaryColorHex = enhancedTheme.colorScheme.onPrimaryColorHex,
+            onSecondaryColorHex = enhancedTheme.colorScheme.onSecondaryColorHex,
+            onBackgroundColorHex = enhancedTheme.colorScheme.onBackgroundColorHex,
+            onSurfaceColorHex = enhancedTheme.colorScheme.onSurfaceColorHex,
+            successColorHex = enhancedTheme.colorScheme.successColorHex,
+            errorColorHex = enhancedTheme.colorScheme.errorColorHex,
+            warningColorHex = enhancedTheme.colorScheme.warningColorHex,
+            faceDetectionOverlayColorHex = enhancedTheme.colorScheme.faceDetectionOverlayColorHex,
+            documentScanOverlayColorHex = enhancedTheme.colorScheme.documentScanOverlayColorHex,
+            pendingStepColorHex = enhancedTheme.colorScheme.pendingStepColorHex,
+            completedStepColorHex = enhancedTheme.colorScheme.completedStepColorHex,
+            isDarkMode = enhancedTheme.colorScheme.backgroundColorHex == "#121212" || 
+                        enhancedTheme.colorScheme.backgroundColorHex == "#000000"
+        )
     }
     
     /**
@@ -265,6 +365,11 @@ object ArtiusIDSDK {
      * Get current theme configuration
      */
     fun getCurrentTheme(): SDKThemeConfiguration? = themeConfiguration
+    
+    /**
+     * Get current enhanced theme configuration
+     */
+    fun getCurrentEnhancedTheme(): EnhancedSDKThemeConfiguration? = enhancedThemeConfiguration
     
     /**
      * Get current SDK configuration  
