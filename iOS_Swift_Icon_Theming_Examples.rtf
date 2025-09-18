@@ -1,0 +1,349 @@
+{\rtf1\ansi\deff0 {\fonttbl {\f0 Times New Roman;} {\f1 Courier New;}}
+{\colortbl;\red0\green0\blue0;\red0\green0\blue255;\red0\green128\blue0;\red255\green0\blue0;}
+
+\f0\fs24
+
+{\b\fs32 iOS Swift Icon Theming Examples}
+\par
+{\b\fs28 artius.iD SDK - Dynamic PNG Icon Color Theming}
+\par\par
+
+{\b\fs20 Overview}
+\par
+This document shows how to implement dynamic icon color theming in iOS Swift, similar to the Android SDK system. This allows host applications to customize all PNG icon colors throughout the SDK using a centralized theming system.
+\par\par
+
+{\b\fs20 1. UIImageView Extension for Icon Tinting}
+\par\par
+{\f1\fs18
+import UIKit\par\par
+
+extension UIImageView \{\par
+    /// Apply theme color to icon with specified category\par
+    func applyIconTheme(category: IconCategory, theme: SDKIconTheme) \{\par
+        guard let image = self.image else \{ return \}\par
+        \par
+        // Get color for category\par
+        let iconColor = theme.colorForCategory(category)\par
+        \par
+        // Apply tint color to PNG icon\par
+        self.image = image.withRenderingMode(.alwaysTemplate)\par
+        self.tintColor = iconColor\par
+    \}\par
+\}\par\par
+
+// Usage Example\par
+let documentIcon = UIImageView(image: UIImage(named: "ic_passport"))\par
+documentIcon.applyIconTheme(category: .document, theme: currentTheme.iconTheme)\par
+}
+\par\par
+
+{\b\fs20 2. Icon Category Enum}
+\par\par
+{\f1\fs18
+enum IconCategory \{\par
+    case primary\par
+    case secondary\par
+    case accent\par
+    case disabled\par
+    case navigation\par
+    case action\par
+    case instruction\par
+    case warning\par
+    case error\par
+    case success\par
+    case document\par
+    case camera\par
+    case scan\par
+    case biometric\par
+    case security\par
+    case nfc\par
+    case statusActive\par
+    case statusInactive\par
+    case statusProcessing\par
+\}\par
+}
+\par\par
+
+{\b\fs20 3. Icon Theme Configuration}
+\par\par
+{\f1\fs18
+struct SDKIconTheme \{\par
+    let iconStyle: String\par
+    let mediumIconSize: CGFloat\par
+    \par
+    // Core UI Icons\par
+    let primaryIconColor: UIColor\par
+    let secondaryIconColor: UIColor\par
+    let accentIconColor: UIColor\par
+    let disabledIconColor: UIColor\par
+    \par
+    // Navigation & Actions\par
+    let navigationIconColor: UIColor\par
+    let actionIconColor: UIColor\par
+    \par
+    // Instruction & Feedback\par
+    let instructionIconColor: UIColor\par
+    let warningIconColor: UIColor\par
+    let errorIconColor: UIColor\par
+    let successIconColor: UIColor\par
+    \par
+    // Document & Verification\par
+    let documentIconColor: UIColor\par
+    let cameraIconColor: UIColor\par
+    let scanIconColor: UIColor\par
+    \par
+    // Security & Biometrics\par
+    let biometricIconColor: UIColor\par
+    let securityIconColor: UIColor\par
+    let nfcIconColor: UIColor\par
+    \par
+    // Status Indicators\par
+    let statusActiveIconColor: UIColor\par
+    let statusInactiveIconColor: UIColor\par
+    let statusProcessingIconColor: UIColor\par
+    \par
+    /// Get color for specific icon category\par
+    func colorForCategory(_ category: IconCategory) -> UIColor \{\par
+        switch category \{\par
+        case .primary: return primaryIconColor\par
+        case .secondary: return secondaryIconColor\par
+        case .accent: return accentIconColor\par
+        case .disabled: return disabledIconColor\par
+        case .navigation: return navigationIconColor\par
+        case .action: return actionIconColor\par
+        case .instruction: return instructionIconColor\par
+        case .warning: return warningIconColor\par
+        case .error: return errorIconColor\par
+        case .success: return successIconColor\par
+        case .document: return documentIconColor\par
+        case .camera: return cameraIconColor\par
+        case .scan: return scanIconColor\par
+        case .biometric: return biometricIconColor\par
+        case .security: return securityIconColor\par
+        case .nfc: return nfcIconColor\par
+        case .statusActive: return statusActiveIconColor\par
+        case .statusInactive: return statusInactiveIconColor\par
+        case .statusProcessing: return statusProcessingIconColor\par
+        \}\par
+    \}\par
+\}\par
+}
+\par\par
+
+{\b\fs20 4. Theme Configuration Example}
+\par\par
+{\f1\fs18
+// Corporate Theme Example\par
+let corporateTheme = SDKIconTheme(\par
+    iconStyle: "outlined",\par
+    mediumIconSize: 24.0,\par
+    \par
+    // Core UI Icons\par
+    primaryIconColor: UIColor(hex: "#2196F3"),      // Blue\par
+    secondaryIconColor: UIColor(hex: "#757575"),    // Grey\par
+    accentIconColor: UIColor(hex: "#FF9800"),       // Orange\par
+    disabledIconColor: UIColor(hex: "#BDBDBD"),     // Light Grey\par
+    \par
+    // Navigation & Actions\par
+    navigationIconColor: UIColor(hex: "#2196F3"),   // Blue\par
+    actionIconColor: UIColor(hex: "#4CAF50"),       // Green\par
+    \par
+    // Instruction & Feedback\par
+    instructionIconColor: UIColor(hex: "#FF9800"),  // Orange\par
+    warningIconColor: UIColor(hex: "#FFC107"),      // Amber\par
+    errorIconColor: UIColor(hex: "#F44336"),        // Red\par
+    successIconColor: UIColor(hex: "#4CAF50"),      // Green\par
+    \par
+    // Document & Verification\par
+    documentIconColor: UIColor(hex: "#2196F3"),     // Blue\par
+    cameraIconColor: UIColor(hex: "#FFFFFF"),       // White\par
+    scanIconColor: UIColor(hex: "#FF9800"),         // Orange\par
+    \par
+    // Security & Biometrics\par
+    biometricIconColor: UIColor(hex: "#9C27B0"),    // Purple\par
+    securityIconColor: UIColor(hex: "#4CAF50"),     // Green\par
+    nfcIconColor: UIColor(hex: "#FF5722"),          // Deep Orange\par
+    \par
+    // Status Indicators\par
+    statusActiveIconColor: UIColor(hex: "#4CAF50"),    // Green\par
+    statusInactiveIconColor: UIColor(hex: "#9E9E9E"),  // Grey\par
+    statusProcessingIconColor: UIColor(hex: "#2196F3") // Blue\par
+)\par
+}
+\par\par
+
+{\b\fs20 5. UIColor Hex Extension}
+\par\par
+{\f1\fs18
+extension UIColor \{\par
+    /// Initialize UIColor from hex string\par
+    convenience init(hex: String) \{\par
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)\par
+        var int: UInt64 = 0\par
+        Scanner(string: hex).scanHexInt64(&int)\par
+        let a, r, g, b: UInt64\par
+        switch hex.count \{\par
+        case 3: // RGB (12-bit)\par
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)\par
+        case 6: // RGB (24-bit)\par
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)\par
+        case 8: // ARGB (32-bit)\par
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)\par
+        default:\par
+            (a, r, g, b) = (1, 1, 1, 0)\par
+        \}\par
+        \par
+        self.init(\par
+            red: CGFloat(r) / 255,\par
+            green: CGFloat(g) / 255,\par
+            blue: CGFloat(b) / 255,\par
+            alpha: CGFloat(a) / 255\par
+        )\par
+    \}\par
+\}\par
+}
+\par\par
+
+{\b\fs20 6. Themed Icon Component}
+\par\par
+{\f1\fs18
+class ThemedIconView: UIImageView \{\par
+    private var iconCategory: IconCategory = .primary\par
+    private var iconTheme: SDKIconTheme?\par
+    \par
+    /// Set icon with automatic theming\par
+    func setIcon(named imageName: String, category: IconCategory, theme: SDKIconTheme) \{\par
+        self.iconCategory = category\par
+        self.iconTheme = theme\par
+        \par
+        // Load image\par
+        guard let image = UIImage(named: imageName) else \{ return \}\par
+        \par
+        // Apply template rendering mode for tinting\par
+        self.image = image.withRenderingMode(.alwaysTemplate)\par
+        \par
+        // Apply theme color\par
+        self.tintColor = theme.colorForCategory(category)\par
+        \par
+        // Set size if needed\par
+        self.frame.size = CGSize(width: theme.mediumIconSize, height: theme.mediumIconSize)\par
+    \}\par
+    \par
+    /// Update theme colors dynamically\par
+    func updateTheme(_ newTheme: SDKIconTheme) \{\par
+        self.iconTheme = newTheme\par
+        self.tintColor = newTheme.colorForCategory(iconCategory)\par
+    \}\par
+\}\par
+}
+\par\par
+
+{\b\fs20 7. Usage in View Controller}
+\par\par
+{\f1\fs18
+class DocumentSelectionViewController: UIViewController \{\par
+    @IBOutlet weak var passportIcon: ThemedIconView!\par
+    @IBOutlet weak var backButton: ThemedIconView!\par
+    @IBOutlet weak var successIndicator: ThemedIconView!\par
+    \par
+    var currentTheme: SDKIconTheme = corporateTheme\par
+    \par
+    override func viewDidLoad() \{\par
+        super.viewDidLoad()\par
+        setupThemedIcons()\par
+    \}\par
+    \par
+    private func setupThemedIcons() \{\par
+        // Document icon\par
+        passportIcon.setIcon(\par
+            named: "ic_passport",\par
+            category: .document,\par
+            theme: currentTheme\par
+        )\par
+        \par
+        // Navigation icon\par
+        backButton.setIcon(\par
+            named: "ic_arrow_back",\par
+            category: .navigation,\par
+            theme: currentTheme\par
+        )\par
+        \par
+        // Success icon\par
+        successIndicator.setIcon(\par
+            named: "ic_check_circle",\par
+            category: .success,\par
+            theme: currentTheme\par
+        )\par
+    \}\par
+    \par
+    /// Update all icons when theme changes\par
+    func updateTheme(_ newTheme: SDKIconTheme) \{\par
+        currentTheme = newTheme\par
+        passportIcon.updateTheme(newTheme)\par
+        backButton.updateTheme(newTheme)\par
+        successIndicator.updateTheme(newTheme)\par
+    \}\par
+\}\par
+}
+\par\par
+
+{\b\fs20 8. SwiftUI Version (Modern Approach)}
+\par\par
+{\f1\fs18
+import SwiftUI\par\par
+
+struct ThemedIcon: View \{\par
+    let imageName: String\par
+    let category: IconCategory\par
+    let theme: SDKIconTheme\par
+    \par
+    var body: some View \{\par
+        Image(imageName)\par
+            .renderingMode(.template)\par
+            .foregroundColor(Color(theme.colorForCategory(category)))\par
+            .frame(width: theme.mediumIconSize, height: theme.mediumIconSize)\par
+    \}\par
+\}\par\par
+
+// Usage in SwiftUI\par
+struct DocumentSelectionView: View \{\par
+    let theme: SDKIconTheme\par
+    \par
+    var body: some View \{\par
+        VStack \{\par
+            ThemedIcon(imageName: "ic_passport", category: .document, theme: theme)\par
+            ThemedIcon(imageName: "ic_arrow_back", category: .navigation, theme: theme)\par
+            ThemedIcon(imageName: "ic_check_circle", category: .success, theme: theme)\par
+        \}\par
+    \}\par
+\}\par
+}
+\par\par
+
+{\b\fs20 Key Benefits}
+\par\par
+{\b 1. Template Rendering Mode:} Use .alwaysTemplate to enable tinting
+\par
+{\b 2. UIColor from Hex:} Convert hex strings to UIColor for consistency
+\par
+{\b 3. Category-Based Theming:} Same category system as Android
+\par
+{\b 4. Dynamic Updates:} Support runtime theme changes
+\par
+{\b 5. SwiftUI Support:} Modern declarative approach available
+\par
+{\b 6. Centralized Control:} Single configuration point for all icon colors
+\par
+{\b 7. Automatic Application:} All SDK screens inherit theme colors
+\par
+{\b 8. Brand Consistency:} Maintain host app branding throughout SDK
+\par\par
+
+{\b\fs20 Summary}
+\par\par
+This iOS Swift implementation provides the same level of control and flexibility as the Android system, allowing host iOS apps to completely customize all PNG icon colors throughout the artius.iD SDK using a centralized theming approach.
+\par\par
+The key is using .alwaysTemplate rendering mode which allows UIKit to tint PNG icons with any color at runtime, providing complete theming flexibility without requiring multiple icon assets.
+\par
+}

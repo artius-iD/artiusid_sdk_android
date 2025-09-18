@@ -1,3 +1,9 @@
+/*
+ * File: PinningValidator.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.security
 
 import android.util.Log

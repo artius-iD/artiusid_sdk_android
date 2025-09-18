@@ -1,3 +1,9 @@
+/*
+ * File: EnvironmentManager.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.utils
 
 import android.content.Context

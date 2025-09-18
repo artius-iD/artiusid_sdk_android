@@ -1,3 +1,9 @@
+/*
+ * File: SelectDocumentTypeScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.document
 
 import androidx.compose.foundation.Image
@@ -83,6 +89,7 @@ fun SelectDocumentTypeScreen(
                     ThemedDocumentIcon(
                         iconRes = R.drawable.stateid_icon,
                         contentDescription = "State ID",
+                        overrideKey = "state_id_icon",
                         modifier = Modifier
                             .size(width = 50.dp, height = 35.dp)
                             .padding(end = 16.dp)
@@ -137,6 +144,7 @@ fun SelectDocumentTypeScreen(
                     ThemedDocumentIcon(
                         iconRes = R.drawable.passport_icon,
                         contentDescription = "Passport",
+                        overrideKey = "passport_icon",
                         modifier = Modifier
                             .size(width = 35.dp, height = 50.dp)
                             .padding(end = 16.dp)

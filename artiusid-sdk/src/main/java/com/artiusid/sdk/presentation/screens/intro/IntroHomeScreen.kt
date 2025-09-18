@@ -1,3 +1,9 @@
+/*
+ * File: IntroHomeScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.intro
 
 import androidx.compose.foundation.Image

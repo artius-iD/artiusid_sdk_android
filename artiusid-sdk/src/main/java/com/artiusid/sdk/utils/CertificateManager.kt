@@ -1,3 +1,9 @@
+/*
+ * File: CertificateManager.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.utils
 
 import android.content.Context
@@ -255,7 +261,7 @@ class CertificateManager(private val context: Context) {
             "2.5.4.6" to "US",           // countryName
             "2.5.4.8" to "Arizona",      // stateOrProvinceName  
             "2.5.4.7" to "Phoenix",      // localityName
-            "2.5.4.10" to "artius.iD",    // organizationName
+            "2.5.4.10" to "ArtiusID",    // organizationName
             "2.5.4.11" to "Development", // organizationalUnitName
             "2.5.4.3" to deviceId         // commonName
         )

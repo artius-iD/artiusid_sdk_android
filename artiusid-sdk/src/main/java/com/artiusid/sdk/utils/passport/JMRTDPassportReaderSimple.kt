@@ -1,3 +1,9 @@
+/*
+ * File: JMRTDPassportReaderSimple.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // JMRTDPassportReaderSimple.kt
 // artiusid

@@ -1,3 +1,9 @@
+/*
+ * File: StandaloneAppActivity.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.standalone
 
 import android.content.Intent

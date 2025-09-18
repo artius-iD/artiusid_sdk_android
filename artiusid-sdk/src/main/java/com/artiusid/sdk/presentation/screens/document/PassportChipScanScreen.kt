@@ -1,3 +1,9 @@
+/*
+ * File: PassportChipScanScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // PassportChipScanScreen.kt
 // artiusid

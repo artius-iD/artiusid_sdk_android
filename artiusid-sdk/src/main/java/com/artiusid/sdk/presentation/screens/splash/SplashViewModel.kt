@@ -1,3 +1,9 @@
+/*
+ * File: SplashViewModel.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.splash
 
 import androidx.lifecycle.ViewModel

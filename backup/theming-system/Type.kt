@@ -1,3 +1,9 @@
+/*
+ * File: Type.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.ui.theme
 
 import androidx.compose.material3.Typography

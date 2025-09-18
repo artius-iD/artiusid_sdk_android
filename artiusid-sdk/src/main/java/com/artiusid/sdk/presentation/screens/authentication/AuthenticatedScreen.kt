@@ -1,3 +1,9 @@
+/*
+ * File: AuthenticatedScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.authentication
 
 import androidx.compose.foundation.Image

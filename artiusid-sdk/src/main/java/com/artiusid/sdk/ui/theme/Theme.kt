@@ -1,3 +1,9 @@
+/*
+ * File: Theme.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.ui.theme
 
 import android.app.Activity

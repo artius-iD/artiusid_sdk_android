@@ -1,3 +1,9 @@
+/*
+ * File: EnrollmentData.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.domain.model
 
 data class EnrollmentData(

@@ -1,3 +1,9 @@
+/*
+ * File: BarcodeScanManager.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // BarcodeScanManager.kt
 // artiusid

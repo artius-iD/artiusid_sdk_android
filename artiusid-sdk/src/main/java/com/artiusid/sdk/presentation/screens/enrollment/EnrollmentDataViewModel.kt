@@ -1,3 +1,9 @@
+/*
+ * File: EnrollmentDataViewModel.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.enrollment
 
 import androidx.lifecycle.ViewModel

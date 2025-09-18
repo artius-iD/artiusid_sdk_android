@@ -1,3 +1,9 @@
+/*
+ * File: ArtiusSDKConfig.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.config
 
 import androidx.compose.ui.graphics.Color

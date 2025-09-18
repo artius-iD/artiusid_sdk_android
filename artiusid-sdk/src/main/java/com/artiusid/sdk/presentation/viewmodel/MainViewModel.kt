@@ -1,3 +1,9 @@
+/*
+ * File: MainViewModel.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel

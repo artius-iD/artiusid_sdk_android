@@ -1,3 +1,9 @@
+/*
+ * File: AuthRepository.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.domain.repository
 
 interface AuthRepository {

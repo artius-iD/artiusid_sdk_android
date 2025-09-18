@@ -1,3 +1,9 @@
+/*
+ * File: MRZParser.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.utils.passport
 
 import com.artiusid.sdk.data.models.passport.PassportMRZData

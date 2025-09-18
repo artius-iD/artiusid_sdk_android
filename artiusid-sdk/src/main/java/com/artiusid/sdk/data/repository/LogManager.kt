@@ -1,3 +1,9 @@
+/*
+ * File: LogManager.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.data.repository
 
 import android.util.Log

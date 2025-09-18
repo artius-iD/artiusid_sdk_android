@@ -1,3 +1,9 @@
+/*
+ * File: DocumentDataHolder.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.utils
 
 // Data classes to hold document information

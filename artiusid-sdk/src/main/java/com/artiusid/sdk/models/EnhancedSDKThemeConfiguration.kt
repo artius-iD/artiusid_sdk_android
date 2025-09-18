@@ -1,3 +1,9 @@
+/*
+ * File: EnhancedSDKThemeConfiguration.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.models
 
 import android.os.Parcelable

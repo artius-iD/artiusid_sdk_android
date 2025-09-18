@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
+import com.artiusid.sdk.ui.components.ThemedImage
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
@@ -264,27 +265,27 @@ fun FaceScanScreen(
                 }
                 // Face overlay and positioning animations (iOS-like)
                 if (faceResult?.processingStage == ProcessingStage.INITIAL_INSTRUCTIONS) {
-                    // Face overlay background - removed to avoid visible box on themed backgrounds
-                    // Image(
-                    //     painter = painterResource(id = R.drawable.face_overlay),
-                    //     contentDescription = "Face Overlay",
-                    //     modifier = Modifier
-                    //         .size(450.dp)
-                    //         .alpha(0.0f)
-                    // )
+                    // Face outline overlay to guide positioning (like standalone app)
+                    ThemedImage(
+                        defaultResourceId = R.drawable.face_overlay,
+                        overrideKey = "face_overlay",
+                        contentDescription = "Face Outline Guide",
+                        modifier = Modifier
+                            .size(450.dp)
+                            .alpha(0.3f)
+                    )
                     
                     // Show positioning guidance GIF based on face detection results
                     faceResult?.let { result ->
                         if (result.alignmentDirection.isNotEmpty()) {
-                            // Show specific positioning guidance GIF
+                            // Show specific positioning guidance GIF - smaller size to fit within face outline
                             com.artiusid.sdk.presentation.components.FacePositioningAnimationView(
                                 direction = result.alignmentDirection,
                                 modifier = Modifier
-                                    .size(450.dp)
+                                    .size(300.dp)
                                     .clip(CircleShape)
                             )
                         }
-                        // Note: No fallback GIF - positioning guidance only shows when needed
                     }
                 } else {
                     // Show progress circle for segment capture

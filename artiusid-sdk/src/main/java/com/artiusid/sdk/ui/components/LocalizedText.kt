@@ -1,3 +1,9 @@
+/*
+ * File: LocalizedText.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.ui.components
 
 import androidx.annotation.StringRes

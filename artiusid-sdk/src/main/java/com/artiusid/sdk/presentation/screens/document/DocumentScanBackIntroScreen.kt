@@ -1,3 +1,9 @@
+/*
+ * File: DocumentScanBackIntroScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.document
 
 import androidx.compose.foundation.Image
@@ -20,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
+import com.artiusid.sdk.ui.components.ThemedGifAnimation
 import coil.compose.AsyncImage
 import coil.compose.AsyncImage
 
@@ -54,16 +61,13 @@ fun DocumentScanBackIntroScreen(
                     .padding(top = 0.dp),
                 contentAlignment = Alignment.TopCenter
             ) {
-                AsyncImage(
-                    model = coil.request.ImageRequest.Builder(LocalContext.current)
-                        .data(R.drawable.stateid_animation)
-                        .crossfade(true)
-                        .build(),
+                ThemedGifAnimation(
+                    defaultResourceId = R.drawable.stateid_animation,
+                    overrideKey = "state_id_animation_gif",
                     contentDescription = "State ID Back Animation",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
-                        .background(Color.Transparent)
                 )
             }
             

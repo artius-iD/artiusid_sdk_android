@@ -1,3 +1,9 @@
+/*
+ * File: ApiService.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.data.api
 
 import com.artiusid.sdk.data.model.ApprovalRequest

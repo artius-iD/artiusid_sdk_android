@@ -1,3 +1,9 @@
+/*
+ * File: AppModule.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.di
 
 import android.content.Context

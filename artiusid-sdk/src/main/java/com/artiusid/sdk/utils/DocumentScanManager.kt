@@ -1,3 +1,9 @@
+/*
+ * File: DocumentScanManager.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.utils
 
 import android.graphics.Bitmap

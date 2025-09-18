@@ -1,3 +1,9 @@
+/*
+ * File: LoginScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.login
 
 import androidx.compose.foundation.layout.*

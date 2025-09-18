@@ -1,3 +1,9 @@
+/*
+ * File: ApprovalRequestViewModel.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.approval
 
 import android.content.Context

@@ -1,3 +1,9 @@
+/*
+ * File: BridgeMainActivity.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sample
 
 import android.os.Bundle
@@ -23,6 +29,8 @@ import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
 import com.artiusid.sample.theme.SampleAppThemes
 import com.artiusid.sample.theme.EnhancedThemeOption
 import com.artiusid.sample.localization.SampleAppLocalization
+import com.artiusid.sample.config.ImageOverrideOption
+import com.artiusid.sdk.models.SDKImageOverrides
 import com.artiusid.sdk.callbacks.VerificationCallback
 import com.artiusid.sdk.callbacks.AuthenticationCallback
 import com.artiusid.sdk.models.VerificationResult
@@ -42,6 +50,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     private var isLoading by mutableStateOf(false)
     private var lastResult by mutableStateOf("Application started - checking keychain status...")
     private var selectedTheme by mutableStateOf(EnhancedThemeOption.ARTIUSID_DEFAULT)
+    private var selectedImageOverride by mutableStateOf(ImageOverrideOption.DEFAULT)
     private var verificationResultData by mutableStateOf<VerificationResultData?>(null)
     private var showResultsScreen by mutableStateOf(false)
     private var fcmTokenStatus by mutableStateOf("❌ Not available")
@@ -125,6 +134,42 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                         selectedTheme = selectedTheme,
                         onThemeSelected = { selectedTheme = it }
                     )
+                }
+            }
+            
+            // Image Override Selection
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "🖼️ Image Override Selection",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    ImageOverrideDropdown(
+                        selectedOverride = selectedImageOverride,
+                        onOverrideSelected = { selectedImageOverride = it }
+                    )
+                    
+                    // Show override statistics
+                    if (selectedImageOverride != ImageOverrideOption.DEFAULT) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        val stats = com.artiusid.sample.config.ImageOverrideHelper.getOverrideStats(selectedImageOverride.overrides)
+                        Text(
+                            text = "📊 ${stats["activeOverrides"]} overrides active (${stats["overridePercentage"]}%)",
+                            fontSize = 12.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
             }
             
@@ -487,7 +532,8 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                 hostAppPackageName = packageName,
                 sharedCertificateContext = true,
                 sharedFirebaseContext = true,
-                localizationOverrides = localizationOverrides
+                localizationOverrides = localizationOverrides,
+                imageOverrides = selectedImageOverride.overrides
             )
             
             ArtiusIDSDK.initializeWithEnhancedTheme(
@@ -521,7 +567,8 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                 hostAppPackageName = packageName,
                 sharedCertificateContext = true,
                 sharedFirebaseContext = true,
-                localizationOverrides = localizationOverrides
+                localizationOverrides = localizationOverrides,
+                imageOverrides = selectedImageOverride.overrides
             )
             
             ArtiusIDSDK.initializeWithEnhancedTheme(
@@ -657,6 +704,65 @@ private fun ThemeDropdown(
                     },
                     onClick = {
                         onThemeSelected(theme)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Image Override selection dropdown composable
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ImageOverrideDropdown(
+    selectedOverride: ImageOverrideOption,
+    onOverrideSelected: (ImageOverrideOption) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = selectedOverride.displayName,
+            onValueChange = { },
+            readOnly = true,
+            label = { Text("Select Image Override") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+        
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            ImageOverrideOption.values().forEach { override ->
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(
+                                text = override.displayName,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = override.description,
+                                fontSize = 12.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                    },
+                    onClick = {
+                        onOverrideSelected(override)
                         expanded = false
                     }
                 )

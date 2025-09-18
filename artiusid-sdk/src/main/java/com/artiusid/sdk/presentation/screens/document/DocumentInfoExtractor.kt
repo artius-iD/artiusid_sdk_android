@@ -1,3 +1,9 @@
+/*
+ * File: DocumentInfoExtractor.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.document
 
 import android.graphics.Bitmap

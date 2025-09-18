@@ -1,3 +1,9 @@
+/*
+ * File: EnrollmentSuccessScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.enrollment
 
 import androidx.compose.animation.*

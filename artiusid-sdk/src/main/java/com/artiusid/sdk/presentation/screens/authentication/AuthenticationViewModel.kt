@@ -1,3 +1,9 @@
+/*
+ * File: AuthenticationViewModel.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.authentication
 
 import android.content.Context

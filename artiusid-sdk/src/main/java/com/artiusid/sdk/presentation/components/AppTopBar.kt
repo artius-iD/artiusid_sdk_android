@@ -1,3 +1,9 @@
+/*
+ * File: AppTopBar.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.components
 
 import androidx.compose.foundation.layout.RowScope

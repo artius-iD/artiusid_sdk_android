@@ -1,3 +1,9 @@
+/*
+ * File: BarcodeScanManagerImpl.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.services
 
 import android.content.Context

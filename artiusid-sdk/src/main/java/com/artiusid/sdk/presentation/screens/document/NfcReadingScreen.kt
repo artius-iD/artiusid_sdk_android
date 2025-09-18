@@ -1,3 +1,9 @@
+/*
+ * File: NfcReadingScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.document
 
 import androidx.compose.foundation.layout.*

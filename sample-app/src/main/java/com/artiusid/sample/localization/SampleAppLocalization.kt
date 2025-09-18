@@ -1,3 +1,9 @@
+/*
+ * File: SampleAppLocalization.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sample.localization
 
 import android.content.Context

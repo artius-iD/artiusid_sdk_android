@@ -1,3 +1,9 @@
+/*
+ * File: VerificationCallback.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.callbacks
 
 import com.artiusid.sdk.models.VerificationResult

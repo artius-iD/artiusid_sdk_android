@@ -1,3 +1,9 @@
+/*
+ * File: DER.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.security.asn1
 
 import android.util.Base64

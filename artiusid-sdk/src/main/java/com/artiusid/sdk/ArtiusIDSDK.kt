@@ -1,3 +1,9 @@
+/*
+ * File: ArtiusIDSDK.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk
 
 import android.app.Activity
@@ -15,6 +21,7 @@ import com.artiusid.sdk.services.APIManager
 import com.artiusid.sdk.util.DeviceUtils
 import com.artiusid.sdk.utils.SharedContextManager
 import com.artiusid.sdk.localization.LocalizationManager
+import com.artiusid.sdk.utils.ImageOverrideInitializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -92,9 +99,22 @@ object ArtiusIDSDK {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     initializeSharedCertificate(context, sdkConfiguration!!)
+                    
+                    // Initialize image override system after certificate is ready
+                    android.util.Log.d(TAG, "🖼️ Initializing image override system after certificate setup...")
+                    ImageOverrideInitializer.initialize(context, sdkConfiguration!!)
+                    
                 } catch (e: Exception) {
                     android.util.Log.e(TAG, "❌ Certificate initialization failed, but continuing with SDK initialization", e)
                     // App continues without certificate - verification will handle this gracefully
+                    
+                    // Still initialize image override system even if certificate fails
+                    try {
+                        android.util.Log.d(TAG, "🖼️ Initializing image override system (certificate failed)...")
+                        ImageOverrideInitializer.initialize(context, sdkConfiguration!!)
+                    } catch (imageE: Exception) {
+                        android.util.Log.e(TAG, "❌ Image override initialization also failed", imageE)
+                    }
                 }
             }
 
@@ -155,8 +175,21 @@ object ArtiusIDSDK {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     initializeSharedCertificate(context, sdkConfiguration!!)
+                    
+                    // Initialize image override system after certificate is ready
+                    android.util.Log.d(TAG, "🖼️ Initializing image override system after certificate setup...")
+                    ImageOverrideInitializer.initialize(context, sdkConfiguration!!)
+                    
                 } catch (e: Exception) {
                     android.util.Log.e(TAG, "❌ Certificate initialization failed, but continuing with SDK initialization", e)
+                    
+                    // Still initialize image override system even if certificate fails
+                    try {
+                        android.util.Log.d(TAG, "🖼️ Initializing image override system (certificate failed)...")
+                        ImageOverrideInitializer.initialize(context, sdkConfiguration!!)
+                    } catch (imageE: Exception) {
+                        android.util.Log.e(TAG, "❌ Image override initialization also failed", imageE)
+                    }
                 }
             }
 

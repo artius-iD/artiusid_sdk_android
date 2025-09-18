@@ -1,3 +1,9 @@
+/*
+ * File: NotificationStateManager.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.utils
 
 import javax.inject.Inject

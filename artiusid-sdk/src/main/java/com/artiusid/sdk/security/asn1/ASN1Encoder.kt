@@ -1,3 +1,9 @@
+/*
+ * File: ASN1Encoder.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.security.asn1
 
 import com.artiusid.sdk.security.constants.ASN1Tag

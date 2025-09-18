@@ -1,3 +1,9 @@
+/*
+ * File: PermissionsHandler.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.permissions
 
 import android.Manifest

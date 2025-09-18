@@ -1,3 +1,9 @@
+/*
+ * File: SDKThemeProvider.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme

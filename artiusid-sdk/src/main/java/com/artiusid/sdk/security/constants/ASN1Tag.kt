@@ -1,3 +1,9 @@
+/*
+ * File: ASN1Tag.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.security.constants
 
 /**

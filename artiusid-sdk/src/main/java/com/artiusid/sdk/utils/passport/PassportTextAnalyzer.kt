@@ -1,3 +1,9 @@
+/*
+ * File: PassportTextAnalyzer.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.utils.passport
 
 import android.graphics.Bitmap
@@ -1035,8 +1041,12 @@ class PassportTextAnalyzer(
         // Format: P<COUNTRY<SURNAME<<GIVENNAMES<<<<<<<<<<<<<<<
         
         for (line in mrzLines) {
-            // Clean the line
+            // Clean the line and apply OCR corrections
             val cleanLine = line.replace(" ", "").uppercase()
+                .replace("K", "<") // Common OCR mistake: K is often misread < character
+                .replace("0", "O") // Common OCR mistake
+                .replace("1", "I") // Common OCR mistake
+                .replace("8", "B") // Common OCR mistake
             
             // Check if this looks like MRZ Line 1 (starts with P< and contains names)
             if (cleanLine.startsWith("P<") && cleanLine.contains("<<")) {
@@ -1068,6 +1078,10 @@ class PassportTextAnalyzer(
         // Fallback: try to find names in any line that looks like it has name patterns
         for (line in mrzLines) {
             val cleanLine = line.replace(" ", "").uppercase()
+                .replace("K", "<") // Common OCR mistake: K is often misread < character
+                .replace("0", "O") // Common OCR mistake
+                .replace("1", "I") // Common OCR mistake
+                .replace("8", "B") // Common OCR mistake
             
             // Look for patterns like "SURNAME<<GIVENNAMES" anywhere in the line
             val namePattern = Regex("([A-Z]+)<<([A-Z]+)")

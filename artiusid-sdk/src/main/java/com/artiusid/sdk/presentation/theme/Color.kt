@@ -1,3 +1,9 @@
+/*
+ * File: Color.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.theme
 
 import androidx.compose.ui.graphics.Color

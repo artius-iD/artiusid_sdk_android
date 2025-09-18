@@ -1,3 +1,9 @@
+/*
+ * File: NFCErrorHandler.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // NFCErrorHandler.kt
 // artiusid

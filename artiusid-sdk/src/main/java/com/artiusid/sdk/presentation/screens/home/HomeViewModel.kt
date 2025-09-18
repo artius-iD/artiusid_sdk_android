@@ -1,3 +1,9 @@
+/*
+ * File: HomeViewModel.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.home
 
 import androidx.lifecycle.ViewModel

@@ -1,3 +1,9 @@
+/*
+ * File: StandaloneAppBridge.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.bridge
 
 import android.app.Activity

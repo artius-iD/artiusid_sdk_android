@@ -1,3 +1,9 @@
+/*
+ * File: FaceVerificationViewModel.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.face
 
 import androidx.lifecycle.ViewModel

@@ -1,3 +1,9 @@
+/*
+ * File: HybridBarcodeScanner.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // HybridBarcodeScanner.kt
 // artiusid

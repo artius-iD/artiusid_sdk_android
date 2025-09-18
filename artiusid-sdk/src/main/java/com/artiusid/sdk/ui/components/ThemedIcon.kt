@@ -1,3 +1,9 @@
+/*
+ * File: ThemedIcon.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.ui.components
 
 import androidx.annotation.DrawableRes
@@ -10,23 +16,36 @@ import androidx.compose.ui.res.painterResource
 import com.artiusid.sdk.ui.theme.ThemedIconColors
 
 /**
- * General themed icon with customizable color
+ * General themed icon with customizable color and override support
  */
 @Composable
 fun ThemedIcon(
     @DrawableRes iconRes: Int,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    tint: Color? = null
+    tint: Color? = null,
+    overrideKey: String? = null
 ) {
     val iconTint = tint ?: ThemedIconColors.getPrimaryIconColor()
     
-    Image(
-        painter = painterResource(id = iconRes),
-        contentDescription = contentDescription,
-        modifier = modifier,
-        colorFilter = ColorFilter.tint(iconTint)
-    )
+    if (overrideKey != null) {
+        // Use themed image with override support
+        ThemedImage(
+            defaultResourceId = iconRes,
+            overrideKey = overrideKey,
+            contentDescription = contentDescription ?: "",
+            modifier = modifier,
+            colorFilter = ColorFilter.tint(iconTint)
+        )
+    } else {
+        // Fallback to standard image
+        Image(
+            painter = painterResource(id = iconRes),
+            contentDescription = contentDescription,
+            modifier = modifier,
+            colorFilter = ColorFilter.tint(iconTint)
+        )
+    }
 }
 
 /**
@@ -36,13 +55,15 @@ fun ThemedIcon(
 fun ThemedNavigationIcon(
     @DrawableRes iconRes: Int,
     contentDescription: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    overrideKey: String? = null
 ) {
     ThemedIcon(
         iconRes = iconRes,
         contentDescription = contentDescription,
         modifier = modifier,
-        tint = ThemedIconColors.getNavigationIconColor()
+        tint = ThemedIconColors.getNavigationIconColor(),
+        overrideKey = overrideKey
     )
 }
 
@@ -87,13 +108,15 @@ fun ThemedInstructionIcon(
 fun ThemedDocumentIcon(
     @DrawableRes iconRes: Int,
     contentDescription: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    overrideKey: String? = null
 ) {
     ThemedIcon(
         iconRes = iconRes,
         contentDescription = contentDescription,
         modifier = modifier,
-        tint = ThemedIconColors.getDocumentIconColor()
+        tint = ThemedIconColors.getDocumentIconColor(),
+        overrideKey = overrideKey
     )
 }
 

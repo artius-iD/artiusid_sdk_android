@@ -1,3 +1,9 @@
+/*
+ * File: VerificationResultsScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.verification
 
 import androidx.compose.foundation.Image

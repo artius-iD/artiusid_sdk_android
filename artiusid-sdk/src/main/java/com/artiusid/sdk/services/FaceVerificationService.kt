@@ -1,3 +1,9 @@
+/*
+ * File: FaceVerificationService.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.services
 
 import kotlinx.coroutines.flow.Flow

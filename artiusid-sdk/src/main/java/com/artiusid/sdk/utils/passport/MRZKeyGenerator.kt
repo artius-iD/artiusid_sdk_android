@@ -1,3 +1,9 @@
+/*
+ * File: MRZKeyGenerator.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // MRZKeyGenerator.kt
 // artiusid

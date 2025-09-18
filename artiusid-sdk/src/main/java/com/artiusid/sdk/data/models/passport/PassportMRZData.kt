@@ -1,3 +1,9 @@
+/*
+ * File: PassportMRZData.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.data.models.passport
 
 import java.text.SimpleDateFormat

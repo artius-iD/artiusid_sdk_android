@@ -1,3 +1,9 @@
+/*
+ * File: EnhancedBarcodeReader.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // EnhancedBarcodeReader.kt
 // artiusid

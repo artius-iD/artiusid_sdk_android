@@ -1,3 +1,9 @@
+/*
+ * File: EnrollmentRepositoryImpl.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.data.repository
 
 import com.artiusid.sdk.domain.model.EnrollmentData

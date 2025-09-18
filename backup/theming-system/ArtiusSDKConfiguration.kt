@@ -1,3 +1,9 @@
+/*
+ * File: ArtiusSDKConfiguration.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.config
 
 import com.artiusid.sdk.theme.SDKThemeConfiguration

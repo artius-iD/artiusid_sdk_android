@@ -1,3 +1,9 @@
+/*
+ * File: DeviceUtils.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.util
 
 import android.content.Context

@@ -1,3 +1,9 @@
+/*
+ * File: SampleAppThemes.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sample.theme
 
 import com.artiusid.sdk.models.*

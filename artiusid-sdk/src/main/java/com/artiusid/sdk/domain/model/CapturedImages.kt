@@ -1,3 +1,9 @@
+/*
+ * File: CapturedImages.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // CapturedImages.kt
 // artiusid

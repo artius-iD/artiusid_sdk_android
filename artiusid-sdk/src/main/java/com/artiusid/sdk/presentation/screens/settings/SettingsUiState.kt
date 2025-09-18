@@ -1,3 +1,9 @@
+/*
+ * File: SettingsUiState.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.settings
 
 data class SettingsUiState(

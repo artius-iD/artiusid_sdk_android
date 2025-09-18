@@ -1,3 +1,9 @@
+/*
+ * File: SampleApplication.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sample
 
 import android.app.Application

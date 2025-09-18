@@ -1,7 +1,14 @@
+/*
+ * File: SDKConfiguration.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.config
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import com.artiusid.sdk.models.SDKImageOverrides
 
 /**
  * SDK Configuration for the bridge to standalone application
@@ -21,7 +28,9 @@ data class SDKConfiguration(
     val sharedCertificateContext: Boolean = true,
     val sharedFirebaseContext: Boolean = true,
     // Localization support
-    val localizationOverrides: Map<String, String> = emptyMap()
+    val localizationOverrides: Map<String, String> = emptyMap(),
+    // Image and GIF override support
+    val imageOverrides: SDKImageOverrides = SDKImageOverrides()
 ) : Parcelable
 
 enum class Environment {

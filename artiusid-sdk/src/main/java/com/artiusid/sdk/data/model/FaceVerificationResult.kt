@@ -1,3 +1,9 @@
+/*
+ * File: FaceVerificationResult.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.data.model
 
 data class FaceVerificationResult(

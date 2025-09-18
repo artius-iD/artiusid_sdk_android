@@ -57,11 +57,11 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
         private const val IDEAL_DISTANCE_MIN = 20.0f // cm
         private const val IDEAL_DISTANCE_MAX = 50.0f // cm
         
-        // iOS-like positioning thresholds (balanced for good UX and animation visibility)
-        private const val INITIAL_PITCH_THRESHOLD = 5.0 // degrees
-        private const val INITIAL_YAW_THRESHOLD = 6.0 // degrees
-        private const val POSITIONING_DISTANCE_MIN = 25.0f // cm (more lenient)
-        private const val POSITIONING_DISTANCE_MAX = 50.0f // cm (more lenient)
+        // iOS-like positioning thresholds (stricter to ensure positioning guidance shows)
+        private const val INITIAL_PITCH_THRESHOLD = 3.0 // degrees (stricter)
+        private const val INITIAL_YAW_THRESHOLD = 4.0 // degrees (stricter)
+        private const val POSITIONING_DISTANCE_MIN = 30.0f // cm (stricter)
+        private const val POSITIONING_DISTANCE_MAX = 45.0f // cm (stricter)
         
         // Strict thresholds for final selfie capture when looking straight forward
         private const val SELFIE_YAW_THRESHOLD = 5.0f // ±5° for left/right
@@ -89,7 +89,7 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
     // iOS-like processing stage
     private var processingStage = ProcessingStage.INITIAL_INSTRUCTIONS
     private var stageStartTime = System.currentTimeMillis()
-    private val MIN_POSITIONING_TIME_MS = 2000L // Show positioning animations for at least 2 seconds
+    private val MIN_POSITIONING_TIME_MS = 5000L // Show positioning animations for at least 5 seconds
     
     // iOS-like calibration variables
     private var initialYaw: Float = 0.0f
@@ -163,10 +163,18 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                     } else {
                         // No face detected
                         Log.d(TAG, "No face detected in image")
-                        // Only reset if not completed and not already completed
+                        // Only reset if not completed and not in advanced stages
                         if (processingStage != ProcessingStage.COMPLETED && !isCompleted) {
-                            resetCalibration()
-                        } else if (isCompleted) {
+                            // Don't reset if we're in advanced stages (segmented capture, blink detection)
+                            if (processingStage == ProcessingStage.INITIAL_INSTRUCTIONS || 
+                                processingStage == ProcessingStage.CALIBRATING ||
+                                processingStage == ProcessingStage.CAPTURE_PHOTO) {
+                                Log.d(TAG, "Face lost in early stage - resetting calibration")
+                                resetCalibration()
+                            } else {
+                                Log.d(TAG, "Face lost in advanced stage (${processingStage}) - maintaining state")
+                            }
+                        } else {
                             // If already completed, don't update anything - keep the completion state
                             Log.d(TAG, "Face lost but already completed - maintaining completion state")
                             return@addOnSuccessListener
@@ -181,10 +189,18 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                 }
                 .addOnFailureListener { e ->
                     Log.e(TAG, "Face detection failed: ${e.message}", e)
-                    // Only reset if not completed and not already completed
+                    // Only reset if not completed and not in advanced stages
                     if (processingStage != ProcessingStage.COMPLETED && !isCompleted) {
-                        resetCalibration()
-                    } else if (isCompleted) {
+                        // Don't reset if we're in advanced stages (segmented capture, blink detection)
+                        if (processingStage == ProcessingStage.INITIAL_INSTRUCTIONS || 
+                            processingStage == ProcessingStage.CALIBRATING ||
+                            processingStage == ProcessingStage.CAPTURE_PHOTO) {
+                            Log.d(TAG, "Face detection failed in early stage - resetting calibration")
+                            resetCalibration()
+                        } else {
+                            Log.d(TAG, "Face detection failed in advanced stage (${processingStage}) - maintaining state")
+                        }
+                    } else {
                         // If already completed, don't update anything - keep the completion state
                         Log.d(TAG, "Face detection failed but already completed - maintaining completion state")
                         return@addOnFailureListener
@@ -249,13 +265,25 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                         }
                         _currentInstruction.value = displayText
                         
+                        // Ensure positioning guidance shows - if no specific direction, default to phone positioning
+                        val alignmentDirection = if (positioningResult.alignmentDirection.isEmpty() && !canAdvance) {
+                            // Default to phone positioning guidance when no specific direction
+                            if (distanceToFace > (POSITIONING_DISTANCE_MIN + POSITIONING_DISTANCE_MAX) / 2) {
+                                "Phone Up"
+                            } else {
+                                "Phone Down"
+                            }
+                        } else {
+                            positioningResult.alignmentDirection
+                        }
+                        
                         // Update face result with positioning direction for animations
                         updateFaceResult(
                             hasFace = true,
                             confidence = 1.0f,
                             error = null,
                             processingStage = processingStage,
-                            alignmentDirection = positioningResult.alignmentDirection,
+                            alignmentDirection = alignmentDirection,
                             hintText = displayText
                         )
                     }

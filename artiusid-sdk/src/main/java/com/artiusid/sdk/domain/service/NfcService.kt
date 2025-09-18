@@ -1,3 +1,9 @@
+/*
+ * File: NfcService.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.domain.service
 
 import android.nfc.NfcAdapter

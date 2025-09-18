@@ -1,3 +1,9 @@
+/*
+ * File: NFCSecurityProvider.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // NFCSecurityProvider.kt
 // artiusid

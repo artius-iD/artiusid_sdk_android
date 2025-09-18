@@ -1,3 +1,9 @@
+/*
+ * File: PassportNFCReader.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 //
 // PassportNFCReader.kt
 // artiusid

@@ -1,3 +1,9 @@
+/*
+ * File: VerificationProcessingScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.verification
 
 import android.util.Log

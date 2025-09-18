@@ -1,3 +1,9 @@
+/*
+ * File: ApprovalResponseScreen.kt
+ * Author: Todd Bryant
+ * Company: artius.iD, Inc.
+ */
+
 package com.artiusid.sdk.presentation.screens.approval
 
 import androidx.compose.foundation.Image
