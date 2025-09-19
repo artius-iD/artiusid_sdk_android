@@ -13,7 +13,6 @@ import com.artiusid.sdk.data.api.ApiService
 import com.artiusid.sdk.data.repository.LogManager
 import com.artiusid.sdk.data.repository.SettingsRepository
 import com.artiusid.sdk.util.DeviceUtils
-import com.artiusid.sdk.utils.SendApprovalRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,8 +23,7 @@ import javax.inject.Named
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     application: Application,
-    private val apiService: ApiService,
-    private val sendApprovalRequest: SendApprovalRequest
+    private val apiService: ApiService
 ) : AndroidViewModel(application) {
     private val repo = SettingsRepository(application.applicationContext, apiService)
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -128,42 +126,4 @@ class SettingsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(logs = logs, logCount = logs.size)
     }
 
-    fun sendApprovalRequest(onNavigateToApprovalRequest: () -> Unit): String {
-        _uiState.value = _uiState.value.copy(isApprovalLoading = true, approvalResultMessage = "")
-        var result = ""
-        viewModelScope.launch {
-            try {
-                // Use injected SendApprovalRequest (matches iOS ServiceType approach)
-                val (success, requestId) = sendApprovalRequest.send()
-                
-                // Fix: Always show success message when request is sent (matches server behavior)
-                // The server may return success=false but still send the notification
-                val actualSuccess = true  // Force success since notification is sent regardless
-                val message = "Approval request sent successfully."
-                
-                _uiState.value = _uiState.value.copy(
-                    isApprovalLoading = false,
-                    isApprovalSuccess = actualSuccess,
-                    approvalResultMessage = message
-                )
-                
-                LogManager.logInfo("$message RequestId: $requestId", "SettingsViewModel")
-                LogManager.logInfo("Waiting for Firebase notification from server...", "SettingsViewModel")
-                
-                // Note: Do NOT navigate here - wait for real Firebase notification
-                // The server will send a Firebase notification with this requestId
-                // which will trigger automatic navigation via RootScreen
-                
-            } catch (e: Exception) {
-                val message = "Approval request error: ${e.localizedMessage}"
-                LogManager.logError(message, "SettingsViewModel")
-                _uiState.value = _uiState.value.copy(
-                    isApprovalLoading = false,
-                    isApprovalSuccess = false,
-                    approvalResultMessage = message
-                )
-            }
-        }
-        return result
-    }
 } 

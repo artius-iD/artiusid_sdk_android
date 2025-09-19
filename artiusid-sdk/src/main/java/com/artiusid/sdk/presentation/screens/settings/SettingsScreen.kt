@@ -152,9 +152,8 @@ fun SettingsScreen(
                     coroutineScope.launch {
                         // Real server integration: Don't navigate here
                         // Navigation will happen automatically when Firebase notification is received
-                        viewModel.sendApprovalRequest {
-                            // No immediate navigation - wait for Firebase notification
-                        }
+                        // Approval request functionality moved to SDK public method
+                        // viewModel.sendApprovalRequest { ... }
                         showApprovalResult = true
                     }
                 },

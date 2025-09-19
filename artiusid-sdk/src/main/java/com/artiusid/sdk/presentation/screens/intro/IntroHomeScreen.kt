@@ -24,6 +24,7 @@ import com.artiusid.sdk.R
 import com.artiusid.sdk.presentation.screens.document.DocumentType
 import com.artiusid.sdk.ui.theme.*
 import androidx.compose.ui.layout.ContentScale
+import com.artiusid.sdk.ui.components.ThemedImage
 
 @Composable
 fun IntroHomeScreen(
@@ -48,8 +49,9 @@ fun IntroHomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Logo - scaled to match iOS (maxHeight: geo.size.height / 7.5)
-            Image(
-                painter = painterResource(id = R.drawable.logo_ios),
+            ThemedImage(
+                defaultResourceId = R.drawable.logo_ios,
+                overrideKey = "brand_logo",
                 contentDescription = "Logo",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -93,8 +95,9 @@ fun IntroHomeScreen(
             }
             
             // Intro Image - scaled to match iOS (maxHeight: geo.size.height / 4.5)
-            Image(
-                painter = painterResource(id = R.drawable.intro_home_view_image_ios),
+            ThemedImage(
+                defaultResourceId = R.drawable.intro_home_view_image_ios,
+                overrideKey = "intro_home_image",
                 contentDescription = "Intro Image",
                 modifier = Modifier
                     .fillMaxWidth()

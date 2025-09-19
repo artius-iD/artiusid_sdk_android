@@ -8,6 +8,7 @@ package com.artiusid.sdk.models
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 
 /**
  * Comprehensive SDK Image Override Configuration
@@ -163,11 +164,12 @@ enum class ImageLoadingStrategy : Parcelable {
 /**
  * Image override result for internal use
  */
+@Parcelize
 data class ImageOverrideResult(
-    val source: Any,                    // Can be URL, resource ID, file path, etc.
+    val source: @RawValue Any,          // Can be URL, resource ID, file path, etc.
     val strategy: ImageLoadingStrategy,
     val isFallback: Boolean = false
-)
+) : Parcelable
 
 /**
  * Extension functions for easy override checking

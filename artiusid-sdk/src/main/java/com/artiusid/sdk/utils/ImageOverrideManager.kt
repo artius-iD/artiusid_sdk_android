@@ -55,7 +55,8 @@ class ImageOverrideManager private constructor(
                     imageLoader ?: ImageLoader(context)
                 ).also { 
                     INSTANCE = it
-                    Log.d(TAG, "ImageOverrideManager initialized with ${overrides.customOverrides.size} custom overrides")
+                    val totalOverrides = countActiveOverrides(overrides)
+                    Log.d(TAG, "ImageOverrideManager initialized with $totalOverrides active overrides (${overrides.customOverrides.size} custom)")
                 }
             }
         }
@@ -71,6 +72,72 @@ class ImageOverrideManager private constructor(
          * Check if manager is initialized
          */
         fun isInitialized(): Boolean = INSTANCE != null
+        
+        /**
+         * Count all active overrides (non-null fields + custom overrides)
+         */
+        private fun countActiveOverrides(overrides: SDKImageOverrides): Int {
+            var count = 0
+            
+            // Count all non-null field overrides
+            if (overrides.faceOverlay != null) count++
+            if (overrides.faceUpGif != null) count++
+            if (overrides.faceDownGif != null) count++
+            if (overrides.phoneUpGif != null) count++
+            if (overrides.phoneDownGif != null) count++
+            if (overrides.faceRotationGif != null) count++
+            if (overrides.passportOverlay != null) count++
+            if (overrides.stateIdFrontOverlay != null) count++
+            if (overrides.stateIdBackOverlay != null) count++
+            if (overrides.passportAnimationGif != null) count++
+            if (overrides.stateIdAnimationGif != null) count++
+            if (overrides.backButtonIcon != null) count++
+            if (overrides.cameraButtonIcon != null) count++
+            if (overrides.doneIcon != null) count++
+            if (overrides.documentRightArrow != null) count++
+            if (overrides.scanFaceIcon != null) count++
+            if (overrides.docScanIcon != null) count++
+            if (overrides.passportIcon != null) count++
+            if (overrides.stateIdIcon != null) count++
+            if (overrides.focusIcon != null) count++
+            if (overrides.successIcon != null) count++
+            if (overrides.failedIcon != null) count++
+            if (overrides.errorIcon != null) count++
+            if (overrides.systemErrorIcon != null) count++
+            if (overrides.approvalIcon != null) count++
+            if (overrides.approvalRequestIcon != null) count++
+            if (overrides.declinedIcon != null) count++
+            if (overrides.informationalIcon != null) count++
+            if (overrides.brandLogo != null) count++
+            if (overrides.brandImage != null) count++
+            if (overrides.introHomeImage != null) count++
+            if (overrides.accountIcon != null) count++
+            if (overrides.lockIcon != null) count++
+            if (overrides.noGlassesIcon != null) count++
+            if (overrides.noHatIcon != null) count++
+            if (overrides.noMaskIcon != null) count++
+            if (overrides.goodLightIcon != null) count++
+            if (overrides.layFlatIcon != null) count++
+            if (overrides.noGlareIcon != null) count++
+            if (overrides.scanBackground01 != null) count++
+            if (overrides.scanBackground02 != null) count++
+            if (overrides.scanBackground03 != null) count++
+            if (overrides.crossPlatformImage != null) count++
+            if (overrides.crossDeviceImage != null) count++
+            if (overrides.searchImage != null) count++
+            if (overrides.groupImage != null) count++
+            if (overrides.group254x353Image != null) count++
+            if (overrides.group243Image != null) count++
+            if (overrides.vector1Gray902 != null) count++
+            if (overrides.vector1Gray903 != null) count++
+            if (overrides.vector1Gray904 != null) count++
+            if (overrides.vector1 != null) count++
+            
+            // Add custom overrides
+            count += overrides.customOverrides.size
+            
+            return count
+        }
     }
     
     // Cache for resolved image sources
@@ -153,6 +220,108 @@ class ImageOverrideManager private constructor(
     }
     
     /**
+     * Resolve the actual source from an override value based on the loading strategy
+     */
+    private fun resolveOverrideSource(overrideValue: String, strategy: ImageLoadingStrategy): ImageOverrideResult {
+        Log.d(TAG, "Resolving override source: '$overrideValue' with strategy: $strategy")
+        
+        return when (strategy) {
+            ImageLoadingStrategy.URL -> {
+                Log.d(TAG, "Using URL strategy for: $overrideValue")
+                ImageOverrideResult(
+                    source = overrideValue,
+                    strategy = ImageLoadingStrategy.URL,
+                    isFallback = false
+                )
+            }
+            ImageLoadingStrategy.ASSET -> {
+                Log.d(TAG, "Using ASSET strategy for: $overrideValue")
+                // For assets, we need to use the file:///android_asset/ prefix for Coil
+                val assetPath = "file:///android_asset/$overrideValue"
+                Log.d(TAG, "Asset path resolved to: $assetPath")
+                ImageOverrideResult(
+                    source = assetPath,
+                    strategy = ImageLoadingStrategy.ASSET,
+                    isFallback = false
+                )
+            }
+            ImageLoadingStrategy.FILE -> {
+                Log.d(TAG, "Using FILE strategy for: $overrideValue")
+                ImageOverrideResult(
+                    source = overrideValue,
+                    strategy = ImageLoadingStrategy.FILE,
+                    isFallback = false
+                )
+            }
+            ImageLoadingStrategy.RESOURCE -> {
+                Log.d(TAG, "Using RESOURCE strategy for: $overrideValue")
+                val resourceId = overrideValue.toIntOrNull()
+                if (resourceId != null) {
+                    ImageOverrideResult(
+                        source = resourceId,
+                        strategy = ImageLoadingStrategy.RESOURCE,
+                        isFallback = false
+                    )
+                } else {
+                    Log.e(TAG, "Invalid resource ID: $overrideValue")
+                    ImageOverrideResult(
+                        source = overrideValue,
+                        strategy = ImageLoadingStrategy.ASSET,
+                        isFallback = true
+                    )
+                }
+            }
+            ImageLoadingStrategy.AUTO_DETECT -> {
+                Log.d(TAG, "Using AUTO_DETECT strategy for: $overrideValue")
+                when {
+                    overrideValue.startsWith("http://") || overrideValue.startsWith("https://") -> {
+                        Log.d(TAG, "Auto-detected URL: $overrideValue")
+                        ImageOverrideResult(
+                            source = overrideValue,
+                            strategy = ImageLoadingStrategy.URL,
+                            isFallback = false
+                        )
+                    }
+                    overrideValue.startsWith("file://") -> {
+                        Log.d(TAG, "Auto-detected FILE: $overrideValue")
+                        ImageOverrideResult(
+                            source = overrideValue,
+                            strategy = ImageLoadingStrategy.FILE,
+                            isFallback = false
+                        )
+                    }
+                    overrideValue.matches(Regex("^\\d+$")) -> {
+                        Log.d(TAG, "Auto-detected RESOURCE: $overrideValue")
+                        val resourceId = overrideValue.toIntOrNull()
+                        if (resourceId != null) {
+                            ImageOverrideResult(
+                                source = resourceId,
+                                strategy = ImageLoadingStrategy.RESOURCE,
+                                isFallback = false
+                            )
+                        } else {
+                            Log.e(TAG, "Invalid resource ID in auto-detect: $overrideValue")
+                            ImageOverrideResult(
+                                source = "file:///android_asset/$overrideValue",
+                                strategy = ImageLoadingStrategy.ASSET,
+                                isFallback = true
+                            )
+                        }
+                    }
+                    else -> {
+                        Log.d(TAG, "Auto-detected ASSET: $overrideValue")
+                        ImageOverrideResult(
+                            source = "file:///android_asset/$overrideValue",
+                            strategy = ImageLoadingStrategy.ASSET,
+                            isFallback = false
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Clear all caches
      */
     fun clearCache() {
@@ -219,59 +388,6 @@ class ImageOverrideManager private constructor(
     
     // === PRIVATE METHODS ===
     
-    /**
-     * Resolve the actual source from override string based on loading strategy
-     */
-    private fun resolveOverrideSource(overrideValue: String, strategy: ImageLoadingStrategy): ImageOverrideResult {
-        val detectedStrategy = if (strategy == ImageLoadingStrategy.AUTO_DETECT) {
-            detectLoadingStrategy(overrideValue)
-        } else {
-            strategy
-        }
-        
-        val source = when (detectedStrategy) {
-            ImageLoadingStrategy.URL -> {
-                Log.d(TAG, "Resolving as URL: $overrideValue")
-                overrideValue
-            }
-            
-            ImageLoadingStrategy.FILE -> {
-                Log.d(TAG, "Resolving as file path: $overrideValue")
-                if (overrideValue.startsWith("file://")) {
-                    Uri.parse(overrideValue)
-                } else {
-                    File(overrideValue)
-                }
-            }
-            
-            ImageLoadingStrategy.ASSET -> {
-                Log.d(TAG, "Resolving as asset: $overrideValue")
-                Uri.parse("file:///android_asset/$overrideValue")
-            }
-            
-            ImageLoadingStrategy.RESOURCE -> {
-                Log.d(TAG, "Resolving as resource ID: $overrideValue")
-                try {
-                    overrideValue.toInt()
-                } catch (e: NumberFormatException) {
-                    Log.w(TAG, "Invalid resource ID format: $overrideValue, treating as asset")
-                    Uri.parse("file:///android_asset/$overrideValue")
-                }
-            }
-            
-            ImageLoadingStrategy.AUTO_DETECT -> {
-                // This shouldn't happen, but fallback to asset
-                Log.w(TAG, "AUTO_DETECT strategy not resolved, defaulting to asset")
-                Uri.parse("file:///android_asset/$overrideValue")
-            }
-        }
-        
-        return ImageOverrideResult(
-            source = source,
-            strategy = detectedStrategy,
-            isFallback = false
-        )
-    }
     
     /**
      * Auto-detect loading strategy based on override string format

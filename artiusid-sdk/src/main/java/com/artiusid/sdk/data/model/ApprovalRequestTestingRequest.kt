@@ -25,5 +25,8 @@ data class ApprovalRequestTestingRequest(
     val approvalTitle: String,
     
     @SerializedName("approvalDescription")
-    val approvalDescription: String
+    val approvalDescription: String,
+    
+    @SerializedName("timeout")
+    val timeout: Int = 30
 ) 

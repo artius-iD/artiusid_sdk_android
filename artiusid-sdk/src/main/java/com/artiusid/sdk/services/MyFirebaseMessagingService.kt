@@ -121,8 +121,17 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             )
             notificationManager.createNotificationChannel(channel)
         }
-        val intent = Intent(this, StandaloneAppActivity::class.java)
+        // Create intent to launch the host app's main activity (sample app)
+        val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        } ?: Intent(this, StandaloneAppActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        
+        // Add notification data to intent for sample app handling
+        remoteMessage.data["approvalTitle"]?.let { intent.putExtra("approvalTitle", it) }
+        remoteMessage.data["approvalDescription"]?.let { intent.putExtra("approvalDescription", it) }
+        remoteMessage.data["requestId"]?.let { intent.putExtra("requestId", it) }
+        
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)

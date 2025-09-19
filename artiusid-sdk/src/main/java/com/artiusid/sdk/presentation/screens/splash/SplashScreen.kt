@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import com.artiusid.sdk.ui.theme.*
 import com.artiusid.sdk.presentation.permissions.PermissionRequest
 import com.artiusid.sdk.presentation.permissions.PermissionsHandler
+import com.artiusid.sdk.ui.components.ThemedImage
 
 @Composable
 fun SplashScreen(
@@ -57,8 +58,9 @@ fun SplashScreen(
             )
     ) {
         // Logo centered in the screen - responsive
-        Image(
-            painter = painterResource(id = R.drawable.logo_ios),
+        ThemedImage(
+            defaultResourceId = R.drawable.logo_ios,
+            overrideKey = "brand_logo",
             contentDescription = "App Logo",
             modifier = Modifier
                 .size(200.dp)

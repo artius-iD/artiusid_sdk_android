@@ -57,9 +57,9 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
         private const val IDEAL_DISTANCE_MIN = 20.0f // cm
         private const val IDEAL_DISTANCE_MAX = 50.0f // cm
         
-        // iOS-like positioning thresholds (stricter to ensure positioning guidance shows)
+        // iOS-like positioning thresholds (adjusted to show more directional arrows)
         private const val INITIAL_PITCH_THRESHOLD = 3.0 // degrees (stricter)
-        private const val INITIAL_YAW_THRESHOLD = 4.0 // degrees (stricter)
+        private const val INITIAL_YAW_THRESHOLD = 2.5 // degrees (lowered to trigger Face Left/Right more easily)
         private const val POSITIONING_DISTANCE_MIN = 30.0f // cm (stricter)
         private const val POSITIONING_DISTANCE_MAX = 45.0f // cm (stricter)
         
@@ -991,16 +991,23 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
      * Based on iOS ARKit implementation
      */
     private fun provideInitialInstructions(yaw: Float, pitch: Float, roll: Float, distanceToFace: Float): PositioningResult {
-        Log.d(TAG, "[POSITIONING] Yaw: $yaw°, Pitch: $pitch°, Distance: ${distanceToFace}cm")
+        Log.e(TAG, "🎯 [POSITIONING] Yaw: $yaw°, Pitch: $pitch°, Distance: ${distanceToFace}cm")
+        
+        val pitchAbs = abs(pitch)
+        val yawAbs = abs(yaw)
+        Log.e(TAG, "🎯 [POSITIONING] PitchAbs: $pitchAbs°, YawAbs: $yawAbs°")
+        Log.e(TAG, "🎯 [POSITIONING] Thresholds - Pitch: $INITIAL_PITCH_THRESHOLD°, Yaw: $INITIAL_YAW_THRESHOLD°")
         
         // Check distance first (similar to iOS relativePosition.y check)
         if (distanceToFace < POSITIONING_DISTANCE_MIN) {
+            Log.e(TAG, "🎯 [POSITIONING] DISTANCE TOO CLOSE: ${distanceToFace}cm < ${POSITIONING_DISTANCE_MIN}cm -> Phone Down")
             return PositioningResult(
                 isPositioned = false,
                 instructionText = "Move phone away.",  // iOS: kMsgPhoneTooClose
                 alignmentDirection = "Phone Down"  // Show hand lowering phone animation
             )
         } else if (distanceToFace > POSITIONING_DISTANCE_MAX) {
+            Log.e(TAG, "🎯 [POSITIONING] DISTANCE TOO FAR: ${distanceToFace}cm > ${POSITIONING_DISTANCE_MAX}cm -> Phone Up")
             return PositioningResult(
                 isPositioned = false,
                 instructionText = "Move phone closer.",  // iOS: kMsgPhoneTooFar
@@ -1009,11 +1016,11 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
         }
         
         // Check face orientation (similar to iOS pitch/yaw checking)
-        val pitchAbs = abs(pitch)
-        val yawAbs = abs(yaw)
+        Log.e(TAG, "🎯 [POSITIONING] Checking face orientation...")
         
         if (pitchAbs < INITIAL_PITCH_THRESHOLD && yawAbs < INITIAL_YAW_THRESHOLD) {
             // Face is well positioned
+            Log.e(TAG, "🎯 [POSITIONING] FACE WELL POSITIONED -> Perfect! Hold steady...")
             return PositioningResult(
                 isPositioned = true,
                 instructionText = "Perfect! Hold steady...",
@@ -1021,11 +1028,14 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
             )
         } else {
             // Provide directional guidance
+            Log.e(TAG, "🎯 [POSITIONING] PROVIDING DIRECTIONAL GUIDANCE...")
             return when {
                 pitchAbs > INITIAL_PITCH_THRESHOLD && yawAbs > INITIAL_YAW_THRESHOLD -> {
                     // Diagonal movement needed
+                    Log.e(TAG, "🎯 [POSITIONING] DIAGONAL MOVEMENT: Pitch=${pitchAbs}° > ${INITIAL_PITCH_THRESHOLD}° AND Yaw=${yawAbs}° > ${INITIAL_YAW_THRESHOLD}°")
                     val pitchDirection = if (pitch > 0) "Down" else "Up"
                     val yawDirection = if (yaw > 0) "Left" else "Right"
+                    Log.e(TAG, "🎯 [POSITIONING] -> Face $pitchDirection-$yawDirection")
                     PositioningResult(
                         isPositioned = false,
                         instructionText = "Look $pitchDirection and $yawDirection",
@@ -1033,8 +1043,10 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                     )
                 }
                 pitchAbs > INITIAL_PITCH_THRESHOLD -> {
+                    Log.e(TAG, "🎯 [POSITIONING] PITCH ONLY: Pitch=${pitchAbs}° > ${INITIAL_PITCH_THRESHOLD}°")
                     if (pitch > 0) {
                         // Face is looking down, need to look up
+                        Log.e(TAG, "🎯 [POSITIONING] -> Face Up (pitch=${pitch}° > 0)")
                         PositioningResult(
                             isPositioned = false,
                             instructionText = "Turn face up a little.",  // iOS: kMsgTurnFaceUp
@@ -1042,6 +1054,7 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                         )
                     } else {
                         // Face is looking up, need to look down
+                        Log.e(TAG, "🎯 [POSITIONING] -> Face Down (pitch=${pitch}° < 0)")
                         PositioningResult(
                             isPositioned = false,
                             instructionText = "Turn face down a little.",  // iOS: kMsgTurnFaceDown
@@ -1050,8 +1063,10 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                     }
                 }
                 yawAbs > INITIAL_YAW_THRESHOLD -> {
+                    Log.e(TAG, "🎯 [POSITIONING] YAW ONLY: Yaw=${yawAbs}° > ${INITIAL_YAW_THRESHOLD}°")
                     if (yaw > 0) {
                         // Face is turned right, need to turn left
+                        Log.e(TAG, "🎯 [POSITIONING] -> Face Left (yaw=${yaw}° > 0)")
                         PositioningResult(
                             isPositioned = false,
                             instructionText = "Turn face left a little.",  // iOS: kMsgTurnFaceLeft
@@ -1059,6 +1074,7 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
                         )
                     } else {
                         // Face is turned left, need to turn right
+                        Log.e(TAG, "🎯 [POSITIONING] -> Face Right (yaw=${yaw}° < 0)")
                         PositioningResult(
                             isPositioned = false,
                             instructionText = "Turn face right a little.",  // iOS: kMsgTurnFaceRight

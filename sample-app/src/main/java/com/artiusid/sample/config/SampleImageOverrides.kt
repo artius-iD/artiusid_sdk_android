@@ -21,41 +21,52 @@ object SampleImageOverrides {
     val DEFAULT = SDKImageOverrides()
     
     /**
-     * Corporate Theme - Professional blue/grey overrides
+     * Corporate Images - Professional blue/grey overrides
      */
     val CORPORATE = SDKImageOverrides(
         // Face scan assets - using custom corporate styling
-        faceOverlay = "corporate_face_overlay",
-        faceUpGif = "corporate_face_up",
-        faceDownGif = "corporate_face_down",
-        phoneUpGif = "corporate_phone_up",
-        phoneDownGif = "corporate_phone_down",
+        faceOverlay = "corporate/corporate_face_overlay.png",
+        faceUpGif = "corporate/corporate_face_up.gif",
+        faceDownGif = "corporate/corporate_face_down.gif",
+        phoneUpGif = "corporate/corporate_phone_up.gif",
+        phoneDownGif = "corporate/corporate_phone_down.gif",
         
         // Document assets - corporate branding
-        passportOverlay = "corporate_passport_overlay",
-        stateIdFrontOverlay = "corporate_stateid_front_overlay",
-        stateIdBackOverlay = "corporate_stateid_back_overlay",
-        passportAnimationGif = "corporate_passport_animation",
-        stateIdAnimationGif = "corporate_stateid_animation",
+        passportOverlay = "corporate/corporate_passport_overlay.png",
+        stateIdFrontOverlay = "corporate/corporate_stateid_front_overlay.png",
+        stateIdBackOverlay = "corporate/corporate_stateid_back_overlay.png",
+        passportAnimationGif = "corporate/corporate_passport_animation.gif",
+        stateIdAnimationGif = "corporate/corporate_stateid_animation.gif",
         
         // UI icons - corporate color scheme
-        backButtonIcon = "corporate_back_button",
-        cameraButtonIcon = "corporate_camera_button",
-        scanFaceIcon = "corporate_scan_face",
-        docScanIcon = "corporate_doc_scan",
+        backButtonIcon = "corporate/corporate_back_button.png",
+        cameraButtonIcon = "corporate/corporate_camera_button.png",
+        scanFaceIcon = "corporate/corporate_scan_face.png",
+        docScanIcon = "corporate/corporate_doc_scan.png",
+        doneIcon = "corporate/corporate_success.png", // Use success icon for completion
         
         // Status icons - professional styling
-        successIcon = "corporate_success",
-        failedIcon = "corporate_failed",
-        errorIcon = "corporate_error",
+        successIcon = "corporate/corporate_success.png",
+        failedIcon = "corporate/corporate_failed.png",
+        errorIcon = "corporate/corporate_error.png",
+        systemErrorIcon = "corporate/corporate_error.png", // Reuse error icon
+        
+        // Processing and verification images
+        crossPlatformImage = "corporate/corporate_brand_image.png", // Use brand image for processing
+        
+        // Instruction icons for face scan intro - use distinct icons
+        noGlassesIcon = "corporate/corporate_scan_face.png",    // Face scan for glasses
+        noHatIcon = "corporate/corporate_back_button.png",      // Back button for hat (different shape)
+        noMaskIcon = "corporate/corporate_error.png",           // Error icon for mask (warning)
+        goodLightIcon = "corporate/corporate_success.png",      // Success icon for good lighting
         
         // Brand assets - corporate identity
-        brandLogo = "corporate_logo",
-        brandImage = "corporate_brand_image",
+        brandLogo = "corporate/corporate_logo.png",
+        brandImage = "corporate/corporate_brand_image.png",
         
         // Document selection icons
-        passportIcon = "corporate_passport_icon",
-        stateIdIcon = "corporate_stateid_icon",
+        passportIcon = "corporate/corporate_passport_icon.png",
+        stateIdIcon = "corporate/corporate_stateid_icon.png",
         
         // Configuration
         defaultLoadingStrategy = ImageLoadingStrategy.ASSET,
@@ -182,33 +193,9 @@ enum class ImageOverrideOption(
     ),
     
     CORPORATE(
-        displayName = "Corporate Theme",
-        description = "Professional blue/grey styling with corporate branding",
+        displayName = "Corporate Images",
+        description = "Professional styling with Freepik Special Lineal icons",
         overrides = SampleImageOverrides.CORPORATE
-    ),
-    
-    MODERN(
-        displayName = "Modern Theme",
-        description = "Sleek, modern design with gradients and flat icons",
-        overrides = SampleImageOverrides.MODERN
-    ),
-    
-    URL_BASED(
-        displayName = "URL-Based (Demo)",
-        description = "Load images from web URLs (demo configuration)",
-        overrides = SampleImageOverrides.URL_BASED
-    ),
-    
-    FILE_BASED(
-        displayName = "File-Based (Demo)",
-        description = "Load images from local file system paths",
-        overrides = SampleImageOverrides.FILE_BASED
-    ),
-    
-    CUSTOM_EXTENDED(
-        displayName = "Custom Extended",
-        description = "Demonstrates custom override extensibility",
-        overrides = SampleImageOverrides.CUSTOM_EXTENDED
     )
 }
 

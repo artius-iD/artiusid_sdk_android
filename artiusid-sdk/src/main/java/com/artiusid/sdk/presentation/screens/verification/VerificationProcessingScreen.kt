@@ -25,6 +25,7 @@ import com.artiusid.sdk.presentation.components.AppTopBar
 import com.artiusid.sdk.ui.theme.GradientBackground
 import com.artiusid.sdk.ui.theme.Yellow900
 import com.artiusid.sdk.utils.ImageStorage
+import com.artiusid.sdk.ui.components.ThemedImage
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.presentation.components.DocumentRecaptureNotificationView
@@ -136,8 +137,9 @@ fun VerificationProcessingScreen(
                 when (uiState) {
                     VerificationProcessingUiState.Processing -> {
                         // Processing animation placeholder
-                        Image(
-                            painter = painterResource(id = R.drawable.img_crossplatform),
+                        ThemedImage(
+                            defaultResourceId = R.drawable.img_crossplatform,
+                            overrideKey = "cross_platform_image",
                             contentDescription = "Processing",
                             modifier = Modifier
                                 .size(200.dp)
@@ -180,8 +182,9 @@ fun VerificationProcessingScreen(
                     
                     VerificationProcessingUiState.Success -> {
                         // Processing complete
-                        Image(
-                            painter = painterResource(id = R.drawable.img_success),
+                        ThemedImage(
+                            defaultResourceId = R.drawable.img_success,
+                            overrideKey = "success_icon",
                             contentDescription = "Processing Complete",
                             modifier = Modifier
                                 .size(200.dp)
@@ -213,8 +216,9 @@ fun VerificationProcessingScreen(
                     
                     is VerificationProcessingUiState.Error -> {
                         // Error state - navigate back to previous screen
-                        Image(
-                            painter = painterResource(id = R.drawable.img_system_error),
+                        ThemedImage(
+                            defaultResourceId = R.drawable.img_system_error,
+                            overrideKey = "system_error_icon",
                             contentDescription = "Error",
                             modifier = Modifier
                                 .size(200.dp)
@@ -247,8 +251,9 @@ fun VerificationProcessingScreen(
                     
                     is VerificationProcessingUiState.ConnectionError -> {
                         // Connection error - should return to sample app via SDK callback
-                        Image(
-                            painter = painterResource(id = R.drawable.img_system_error),
+                        ThemedImage(
+                            defaultResourceId = R.drawable.img_system_error,
+                            overrideKey = "system_error_icon",
                             contentDescription = "Connection Error",
                             modifier = Modifier
                                 .size(200.dp)

@@ -17,6 +17,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import com.artiusid.sdk.ui.components.ThemedImage
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -156,8 +157,9 @@ fun FaceScanScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.face_overlay),
+                    ThemedImage(
+                        defaultResourceId = R.drawable.face_overlay,
+                        overrideKey = "face_overlay",
                         contentDescription = "Face Overlay",
                         modifier = Modifier
                             .size(450.dp)

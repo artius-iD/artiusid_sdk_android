@@ -36,8 +36,14 @@ import com.artiusid.sdk.callbacks.AuthenticationCallback
 import com.artiusid.sdk.models.VerificationResult
 import com.artiusid.sdk.models.AuthenticationResult
 import com.artiusid.sdk.models.SDKError
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import com.artiusid.sdk.data.model.AppNotificationState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 
 /**
  * Sample App demonstrating the artius.iD SDK Integration
@@ -56,12 +62,26 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     private var fcmTokenStatus by mutableStateOf("❌ Not available")
     private var fcmTokenPreview by mutableStateOf("")
     
+    // Approval flow state
+    private var showApprovalRequestScreen by mutableStateOf(false)
+    private var showApprovalResponseScreen by mutableStateOf(false)
+    private var approvalRequestId by mutableStateOf<Int?>(null)
+    private var approvalTitle by mutableStateOf("")
+    private var approvalDescription by mutableStateOf("")
+    private var approvalResponse by mutableStateOf("")
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
+        // Initialize SDK on startup so it's available for all operations
+        initializeSDK()
+
         // Check FCM token and certificate status on startup
         checkFCMTokenStatus()
         checkCertificateStatus()
+        
+        // Handle notification intent if app was launched from notification
+        handleNotificationIntent(intent)
         
         setContent {
             MaterialTheme {
@@ -69,16 +89,58 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    if (showResultsScreen && verificationResultData != null) {
-                        VerificationResultsScreen(
-                            verificationData = verificationResultData!!,
-                            onBackHome = {
-                                showResultsScreen = false
-                                verificationResultData = null
-                            }
-                        )
-                    } else {
-                        BridgeSampleApp()
+                    when {
+                        showApprovalRequestScreen -> {
+                            ApprovalRequestScreen(
+                                requestId = approvalRequestId,
+                                title = approvalTitle,
+                                description = approvalDescription,
+                                onApprove = {
+                                    android.util.Log.d("BridgeMainActivity", "✅ User approved the request")
+                                    approvalResponse = "approve"
+                                    showApprovalRequestScreen = false
+                                    showApprovalResponseScreen = true
+                                },
+                                onDeny = {
+                                    android.util.Log.d("BridgeMainActivity", "❌ User denied the request")
+                                    approvalResponse = "deny"
+                                    showApprovalRequestScreen = false
+                                    showApprovalResponseScreen = true
+                                },
+                                onNavigateBack = {
+                                    android.util.Log.d("BridgeMainActivity", "🔙 User navigated back from approval request")
+                                    showApprovalRequestScreen = false
+                                    AppNotificationState.reset()
+                                }
+                            )
+                        }
+                        showApprovalResponseScreen -> {
+                            ApprovalResponseScreen(
+                                response = approvalResponse,
+                                requestId = approvalRequestId,
+                                onNavigateHome = {
+                                    android.util.Log.d("BridgeMainActivity", "🏠 Returning to home from approval response")
+                                    showApprovalResponseScreen = false
+                                    approvalRequestId = null
+                                    approvalTitle = ""
+                                    approvalDescription = ""
+                                    approvalResponse = ""
+                                    AppNotificationState.reset()
+                                }
+                            )
+                        }
+                        showResultsScreen && verificationResultData != null -> {
+                            VerificationResultsScreen(
+                                verificationData = verificationResultData!!,
+                                onBackHome = {
+                                    showResultsScreen = false
+                                    verificationResultData = null
+                                }
+                            )
+                        }
+                        else -> {
+                            BridgeSampleApp()
+                        }
                     }
                 }
             }
@@ -88,6 +150,30 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun BridgeSampleApp() {
+        // Observe notification state for approval responses
+        val notificationType by AppNotificationState.notificationType.collectAsState()
+        val requestId by AppNotificationState.requestId.collectAsState()
+        val notificationTitle by AppNotificationState.notificationTitle.collectAsState()
+        val notificationDescription by AppNotificationState.notificationDescription.collectAsState()
+        
+        // Handle approval notifications
+        LaunchedEffect(notificationType) {
+            if (notificationType == AppNotificationState.NotificationType.APPROVAL) {
+                android.util.Log.d("BridgeMainActivity", "🔔 Approval notification received!")
+                android.util.Log.d("BridgeMainActivity", "📋 Request ID: $requestId")
+                android.util.Log.d("BridgeMainActivity", "📋 Title: $notificationTitle")
+                android.util.Log.d("BridgeMainActivity", "📋 Description: $notificationDescription")
+                
+                // Show approval request screen with biometric authentication
+                approvalRequestId = requestId
+                approvalTitle = notificationTitle
+                approvalDescription = notificationDescription
+                showApprovalRequestScreen = true
+                
+                android.util.Log.d("BridgeMainActivity", "🔐 Showing approval request screen with biometric authentication")
+            }
+        }
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -218,6 +304,46 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onSecondaryColorHex))
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Button(
+                onClick = { sendApprovalRequest() },
+                enabled = !isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.successColorHex))
+                )
+            ) {
+                Text(
+                    text = "📋 Test Approval Process",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Button(
+                onClick = { simulateApprovalNotification() },
+                enabled = !isLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.warningColorHex))
+                )
+            ) {
+                Text(
+                    text = "🔔 Simulate Notification",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
                 )
             }
             
@@ -360,6 +486,74 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 4.dp)
             )
+        }
+    }
+    
+    override fun onNewIntent(intent: android.content.Intent?) {
+        super.onNewIntent(intent)
+        intent?.let { handleNotificationIntent(it) }
+    }
+    
+    private fun handleNotificationIntent(intent: android.content.Intent?) {
+        intent?.extras?.let { extras ->
+            android.util.Log.d("BridgeMainActivity", "🔔 Handling notification intent with extras: ${extras.keySet()}")
+            
+            // Check for approval notification data
+            val approvalTitle = extras.getString("approvalTitle")
+            val approvalDescription = extras.getString("approvalDescription")
+            val requestIdString = extras.getString("requestId")
+            
+            if (!approvalTitle.isNullOrEmpty() && !approvalDescription.isNullOrEmpty()) {
+                val requestId = requestIdString?.toIntOrNull()
+                android.util.Log.d("BridgeMainActivity", "🔔 Processing approval notification from intent")
+                android.util.Log.d("BridgeMainActivity", "📋 Request ID: $requestId")
+                android.util.Log.d("BridgeMainActivity", "📋 Title: $approvalTitle")
+                android.util.Log.d("BridgeMainActivity", "📋 Description: $approvalDescription")
+                
+                // Show approval request screen with biometric authentication
+                this.approvalRequestId = requestId
+                this.approvalTitle = approvalTitle
+                this.approvalDescription = approvalDescription
+                showApprovalRequestScreen = true
+                
+                android.util.Log.d("BridgeMainActivity", "🔐 Showing approval request screen from notification intent")
+            }
+        }
+    }
+
+    private fun initializeSDK() {
+        try {
+            android.util.Log.d("BridgeMainActivity", "🚀 Initializing SDK on app startup...")
+            
+            // Get localization overrides
+            val localizationOverrides = SampleAppLocalization.getStringOverrides(this)
+            android.util.Log.d("BridgeMainActivity", "🌐 Localization overrides: ${localizationOverrides.size} strings")
+            
+            // Create SDK configuration
+            val sdkConfig = SDKConfiguration(
+                apiKey = "demo_api_key_12345",
+                baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
+                environment = Environment.STAGING,
+                enableLogging = true,
+                hostAppPackageName = packageName,
+                sharedCertificateContext = true,
+                sharedFirebaseContext = true,
+                localizationOverrides = localizationOverrides,
+                imageOverrides = selectedImageOverride.overrides
+            )
+            
+            // Initialize SDK with enhanced theme
+            ArtiusIDSDK.initializeWithEnhancedTheme(
+                context = this,
+                configuration = sdkConfig,
+                enhancedTheme = selectedTheme.themeConfig
+            )
+            
+            android.util.Log.d("BridgeMainActivity", "✅ SDK initialized successfully on startup")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("BridgeMainActivity", "❌ Failed to initialize SDK on startup", e)
+            lastResult = "❌ SDK initialization error: ${e.message}"
         }
     }
     
@@ -520,10 +714,13 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         try {
             isLoading = true
             
-            // Initialize SDK Bridge with selected theme, shared context, and localization overrides
-            val localizationOverrides = SampleAppLocalization.getStringOverrides(this)
-            android.util.Log.d("BridgeMainActivity", "🌐 Localization overrides: ${localizationOverrides.size} strings")
+            android.util.Log.d("BridgeMainActivity", "🔍 Starting verification flow...")
+            android.util.Log.d("BridgeMainActivity", "🎨 Selected Theme: ${selectedTheme.displayName}")
+            android.util.Log.d("BridgeMainActivity", "🖼️ Selected Image Override: ${selectedImageOverride.displayName}")
             
+            // Update SDK configuration with current theme and image overrides
+            // (SDK is already initialized, but we may need to update theme/images)
+            val localizationOverrides = SampleAppLocalization.getStringOverrides(this)
             val sdkConfig = SDKConfiguration(
                 apiKey = "demo_api_key_12345",
                 baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
@@ -536,6 +733,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                 imageOverrides = selectedImageOverride.overrides
             )
             
+            // Re-initialize with updated theme and image overrides
             ArtiusIDSDK.initializeWithEnhancedTheme(
                 context = this,
                 configuration = sdkConfig,
@@ -583,6 +781,64 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         } catch (e: Exception) {
             isLoading = false
             lastResult = "❌ Error starting authentication bridge: ${e.message}"
+        }
+    }
+    
+    private fun sendApprovalRequest() {
+        try {
+            isLoading = true
+            android.util.Log.d("BridgeMainActivity", "📋 Starting approval request test...")
+            
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    // Use the new public SDK method for approval requests
+                    android.util.Log.d("BridgeMainActivity", "📋 Sending approval request via SDK...")
+                    val (success, message, requestId) = ArtiusIDSDK.sendApprovalRequest(this@BridgeMainActivity)
+                    
+                    // Update UI on main thread
+                    runOnUiThread {
+                        isLoading = false
+                        if (success) {
+                            lastResult = "✅ Approval request sent successfully!\nRequest ID: $requestId\nMessage: $message"
+                            android.util.Log.d("BridgeMainActivity", "✅ Approval request successful: $message")
+                        } else {
+                            lastResult = "❌ Approval request failed: $message"
+                            android.util.Log.e("BridgeMainActivity", "❌ Approval request failed: $message")
+                        }
+                    }
+                    
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        isLoading = false
+                        lastResult = "❌ Approval request error: ${e.message}"
+                        android.util.Log.e("BridgeMainActivity", "❌ Approval request exception", e)
+                    }
+                }
+            }
+            
+        } catch (e: Exception) {
+            isLoading = false
+            lastResult = "❌ Error starting approval request: ${e.message}"
+            android.util.Log.e("BridgeMainActivity", "❌ Error starting approval request", e)
+        }
+    }
+    
+    private fun simulateApprovalNotification() {
+        try {
+            android.util.Log.d("BridgeMainActivity", "🔔 Simulating approval notification...")
+            
+            // Simulate an approval notification response
+            AppNotificationState.handleApprovalNotification(
+                requestId = 12345,
+                title = "Approval Request Approved",
+                description = "Your test approval request for \$25.00 has been approved."
+            )
+            
+            android.util.Log.d("BridgeMainActivity", "✅ Simulated notification sent to AppNotificationState")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("BridgeMainActivity", "❌ Error simulating notification: ${e.message}", e)
+            lastResult = "❌ Error simulating notification: ${e.message}"
         }
     }
     

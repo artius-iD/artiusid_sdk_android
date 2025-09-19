@@ -9,20 +9,27 @@ package com.artiusid.sdk.data.model
 import com.google.gson.annotations.SerializedName
 
 /**
- * Matches iOS ApprovalRequestTestingResponse.swift
+ * Matches iOS ApprovalRequestTestingResponse.swift exactly
+ * iOS expects direct fields: requestId, success (not nested under approval_data)
  */
 data class ApprovalRequestTestingResponse(
-    @SerializedName("approval_data")
+    @SerializedName("requestId")
+    val requestId: Int,
+    
+    @SerializedName("success")
+    val success: Boolean
+) {
+    // Provide approvalData for backward compatibility
     val approvalData: ApprovalTestingData?
-)
+        get() = ApprovalTestingData(
+            statusCode = if (success) 200 else 400,
+            message = if (success) "Success" else "Failed",
+            requestId = requestId
+        )
+}
 
 data class ApprovalTestingData(
-    @SerializedName("statusCode")
     val statusCode: Int,
-    
-    @SerializedName("message")
     val message: String,
-    
-    @SerializedName("requestId")
     val requestId: Int
 ) 

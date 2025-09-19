@@ -11,17 +11,14 @@ import android.util.Log
 import com.artiusid.sdk.data.api.ApiService
 import com.artiusid.sdk.data.model.ApprovalRequestTestingRequest
 import com.artiusid.sdk.utils.VerificationStateManager
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Named
 
 /**
  * Matches iOS SendApprovalRequest.swift exactly
  * Sends test approval requests to the server
  */
-class SendApprovalRequest @Inject constructor(
-    @Named("approvalRequest") private val apiService: ApiService,
-    @ApplicationContext private val context: Context
+class SendApprovalRequest(
+    private val apiService: ApiService,
+    private val context: Context
 ) {
     
     companion object {
@@ -80,17 +77,31 @@ class SendApprovalRequest @Inject constructor(
             Log.d(TAG, "Using approval request ApiService exactly like iOS")
             Log.d(TAG, "✅ Server should now find device mapping with UUID format")
             
-            // Call API endpoint exactly like iOS (NO query parameters)
-            val response = apiService.sendApprovalRequest(request)
+            // Log the full request for debugging
+            Log.d(TAG, "📤 Request being sent (body only, like iOS):")
+            Log.d(TAG, "📤   ClientId: ${request.clientId}")
+            Log.d(TAG, "📤   ClientGroupId: ${request.clientGroupId}")
+            Log.d(TAG, "📤   DeviceId: ${request.deviceId}")
+            Log.d(TAG, "📤   ApprovalTitle: ${request.approvalTitle}")
+            Log.d(TAG, "📤   ApprovalDescription: ${request.approvalDescription}")
+            Log.d(TAG, "📤   Timeout: ${request.timeout}")
             
-            // Check if response and approval data are valid
-            if (response.approvalData != null) {
-                val requestId = response.approvalData.requestId
-                Log.d(TAG, "Received requestId: $requestId")
-                Log.d(TAG, "Approval request sent successfully")
-                Pair(true, requestId)
+            // Call API endpoint with body only (exactly like iOS)
+            val response = apiService.sendApprovalRequestIOS(request)
+            
+            // Log the full response for debugging
+            Log.d(TAG, "📋 Server response received:")
+            Log.d(TAG, "📋 Response object: $response")
+            Log.d(TAG, "📋 RequestId: ${response.requestId}")
+            Log.d(TAG, "📋 Success: ${response.success}")
+            
+            // Check if response is successful
+            if (response.success) {
+                Log.d(TAG, "✅ Approval request sent successfully")
+                Log.d(TAG, "✅ Received requestId: ${response.requestId}")
+                Pair(true, response.requestId)
             } else {
-                Log.e(TAG, "Approval response contained null approvalData - server may be unavailable")
+                Log.e(TAG, "❌ Approval request failed - server returned success=false")
                 Log.w(TAG, "Real server integration: No Firebase notification will be sent")
                 Log.w(TAG, "Check server configuration and network connectivity")
                 Pair(false, null)

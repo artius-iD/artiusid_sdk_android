@@ -24,7 +24,7 @@ import com.artiusid.sdk.presentation.components.AppTopBar
 import com.artiusid.sdk.ui.theme.*
 import com.artiusid.sdk.utils.LocalizationManager
 import androidx.compose.ui.platform.LocalContext
-import com.artiusid.sdk.ui.components.ThemedInstructionIcon
+import com.artiusid.sdk.ui.components.ThemedIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,9 +72,10 @@ fun VerificationStepsScreen(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ThemedInstructionIcon(
+                    ThemedIcon(
                         iconRes = R.drawable.scan_face_icon,
                         contentDescription = "Face Scan",
+                        overrideKey = "scan_face_icon",
                         modifier = Modifier
                             .size(64.dp)
                             .padding(8.dp)
@@ -105,9 +106,10 @@ fun VerificationStepsScreen(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ThemedInstructionIcon(
+                    ThemedIcon(
                         iconRes = R.drawable.doc_scan_icon,
                         contentDescription = "Document Scan",
+                        overrideKey = "doc_scan_icon",
                         modifier = Modifier
                             .size(64.dp)
                             .padding(8.dp)
@@ -138,9 +140,10 @@ fun VerificationStepsScreen(
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    ThemedInstructionIcon(
+                    ThemedIcon(
                         iconRes = R.drawable.done_icon,
                         contentDescription = "Completion",
+                        overrideKey = "done_icon",
                         modifier = Modifier
                             .size(64.dp)
                             .padding(8.dp)

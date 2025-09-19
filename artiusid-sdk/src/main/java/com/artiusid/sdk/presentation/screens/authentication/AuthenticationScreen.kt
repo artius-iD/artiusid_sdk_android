@@ -28,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.artiusid.sdk.R
 import com.artiusid.sdk.presentation.components.AppTopBar
 import com.artiusid.sdk.ui.theme.GradientBackground
+import com.artiusid.sdk.ui.components.ThemedImage
 import com.artiusid.sdk.ui.theme.Yellow900
 import kotlinx.coroutines.delay
 
@@ -143,8 +144,9 @@ fun AuthenticationScreen(
                     
                     is AuthenticationUiState.BiometricRequired -> {
                         // Biometric prompt state - show waiting for biometric
-                        Image(
-                            painter = painterResource(id = R.drawable.img_artiusid_ios),
+                        ThemedImage(
+                            defaultResourceId = R.drawable.img_artiusid_ios,
+                            overrideKey = "brand_image",
                             contentDescription = "artius.iD",
                             modifier = Modifier
                                 .size(120.dp)
@@ -171,8 +173,9 @@ fun AuthenticationScreen(
                     
                     is AuthenticationUiState.Success -> {
                         // Success state - show success image and navigate
-                        Image(
-                            painter = painterResource(id = R.drawable.img_success),
+                        ThemedImage(
+                            defaultResourceId = R.drawable.img_success,
+                            overrideKey = "success_icon",
                             contentDescription = "Authentication Success",
                             modifier = Modifier
                                 .size(200.dp)
@@ -204,8 +207,9 @@ fun AuthenticationScreen(
                     
                     is AuthenticationUiState.Error -> {
                         // Error state
-                        Image(
-                            painter = painterResource(id = R.drawable.img_failed),
+                        ThemedImage(
+                            defaultResourceId = R.drawable.img_failed,
+                            overrideKey = "failed_icon",
                             contentDescription = "Authentication Failed",
                             modifier = Modifier
                                 .size(200.dp)

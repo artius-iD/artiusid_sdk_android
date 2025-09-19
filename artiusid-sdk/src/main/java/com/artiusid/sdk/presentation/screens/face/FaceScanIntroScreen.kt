@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
-import com.artiusid.sdk.ui.components.ThemedInstructionIcon
+import com.artiusid.sdk.ui.components.ThemedIcon
 import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,9 +123,10 @@ fun FaceScanIntroScreen(
                             .width(getRelativeWidthDp(180f))
                             .padding(8.dp)
                     ) {
-                        ThemedInstructionIcon(
+                        ThemedIcon(
                             iconRes = R.drawable.no_glasses_icon,
                             contentDescription = "No Glasses",
+                            overrideKey = "no_glasses_icon",
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -143,9 +144,10 @@ fun FaceScanIntroScreen(
                             .width(getRelativeWidthDp(180f))
                             .padding(8.dp)
                     ) {
-                        ThemedInstructionIcon(
+                        ThemedIcon(
                             iconRes = R.drawable.no_hat_icon,
                             contentDescription = "No Hat",
+                            overrideKey = "no_hat_icon",
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -169,9 +171,10 @@ fun FaceScanIntroScreen(
                             .width(getRelativeWidthDp(180f))
                             .padding(8.dp)
                     ) {
-                        ThemedInstructionIcon(
+                        ThemedIcon(
                             iconRes = R.drawable.no_mask_icon,
                             contentDescription = "No Mask",
+                            overrideKey = "no_mask_icon",
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
@@ -189,9 +192,10 @@ fun FaceScanIntroScreen(
                             .width(getRelativeWidthDp(180f))
                             .padding(8.dp)
                     ) {
-                        ThemedInstructionIcon(
+                        ThemedIcon(
                             iconRes = R.drawable.good_light_icon,
                             contentDescription = "Good Light",
+                            overrideKey = "good_light_icon",
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))

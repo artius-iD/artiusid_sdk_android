@@ -30,6 +30,7 @@ import com.artiusid.sdk.R
 import com.artiusid.sdk.data.model.VerificationResultData
 import com.artiusid.sdk.presentation.components.AppTopBar
 import com.artiusid.sdk.ui.theme.*
+import com.artiusid.sdk.ui.components.ThemedImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,8 +68,9 @@ fun VerificationResultsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Header image
-                Image(
-                    painter = painterResource(id = R.drawable.img_crossdevicema),
+                ThemedImage(
+                    defaultResourceId = R.drawable.img_crossdevicema,
+                    overrideKey = "cross_device_image",
                     contentDescription = "Verification Complete",
                     modifier = Modifier
                         .size(200.dp)

@@ -54,7 +54,7 @@ interface ApiService {
     suspend fun loadCertificate(@Body request: LoadCertificateRequest): LoadCertificateResponse
 
     @POST("ApprovalRequestTestingFunction")
-    suspend fun sendApprovalRequest(
+    suspend fun sendApprovalRequestIOS(
         @Body request: ApprovalRequestTestingRequest
     ): ApprovalRequestTestingResponse
 }

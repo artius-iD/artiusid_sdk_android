@@ -51,7 +51,7 @@ object ArtiusIDSDK {
     private var sdkConfiguration: SDKConfiguration? = null
     private var themeConfiguration: SDKThemeConfiguration? = null
     private var enhancedThemeConfiguration: EnhancedSDKThemeConfiguration? = null
-    private var isInitialized = false
+    private var _isInitialized = false
     
     // Shared context management for mTLS and Firebase
     private var sharedContextManager: SharedContextManager? = null
@@ -122,7 +122,7 @@ object ArtiusIDSDK {
             standaloneAppBridge = StandaloneAppBridge(context)
             standaloneAppBridge.initialize(sdkConfiguration!!, theme)
 
-            isInitialized = true
+            _isInitialized = true
 
             android.util.Log.i(TAG, "✅ artius.iD SDK Bridge initialized successfully")
             android.util.Log.i(TAG, "🎨 Theme: ${theme.brandName}")
@@ -206,7 +206,7 @@ object ArtiusIDSDK {
             android.util.Log.d(TAG, "📱 Host package: ${context.packageName}")
             android.util.Log.d(TAG, "🔧 Environment: ${configuration.environment}")
             
-            isInitialized = true
+            _isInitialized = true
             android.util.Log.i(TAG, "✅ ArtiusID SDK Bridge initialized successfully with Enhanced Theming")
             
         } catch (e: Exception) {
@@ -287,7 +287,7 @@ object ArtiusIDSDK {
         try {
             android.util.Log.d(TAG, "🚀 Starting verification via standalone app bridge...")
 
-            if (!isInitialized) {
+            if (!_isInitialized) {
                 callback.onVerificationError(SDKError(
                     code = SDKErrorCode.INVALID_CONFIG,
                     message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
@@ -368,7 +368,7 @@ object ArtiusIDSDK {
         try {
             android.util.Log.d(TAG, "🚀 Starting authentication via standalone app bridge...")
             
-            if (!isInitialized) {
+            if (!_isInitialized) {
                 callback.onAuthenticationError(SDKError(
                     code = SDKErrorCode.INVALID_CONFIG,
                     message = "SDK not initialized. Call ArtiusIDSDK.initialize() first."
@@ -412,7 +412,43 @@ object ArtiusIDSDK {
     /**
      * Check if SDK is initialized
      */
-    fun isInitialized(): Boolean = isInitialized
+    fun isInitialized(): Boolean {
+        return _isInitialized
+    }
+    
+    /**
+     * Send approval request using the same logic as developer settings
+     * @param context Application context
+     * @return Triple<Boolean, String, Int?> - (success, message, requestId)
+     */
+    suspend fun sendApprovalRequest(context: Context): Triple<Boolean, String, Int?> {
+        return try {
+            if (!_isInitialized) {
+                Triple(false, "SDK not initialized", null)
+            } else {
+                // Create approval API service using shared mTLS context
+                val okHttpClient = sharedContextManager?.getSharedOkHttpClient() 
+                    ?: throw IllegalStateException("Shared context not available")
+                
+                val retrofitFactory = com.artiusid.sdk.utils.RetrofitFactory(context)
+                val approvalApiService = retrofitFactory.createApprovalRequestApiService(okHttpClient)
+                
+                // Log the API base URL being used
+                val baseUrl = com.artiusid.sdk.utils.UrlBuilder.getApprovalRequestBaseUrl(context)
+                android.util.Log.d(TAG, "🌐 Approval API Base URL: $baseUrl")
+                android.util.Log.d(TAG, "🌐 Full endpoint: ${baseUrl}ApprovalRequestTestingFunction")
+                
+                // Create SettingsRepository with proper API service
+                val settingsRepository = com.artiusid.sdk.data.repository.SettingsRepository(context, approvalApiService)
+                
+                // Send approval request
+                settingsRepository.sendApprovalRequest()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "❌ Error sending approval request", e)
+            Triple(false, "Error: ${e.message}", null)
+        }
+    }
     
     /**
      * Get shared context manager for mTLS and Firebase context sharing
