@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:612058249806:android:e8f2b3c4a5d6e7f8a9b0c1d2",
+        "mobilesdk_app_id": "1:612058249806:ios:c7ec50d515862df798e11f",
         "android_client_info": {
-          "package_name": "com.artiusid"
+          "package_name": "com.artiusid.app"
         }
       },
       "oauth_client": [],
@@ -26,4 +26,4 @@
     }
   ],
   "configuration_version": "1"
-} 
+}

@@ -201,19 +201,30 @@ class VerificationProcessingViewModel @Inject constructor(
                 val deviceId = convertAndroidIdToUUID(androidId)
                 val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}; Android: ${Build.VERSION.RELEASE}"
                 // Retrieve FCM token securely (match iOS Keychain)
-                // Get FCM token using FirebaseTokenManager (similar to iOS)
+                // Get FCM token using shared context (sample app's token)
                 val fcmToken = try {
-                    val tokenManager = FirebaseTokenManager.getInstance()
-                    val cachedToken = tokenManager?.getFCMToken()
+                    // Try to get FCM token from shared context manager first (sample app's token)
+                    val sharedContextManager = com.artiusid.sdk.ArtiusIDSDK.getSharedContextManager()
+                    val sharedTokenManager = sharedContextManager?.getSharedFirebaseTokenManager()
+                    
+                    val cachedToken = if (sharedTokenManager != null) {
+                        Log.d(TAG, "Using shared FCM token from sample app context")
+                        sharedTokenManager.getFCMToken()
+                    } else {
+                        Log.d(TAG, "No shared context, trying local FirebaseTokenManager")
+                        val tokenManager = FirebaseTokenManager.getInstance()
+                        tokenManager?.getFCMToken()
+                    }
+                    
                     if (!cachedToken.isNullOrEmpty()) {
-                        Log.d(TAG, "Using cached FCM token")
+                        Log.d(TAG, "✅ FCM token retrieved successfully: ${cachedToken.take(20)}...")
                         cachedToken
                     } else {
-                        Log.w(TAG, "No FCM token available, continuing without token")
+                        Log.w(TAG, "❌ No FCM token available, continuing without token")
                         ""
                     }
                 } catch (e: Exception) {
-                    Log.w(TAG, "FCM token unavailable: ${e.message}")
+                    Log.w(TAG, "❌ FCM token unavailable: ${e.message}")
                     ""
                 }
 

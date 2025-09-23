@@ -9,7 +9,8 @@ package com.artiusid.sdk.data.model
 import com.google.gson.annotations.SerializedName
 
 /**
- * Matches iOS ApprovalRequestTestingRequest.swift
+ * Matches iOS ApprovalRequestTestingRequest.swift EXACTLY
+ * CRITICAL: iOS includes timeout field with default value 30
  */
 data class ApprovalRequestTestingRequest(
     @SerializedName("clientId")
@@ -28,5 +29,5 @@ data class ApprovalRequestTestingRequest(
     val approvalDescription: String,
     
     @SerializedName("timeout")
-    val timeout: Int = 30
+    val timeout: Int = 30  // ✅ CRITICAL: iOS has this field!
 ) 

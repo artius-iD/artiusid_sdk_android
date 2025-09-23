@@ -264,6 +264,7 @@ fun AppNavigation(
         composable(Screen.PassportScan.route) {
             PassportScanScreen(
                 onPassportScanComplete = {
+                    android.util.Log.d("AppNavigation", "🔍 DIAGNOSTIC: PassportScan completed, navigating to PassportChipIntro")
                     navController.navigate(Screen.PassportChipIntro.route)
                 },
                 onNavigateBack = {
@@ -275,6 +276,7 @@ fun AppNavigation(
         composable(Screen.PassportChipIntro.route) {
             PassportChipIntroScreen(
                 onNavigateToPassportChip = {
+                    android.util.Log.d("AppNavigation", "🔍 DIAGNOSTIC: PassportChipIntro completed, navigating to PassportChipScan")
                     navController.navigate(Screen.PassportChipScan.route)
                 },
                 onNavigateBack = {
@@ -284,6 +286,7 @@ fun AppNavigation(
         }
 
         composable(Screen.PassportChipScan.route) {
+            android.util.Log.d("AppNavigation", "🔍 DIAGNOSTIC: Entering PassportChipScan screen")
             PassportChipScanScreen(
                 onChipScanComplete = { passportData ->
                     android.util.Log.d("AppNavigation", "=== Passport NFC scan completed ===")
@@ -394,10 +397,10 @@ fun AppNavigation(
             if (verificationData != null) {
                 VerificationResultsScreen(
                     onNavigateHome = {
+                        // Clear verification data and exit standalone app to return to sample app
                         VerificationDataHolder.clearVerificationData()
-                        navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Home.route) { inclusive = false }
-                        }
+                        android.util.Log.d("AppNavigation", "🏠 Back Home pressed on verification results, calling onCancel to exit standalone app")
+                        onCancel?.invoke()
                     },
                     verificationData = verificationData
                 )
@@ -464,12 +467,11 @@ fun AppNavigation(
                     }
                 },
                 onBackToHomeClick = {
-                    // Clear all data and go back to home
+                    // Clear all data and exit standalone app to return to sample app
                     ImageStorage.clearAll()
-                    // Note: Need to inject VerificationDataHolder here
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = false }
-                    }
+                    VerificationDataHolder.clearVerificationData()
+                    android.util.Log.d("AppNavigation", "🔙 Back Home pressed on verification failure, calling onCancel to exit standalone app")
+                    onCancel?.invoke()
                 }
             )
         }

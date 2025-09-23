@@ -127,11 +127,15 @@ suspend fun readPassportWithIsoDep(isoDep: android.nfc.tech.IsoDep, mrzKey: Stri
         Log.d("PassportChipScan", "🔗 Using pre-connected IsoDep for passport reading...")
         
         // Parse MRZ key to extract components (passport number, DOB, expiry)
-        Log.d("PassportChipScan", "🔍 Received MRZ key: '$mrzKey' (${mrzKey.length} chars)")
+        Log.d("PassportChipScan", "🔍 DIAGNOSTIC: Received MRZ key: '$mrzKey' (${mrzKey.length} chars)")
+        Log.d("PassportChipScan", "🔍 DIAGNOSTIC: IsoDep connection status: ${isoDep.isConnected}")
+        Log.d("PassportChipScan", "🔍 DIAGNOSTIC: IsoDep timeout: ${isoDep.timeout}ms")
+        
         val mrzComponents = mrzKey.split("|")
         Log.d("PassportChipScan", "🔍 Split into ${mrzComponents.size} components: ${mrzComponents.joinToString(", ")}")
         if (mrzComponents.size != 3) {
-            Log.e("PassportChipScan", "❌ Invalid MRZ key format - expected 3 components, got ${mrzComponents.size}")
+            Log.e("PassportChipScan", "❌ DIAGNOSTIC: Invalid MRZ key format - expected 3 components, got ${mrzComponents.size}")
+            Log.e("PassportChipScan", "❌ DIAGNOSTIC: Raw MRZ key: '$mrzKey'")
             return@withContext null
         }
         
@@ -156,32 +160,43 @@ suspend fun readPassportWithIsoDep(isoDep: android.nfc.tech.IsoDep, mrzKey: Stri
         
         Log.d("PassportChipScan", "✅ CardService opened successfully")
         
-        // Create PassportService for BAC authentication
-        passportService = PassportService(
-            cardService,
-            PassportService.NORMAL_MAX_TRANCEIVE_LENGTH,
-            PassportService.DEFAULT_MAX_BLOCKSIZE,
-            false, // isSFIEnabled
-            false  // shouldCheckMAC
-        )
+        // Create PassportService for BAC authentication (standalone app method)
+        passportService = PassportService(cardService, 224, 224, false, false)
         
         passportService.open()
         Log.d("PassportChipScan", "✅ PassportService opened successfully")
         
-        // Perform BAC authentication
+        // Perform BAC authentication with check digit
         Log.d("PassportChipScan", "🔐 Starting BAC authentication...")
+        
+        // CRITICAL FIX: Use EXACT standalone app implementation
+        // BAC Key should be created WITHOUT check digits (JMRTD handles them internally)
+        Log.d("PassportChipScan", "🔐 Creating JMRTD BAC key (standalone app method):")
+        Log.d("PassportChipScan", "   Passport: $passportNumber (WITHOUT check digit)")
+        Log.d("PassportChipScan", "   DOB: $dateOfBirth, Expiry: $dateOfExpiry")
+        
         val bacKey = BACKey(passportNumber, dateOfBirth, dateOfExpiry)
+        
+        // Perform BAC authentication (standalone app method)
+        Log.d("PassportChipScan", "🔐 Performing JMRTD BAC authentication...")
+        passportService.sendSelectApplet(false)
         passportService.doBAC(bacKey)
-        Log.d("PassportChipScan", "✅ BAC authentication successful!")
+        Log.d("PassportChipScan", "✅ JMRTD BAC authentication successful!")
         
         // Read passport data files
         Log.d("PassportChipScan", "📖 Reading passport data files...")
         
-        // Read DG1 (MRZ data)
+        // Read DG1 (passport data) - standalone app method
+        Log.d("PassportChipScan", "📚 Reading DG1 with JMRTD...")
         val dg1InputStream = passportService.getInputStream(PassportService.EF_DG1)
-        val dg1File = DG1File(dg1InputStream)
+        val dg1File = DG1File(dg1InputStream as InputStream)
         val mrzInfo = dg1File.mrzInfo
-        Log.d("PassportChipScan", "✅ DG1 (MRZ) read successfully")
+        
+        Log.d("PassportChipScan", "✅ JMRTD passport reading successful!")
+        Log.d("PassportChipScan", "   Document: ${mrzInfo.documentNumber}")
+        Log.d("PassportChipScan", "   Name: ${mrzInfo.primaryIdentifier} ${mrzInfo.secondaryIdentifier}")
+        Log.d("PassportChipScan", "   DOB: ${mrzInfo.dateOfBirth}")
+        Log.d("PassportChipScan", "   Nationality: ${mrzInfo.nationality}")
         
         // Create PassportNFCData result using the same approach as readPassportBasic
         val passportNFCData = PassportNFCData(
@@ -295,9 +310,28 @@ suspend fun readPassportBasic(tag: Tag, mrzKey: String): PassportNFCData? = kotl
         cardService = CardService.getInstance(isoDep)
         cardService.open()
         
-        // Create BAC key for JMRTD
-        val bacKey = BACKey(passportNumber, dateOfBirth, dateOfExpiry)
-        Log.d("PassportChipScan", "🔑 Generated JMRTD BAC key successfully")
+        // Create BAC key for JMRTD - CRITICAL: Use REAL check digits from MRZ
+        val mrzData = ImageStorage.getPassportMRZData()
+        val bacKey = if (mrzData != null) {
+            val realCheckDigits = extractRealCheckDigitsFromMRZ(mrzData)
+            val passportWithRealCheck = passportNumber + realCheckDigits.passportCheck
+            
+            Log.d("PassportChipScan", "🔐 BAC Key Generation - Using REAL MRZ check digits:")
+            Log.d("PassportChipScan", "   Original passport: $passportNumber (${passportNumber.length} chars)")
+            Log.d("PassportChipScan", "   Real check digit from MRZ: ${realCheckDigits.passportCheck}")
+            Log.d("PassportChipScan", "   Passport with REAL check: $passportWithRealCheck (${passportWithRealCheck.length} chars)")
+            Log.d("PassportChipScan", "   DOB: $dateOfBirth, Expiry: $dateOfExpiry")
+            
+            BACKey(passportWithRealCheck, dateOfBirth, dateOfExpiry)
+        } else {
+            // Fallback: try without check digit
+            Log.d("PassportChipScan", "🔐 BAC Key Generation - Fallback without check digit:")
+            Log.d("PassportChipScan", "   Passport: $passportNumber (${passportNumber.length} chars)")
+            Log.d("PassportChipScan", "   DOB: $dateOfBirth, Expiry: $dateOfExpiry")
+            
+            BACKey(passportNumber, dateOfBirth, dateOfExpiry)
+        }
+        Log.d("PassportChipScan", "🔑 Generated JMRTD BAC key with check digit")
         
         // Initialize JMRTD PassportService for BAC (with proper constructor parameters)
         passportService = PassportService(cardService, 224, 224, false, false)
@@ -366,6 +400,26 @@ data class RealCheckDigits(
     val expiryCheck: String
 )
 
+/**
+ * Calculate MRZ check digit using ICAO 9303 standard
+ */
+private fun calculateMRZCheckDigit(input: String): Int {
+    val weights = intArrayOf(7, 3, 1)
+    var sum = 0
+    
+    for (i in input.indices) {
+        val char = input[i]
+        val value = when {
+            char.isDigit() -> char.digitToInt()
+            char.isLetter() -> char.uppercaseChar().code - 'A'.code + 10
+            else -> 0 // For < characters
+        }
+        sum += value * weights[i % 3]
+    }
+    
+    return sum % 10
+}
+
 // Extract real check digits from the actual MRZ lines
 fun extractRealCheckDigitsFromMRZ(mrzData: PassportMRZData): RealCheckDigits {
     // MRZ Line 2 format: PPPPPPPPPCCCDDDDDDDEEEEEEEXXXXXXXXXXXXXXX
@@ -420,11 +474,20 @@ fun PassportChipScanScreen(
     // Get MRZ data from ImageStorage to create authentication key
     val mrzData = remember { ImageStorage.getPassportMRZData() }
     val authKey = remember(mrzData) {
+        Log.d("PassportChipScan", "🔍 DIAGNOSTIC: Checking MRZ data availability...")
+        Log.d("PassportChipScan", "🔍 DIAGNOSTIC: mrzData is null: ${mrzData == null}")
+        
         mrzData?.let { mrz ->
             Log.d("PassportChipScan", "✅ Using REAL passport MRZ data: ${mrz.passportNumber}")
+            Log.d("PassportChipScan", "🔍 DIAGNOSTIC: Full MRZ object: $mrz")
+            Log.d("PassportChipScan", "🔍 DIAGNOSTIC: MRZ Line 1: '${mrz.line1}'")
+            Log.d("PassportChipScan", "🔍 DIAGNOSTIC: MRZ Line 2: '${mrz.line2}'")
             // Use ICAO standard format WITH check digits for JMRTD BAC authentication
             Log.d("PassportChipScan", "🔍 MRZ validation status: ${mrz.isValid}")
             Log.d("PassportChipScan", "🔍 MRZ data: passport=${mrz.passportNumber}, dob=${mrz.dateOfBirth}, expiry=${mrz.dateOfExpiry}")
+            Log.d("PassportChipScan", "🔍 DIAGNOSTIC: Passport number length: ${mrz.passportNumber?.length}")
+            Log.d("PassportChipScan", "🔍 DIAGNOSTIC: DOB length: ${mrz.dateOfBirth?.length}")
+            Log.d("PassportChipScan", "🔍 DIAGNOSTIC: Expiry length: ${mrz.dateOfExpiry?.length}")
             
             // Extract REAL check digits from the actual MRZ lines instead of calculating
             // The passport chip expects the exact same check digits that are printed on the passport
@@ -447,9 +510,13 @@ fun PassportChipScanScreen(
             
             Log.d("PassportChipScan", "🔑 Generated JMRTD BAC key format (WITHOUT check digits)")
             Log.d("PassportChipScan", "   Passport: $passportWithoutCheck (9 digits), DOB: $dobWithoutCheck, Expiry: $expiryWithoutCheck")
-            "$passportWithoutCheck|$dobWithoutCheck|$expiryWithoutCheck"
+            val finalKey = "$passportWithoutCheck|$dobWithoutCheck|$expiryWithoutCheck"
+            Log.d("PassportChipScan", "🔑 DIAGNOSTIC: Final authentication key: '$finalKey' (${finalKey.length} chars)")
+            finalKey
         } ?: mrzKey.ifEmpty { 
             Log.e("PassportChipScan", "❌ NO REAL MRZ DATA FOUND! Please scan your passport's MRZ first.")
+            Log.e("PassportChipScan", "❌ DIAGNOSTIC: mrzKey parameter: '$mrzKey'")
+            Log.e("PassportChipScan", "❌ DIAGNOSTIC: ImageStorage.getPassportMRZData() returned null")
             "NO_MRZ_DATA_AVAILABLE"
         }
     }

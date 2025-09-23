@@ -40,6 +40,7 @@ import java.security.GeneralSecurityException
  */
 class PassportNFCReader @Inject constructor(
     private val context: Context,
+    private val jmrtdReaderReal: JMRTDPassportReaderReal,
     private val jmrtdReader: JMRTDPassportReaderSimple,
     private val securityProvider: NFCSecurityProvider
 ) {
@@ -97,11 +98,13 @@ class PassportNFCReader @Inject constructor(
                 if (tag != null && !FALLBACK_TO_SIMULATION) {
                     try {
                         Log.d(TAG, "📡 Attempting real JMRTD passport reading...")
-                        val passportData = jmrtdReader.readPassport(tag, standardMrzKey)
+                        val passportData = jmrtdReaderReal.readPassport(tag, standardMrzKey)
                         
                         if (passportData != null) {
                             Log.i(TAG, "✅ Real JMRTD reading successful!")
                             return@withTimeoutOrNull passportData
+                        } else {
+                            Log.w(TAG, "⚠️ Real JMRTD reading returned null, falling back to simulation")
                         }
                     } catch (e: Exception) {
                         Log.w(TAG, "⚠️ Real JMRTD reading failed, falling back to simulation: ${e.message}")

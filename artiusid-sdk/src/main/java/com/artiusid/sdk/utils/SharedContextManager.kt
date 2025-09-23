@@ -61,6 +61,13 @@ class SharedContextManager(
     }
     
     /**
+     * Alias for getSharedFirebaseManager() for consistency
+     */
+    fun getSharedFirebaseTokenManager(): FirebaseTokenManager? {
+        return getSharedFirebaseManager()
+    }
+    
+    /**
      * Get OkHttpClient configured with shared mTLS context
      */
     fun getSharedOkHttpClient(): OkHttpClient {

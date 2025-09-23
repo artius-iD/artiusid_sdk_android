@@ -193,6 +193,11 @@ class CertificateManager(private val context: Context) {
         private const val KEY_ALIAS = "artiusid_client_key"
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
         private const val CERT_FILE_NAME = "client_cert.pem"
+        
+        // Enhanced security: Use EncryptedSharedPreferences (like iOS Keychain)
+        private const val ENCRYPTED_PREFS_NAME = "certificate_prefs"
+        private const val CERT_PEM_KEY = "certificate_pem"
+        private const val PRIVATE_KEY_KEY = "private_key_pem"
     }
 
     /**
@@ -279,33 +284,181 @@ class CertificateManager(private val context: Context) {
     }
 
     /**
-     * Store the certificate PEM string in app-private storage.
+     * Store the certificate PEM string in encrypted storage (like iOS Keychain).
      */
     fun storeCertificatePem(certPem: String) {
-        val file = File(context.filesDir, CERT_FILE_NAME)
-        file.writeText(certPem)
-        Log.d(TAG, "Stored certificate PEM at: ${file.absolutePath}")
+        try {
+            // Use EncryptedSharedPreferences for maximum security (like FCM token and Member ID)
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val encryptedPrefs = EncryptedSharedPreferences.create(
+                ENCRYPTED_PREFS_NAME,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+            
+            encryptedPrefs.edit()
+                .putString(CERT_PEM_KEY, certPem)
+                .apply()
+            
+            Log.d(TAG, "✅ Certificate PEM stored securely in encrypted storage (iOS Keychain equivalent)")
+            
+            // Also maintain file-based storage for backward compatibility
+            val file = File(context.filesDir, CERT_FILE_NAME)
+            file.writeText(certPem)
+            Log.d(TAG, "📁 Certificate PEM also stored in file for compatibility: ${file.absolutePath}")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to store certificate PEM in encrypted storage", e)
+            // Fallback to file storage
+            val file = File(context.filesDir, CERT_FILE_NAME)
+            file.writeText(certPem)
+            Log.d(TAG, "📁 Fallback: Certificate PEM stored in file: ${file.absolutePath}")
+        }
     }
 
     /**
-     * Load the certificate PEM string from app-private storage.
+     * Load the certificate PEM string from encrypted storage (iOS Keychain equivalent).
+     * Falls back to file storage for backward compatibility.
      * Returns null if not found.
      */
     fun loadCertificatePem(): String? {
+        try {
+            // Try encrypted storage first (like iOS Keychain)
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val encryptedPrefs = EncryptedSharedPreferences.create(
+                ENCRYPTED_PREFS_NAME,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+            
+            val encryptedCertPem = encryptedPrefs.getString(CERT_PEM_KEY, null)
+            if (encryptedCertPem != null) {
+                Log.d(TAG, "✅ Certificate PEM loaded from encrypted storage (iOS Keychain equivalent)")
+                return encryptedCertPem
+            }
+            
+            Log.d(TAG, "🔍 No certificate found in encrypted storage, checking file storage...")
+            
+        } catch (e: Exception) {
+            Log.w(TAG, "⚠️ Failed to load certificate PEM from encrypted storage, falling back to file", e)
+        }
+        
+        // Fallback to file storage for backward compatibility
         val file = File(context.filesDir, CERT_FILE_NAME)
-        return if (file.exists()) file.readText() else null
+        if (file.exists()) {
+            val fileCertPem = file.readText()
+            Log.d(TAG, "📁 Certificate PEM loaded from file storage (backward compatibility)")
+            
+            // Migrate to encrypted storage for future use
+            try {
+                storeCertificatePem(fileCertPem)
+                Log.d(TAG, "🔄 Migrated certificate PEM to encrypted storage")
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Failed to migrate certificate PEM to encrypted storage", e)
+            }
+            
+            return fileCertPem
+        }
+        
+        Log.d(TAG, "❌ No certificate PEM found in either encrypted or file storage")
+        return null
     }
 
     /**
-     * Remove the certificate PEM file from app-private storage.
+     * Store the private key PEM string in encrypted storage (like iOS Keychain).
+     */
+    fun storePrivateKeyPem(privateKeyPem: String) {
+        try {
+            // Use EncryptedSharedPreferences for maximum security (like FCM token and Member ID)
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val encryptedPrefs = EncryptedSharedPreferences.create(
+                ENCRYPTED_PREFS_NAME,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+            
+            encryptedPrefs.edit()
+                .putString(PRIVATE_KEY_KEY, privateKeyPem)
+                .apply()
+            
+            Log.d(TAG, "✅ Private Key PEM stored securely in encrypted storage (iOS Keychain equivalent)")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to store private key PEM in encrypted storage", e)
+            throw e // Don't fallback for private keys - security is critical
+        }
+    }
+
+    /**
+     * Load the private key PEM string from encrypted storage (iOS Keychain equivalent).
+     * Returns null if not found.
+     */
+    fun loadPrivateKeyPem(): String? {
+        try {
+            // Load from encrypted storage (like iOS Keychain)
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val encryptedPrefs = EncryptedSharedPreferences.create(
+                ENCRYPTED_PREFS_NAME,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+            
+            val encryptedPrivateKeyPem = encryptedPrefs.getString(PRIVATE_KEY_KEY, null)
+            if (encryptedPrivateKeyPem != null) {
+                Log.d(TAG, "✅ Private Key PEM loaded from encrypted storage (iOS Keychain equivalent)")
+                return encryptedPrivateKeyPem
+            }
+            
+            Log.d(TAG, "❌ No private key found in encrypted storage")
+            return null
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to load private key PEM from encrypted storage", e)
+            return null
+        }
+    }
+
+    /**
+     * Remove the certificate and private key from both encrypted and file storage.
      */
     fun removeCertificatePem() {
+        try {
+            // Remove from encrypted storage
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val encryptedPrefs = EncryptedSharedPreferences.create(
+                ENCRYPTED_PREFS_NAME,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+            
+            encryptedPrefs.edit()
+                .remove(CERT_PEM_KEY)
+                .remove(PRIVATE_KEY_KEY)
+                .apply()
+            
+            Log.d(TAG, "✅ Certificate and private key removed from encrypted storage")
+            
+        } catch (e: Exception) {
+            Log.w(TAG, "⚠️ Failed to remove certificate from encrypted storage", e)
+        }
+        
+        // Also remove file storage for backward compatibility
         val file = File(context.filesDir, CERT_FILE_NAME)
         if (file.exists()) {
             file.delete()
-            Log.d(TAG, "Removed certificate PEM file: ${file.absolutePath}")
+            Log.d(TAG, "📁 Removed certificate PEM file: ${file.absolutePath}")
         } else {
-            Log.d(TAG, "Certificate PEM file does not exist: ${file.absolutePath}")
+            Log.d(TAG, "📁 Certificate PEM file does not exist: ${file.absolutePath}")
         }
     }
 

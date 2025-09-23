@@ -127,8 +127,11 @@ class PassportScanViewModel @Inject constructor() : ViewModel() {
                     _passportData.value = passportData
                     
                     // Store passport image and MRZ data in ImageStorage for NFC screen access
+                    Log.d("PassportScanViewModel", "🔍 DIAGNOSTIC: About to store MRZ data in ImageStorage")
+                    Log.d("PassportScanViewModel", "🔍 DIAGNOSTIC: MRZ data to store: $mrzData")
                     ImageStorage.setPassportImage(capturedImage)
                     ImageStorage.setPassportMRZData(mrzData)
+                    Log.d("PassportScanViewModel", "✅ DIAGNOSTIC: MRZ data stored successfully")
                     
                     // Store passport data for verification results
                     val utilPassportData = com.artiusid.sdk.utils.PassportData(

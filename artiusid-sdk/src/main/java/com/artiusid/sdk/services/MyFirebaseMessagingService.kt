@@ -30,22 +30,35 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         private const val CHANNEL_ID = "artiusid_notifications"
     }
 
+    override fun onCreate() {
+        super.onCreate()
+        Log.d(TAG, "🔥 MyFirebaseMessagingService created and ready to receive messages")
+        Log.d(TAG, "🔥 Service package: ${packageName}")
+    }
+
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d(TAG, "FCM registration token: $token")
-        
+        Log.d(TAG, "🔥 NEW FCM registration token received: $token")
+        Log.d(TAG, "🔥 Token length: ${token.length} characters")
+
         // Save token using FirebaseTokenManager (similar to iOS MessagingDelegate)
-        val tokenManager = FirebaseTokenManager.getInstance()
+        val tokenManager = FirebaseTokenManager.getInstance(applicationContext)
         tokenManager?.saveToken(token)
+        
+        Log.d(TAG, "✅ FCM token saved to secure storage")
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
-        Log.d(TAG, "FCM message received: ${remoteMessage.data}")
-        
+        Log.d(TAG, "🔔 FCM message received!")
+        Log.d(TAG, "🔔 Message ID: ${remoteMessage.messageId}")
+        Log.d(TAG, "🔔 From: ${remoteMessage.from}")
+        Log.d(TAG, "🔔 Data payload: ${remoteMessage.data}")
+        Log.d(TAG, "🔔 Notification payload: ${remoteMessage.notification}")
+
         // Handle notification data similar to iOS handleNotification
         handleNotification(remoteMessage.data)
-        
+
         // Show notification if app is in foreground
         showNotification(remoteMessage)
     }

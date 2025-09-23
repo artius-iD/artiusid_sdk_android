@@ -44,6 +44,12 @@ import java.util.*
 import com.artiusid.sdk.data.model.AppNotificationState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.google.firebase.messaging.FirebaseMessaging
 
 /**
  * Sample App demonstrating the artius.iD SDK Integration
@@ -61,6 +67,8 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     private var showResultsScreen by mutableStateOf(false)
     private var fcmTokenStatus by mutableStateOf("❌ Not available")
     private var fcmTokenPreview by mutableStateOf("")
+    private var memberIdStatus by mutableStateOf("❌ Not available")
+    private var memberIdPreview by mutableStateOf("")
     
     // Approval flow state
     private var showApprovalRequestScreen by mutableStateOf(false)
@@ -76,10 +84,14 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         // Initialize SDK on startup so it's available for all operations
         initializeSDK()
 
-        // Check FCM token and certificate status on startup
+        // Request notification permissions for Android 13+
+        requestNotificationPermissions()
+
+        // Check FCM token, certificate, and member ID status on startup
         checkFCMTokenStatus()
         checkCertificateStatus()
-        
+        checkMemberIdStatus()
+
         // Handle notification intent if app was launched from notification
         handleNotificationIntent(intent)
         
@@ -329,23 +341,27 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            Button(
-                onClick = { simulateApprovalNotification() },
+            // FCM Token Refresh Button (for debugging)
+            OutlinedButton(
+                onClick = { refreshFCMToken() },
                 enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.warningColorHex))
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.primaryColorHex))),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.primaryColorHex)),
+                    containerColor = Color.Transparent
                 )
             ) {
                 Text(
-                    text = "🔔 Simulate Notification",
+                    text = "🔥 Refresh FCM Token",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
+                    color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.primaryColorHex))
                 )
             }
+            
             
             // Results Display
             if (lastResult.isNotEmpty()) {
@@ -433,6 +449,31 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                                 text = "Key Match: ${if (keyMatch) "✅ Valid" else "❌ Invalid"}",
                                 fontSize = 10.sp,
                                 color = if (keyMatch) Color(0xFF4CAF50) else Color(0xFFF44336),
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        // Member ID Section
+                        Text(
+                            text = "👤 Member ID Status",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                        
+                        Text(
+                            text = "Status: $memberIdStatus",
+                            fontSize = 12.sp,
+                            color = if (memberIdStatus.contains("✅")) Color(0xFF4CAF50) else Color(0xFFF44336)
+                        )
+                        
+                        if (memberIdPreview.isNotEmpty()) {
+                            Text(
+                                text = "ID: $memberIdPreview",
+                                fontSize = 10.sp,
+                                color = Color.Gray,
                                 modifier = Modifier.padding(top = 2.dp)
                             )
                         }
@@ -709,6 +750,87 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             }
         }
     }
+
+    private fun checkMemberIdStatus() {
+        android.util.Log.d("BridgeMainActivity", "👤 Checking member ID status...")
+        
+        try {
+            // First check if we have verification result data (most recent/accurate)
+            val resultMemberId = verificationResultData?.accountNumber
+            
+            // Also check VerificationStateManager (secure storage)
+            val verificationStateManager = com.artiusid.sdk.utils.VerificationStateManager(this)
+            val storedMemberId = verificationStateManager.getAccountNumber()
+            
+            android.util.Log.d("BridgeMainActivity", "📱 VerificationStateManager created for context: ${this.packageName}")
+            android.util.Log.d("BridgeMainActivity", "🔍 Result Member ID: ${resultMemberId?.take(8)}...${resultMemberId?.takeLast(4)}")
+            android.util.Log.d("BridgeMainActivity", "🔍 Stored Member ID: ${storedMemberId?.take(8)}...${storedMemberId?.takeLast(4)}")
+            
+            // Use the most recent verification result if available, otherwise use stored
+            val memberId = if (!resultMemberId.isNullOrEmpty()) {
+                android.util.Log.d("BridgeMainActivity", "✅ Using Member ID from verification result (most recent)")
+                resultMemberId
+            } else if (!storedMemberId.isNullOrEmpty()) {
+                android.util.Log.d("BridgeMainActivity", "✅ Using Member ID from secure storage")
+                storedMemberId
+            } else {
+                null
+            }
+
+            if (!memberId.isNullOrEmpty()) {
+                memberIdStatus = "✅ Available"
+                memberIdPreview = memberId.take(8) + "..." + memberId.takeLast(4)
+                android.util.Log.d("BridgeMainActivity", "💾 Final Member ID: ${memberId.take(8)}...${memberId.takeLast(4)}")
+                android.util.Log.d("BridgeMainActivity", "✅ Full Member ID for approval: $memberId")
+                
+                // CRITICAL: Sync the Member ID to VerificationStateManager if it's from result data
+                if (!resultMemberId.isNullOrEmpty() && resultMemberId != storedMemberId) {
+                    android.util.Log.d("BridgeMainActivity", "🔄 Syncing Member ID to secure storage for approval requests")
+                    verificationStateManager.storeVerificationSuccess(
+                        accountNumber = resultMemberId,
+                        accountFullName = "${verificationResultData?.firstName ?: ""} ${verificationResultData?.lastName ?: ""}".trim().takeIf { it.isNotEmpty() },
+                        isAccountActive = true
+                    )
+                }
+                
+                val memberStatus = "✅ Member ID: ${memberId.take(8)}...${memberId.takeLast(4)}"
+                
+                // Update last result to include member ID info
+                if (lastResult.contains("Certificate") || lastResult.contains("FCM Token")) {
+                    lastResult += "\n$memberStatus"
+                } else {
+                    lastResult = memberStatus
+                }
+            } else {
+                memberIdStatus = "❌ Not available"
+                memberIdPreview = "N/A"
+                android.util.Log.w("BridgeMainActivity", "⚠️ No member ID found in verification result or secure storage.")
+                android.util.Log.w("BridgeMainActivity", "⚠️ User must complete verification first to get member ID for approval requests")
+                
+                val memberStatus = "⚠️ No Member ID - complete verification first"
+                
+                // Update last result to include member ID warning
+                if (lastResult.contains("Certificate") || lastResult.contains("FCM Token")) {
+                    lastResult += "\n$memberStatus"
+                } else {
+                    lastResult = memberStatus
+                }
+            }
+        } catch (e: Exception) {
+            val errorStatus = "❌ Member ID check error: ${e.message}"
+            android.util.Log.e("BridgeMainActivity", "❌ Error checking member ID status", e)
+            
+            memberIdStatus = "❌ Error"
+            memberIdPreview = "Error"
+            
+            // Update last result to include member ID error
+            if (lastResult.contains("Certificate") || lastResult.contains("FCM Token")) {
+                lastResult += "\n$errorStatus"
+            } else {
+                lastResult = errorStatus
+            }
+        }
+    }
     
     private fun startVerificationFlow() {
         try {
@@ -823,24 +945,86 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         }
     }
     
-    private fun simulateApprovalNotification() {
+    private fun requestNotificationPermissions() {
         try {
-            android.util.Log.d("BridgeMainActivity", "🔔 Simulating approval notification...")
+            android.util.Log.d("BridgeMainActivity", "🔔 Checking notification permissions...")
             
-            // Simulate an approval notification response
-            AppNotificationState.handleApprovalNotification(
-                requestId = 12345,
-                title = "Approval Request Approved",
-                description = "Your test approval request for \$25.00 has been approved."
-            )
-            
-            android.util.Log.d("BridgeMainActivity", "✅ Simulated notification sent to AppNotificationState")
-            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    android.util.Log.d("BridgeMainActivity", "📱 Requesting POST_NOTIFICATIONS permission...")
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                        1001
+                    )
+                } else {
+                    android.util.Log.d("BridgeMainActivity", "✅ POST_NOTIFICATIONS permission already granted")
+                }
+            } else {
+                android.util.Log.d("BridgeMainActivity", "✅ Notification permissions not required for this Android version")
+            }
         } catch (e: Exception) {
-            android.util.Log.e("BridgeMainActivity", "❌ Error simulating notification: ${e.message}", e)
-            lastResult = "❌ Error simulating notification: ${e.message}"
+            android.util.Log.e("BridgeMainActivity", "❌ Error requesting notification permissions: ${e.message}", e)
         }
     }
+    
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        when (requestCode) {
+            1001 -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    android.util.Log.d("BridgeMainActivity", "✅ POST_NOTIFICATIONS permission granted")
+                    lastResult = "✅ Notification permissions granted - ready to receive approval notifications"
+                } else {
+                    android.util.Log.w("BridgeMainActivity", "⚠️ POST_NOTIFICATIONS permission denied")
+                    lastResult = "⚠️ Notification permissions denied - may not receive approval notifications"
+                }
+            }
+        }
+    }
+    
+    private fun refreshFCMToken() {
+        try {
+            android.util.Log.d("BridgeMainActivity", "🔥 Refreshing FCM token...")
+            
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    android.util.Log.e("BridgeMainActivity", "❌ Failed to get FCM token", task.exception)
+                    lastResult = "❌ Failed to refresh FCM token: ${task.exception?.message}"
+                    return@addOnCompleteListener
+                }
+
+                // Get new token
+                val token = task.result
+                android.util.Log.d("BridgeMainActivity", "🔥 Fresh FCM token: $token")
+                android.util.Log.d("BridgeMainActivity", "🔥 Token length: ${token.length} characters")
+                
+                // Save the new token
+                val tokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this)
+                tokenManager?.saveToken(token)
+                
+                // Update UI
+                lastResult = "🔥 FCM Token refreshed successfully!\nToken: ${token.take(20)}...\nLength: ${token.length} chars"
+                
+                // Update FCM status
+                checkFCMTokenStatus()
+            }
+            
+        } catch (e: Exception) {
+            android.util.Log.e("BridgeMainActivity", "❌ Error refreshing FCM token: ${e.message}", e)
+            lastResult = "❌ Error refreshing FCM token: ${e.message}"
+        }
+    }
+    
     
     // VerificationCallback implementation
     override fun onVerificationSuccess(result: VerificationResult) {
@@ -853,8 +1037,9 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         // Show the results screen
         showResultsScreen = true
         
-        // Refresh FCM token status after verification
+        // Refresh FCM token and member ID status after verification
         checkFCMTokenStatus()
+        checkMemberIdStatus()
         
         // Also update the text result for debugging
         lastResult = """
