@@ -31,10 +31,10 @@ import kotlinx.coroutines.delay
 /**
  * Extension function to find FragmentActivity from Context
  */
-fun Context.findActivity(): ComponentActivity? {
+fun Context.findActivity(): FragmentActivity? {
     var context = this
     while (context is ContextWrapper) {
-        if (context is ComponentActivity) return context
+        if (context is FragmentActivity) return context
         context = context.baseContext
     }
     return null
@@ -56,13 +56,21 @@ fun ApprovalRequestScreen(
 ) {
     val context = LocalContext.current
     var authenticationState by remember { mutableStateOf(AuthenticationState.Authenticating) }
+    var hasTriggeredBiometric by remember { mutableStateOf(false) }
     
-    // Trigger biometric authentication when screen loads
-    LaunchedEffect(Unit) {
+    // Trigger biometric authentication when screen loads (only once)
+    LaunchedEffect(requestId) {
+        if (hasTriggeredBiometric) {
+            android.util.Log.d("ApprovalRequestScreen", "⚠️ Biometric authentication already triggered, skipping")
+            return@LaunchedEffect
+        }
+        
         android.util.Log.d("ApprovalRequestScreen", "🔐 Starting biometric authentication for approval request")
         android.util.Log.d("ApprovalRequestScreen", "📋 Request ID: $requestId")
         android.util.Log.d("ApprovalRequestScreen", "📋 Title: $title")
         android.util.Log.d("ApprovalRequestScreen", "📋 Description: $description")
+        
+        hasTriggeredBiometric = true
         
         // Delay slightly to let the UI state update
         delay(500)
@@ -212,14 +220,14 @@ fun ApprovalRequestScreen(
                         painter = painterResource(id = android.R.drawable.ic_dialog_info),
                         contentDescription = "Authentication Successful",
                         modifier = Modifier.size(80.dp),
-                        tint = Color.Green
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
                         text = "Authentication Successful",
-                        color = Color.Green,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -239,7 +247,7 @@ fun ApprovalRequestScreen(
                                 .fillMaxWidth()
                                 .height(56.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF4CAF50) // Green
+                                containerColor = MaterialTheme.colorScheme.primary
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -247,7 +255,7 @@ fun ApprovalRequestScreen(
                                 text = "✅ Approve",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                         
@@ -259,9 +267,9 @@ fun ApprovalRequestScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
-                            border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFF44336)),
+                            border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.error),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFFF44336),
+                                contentColor = MaterialTheme.colorScheme.error,
                                 containerColor = Color.Transparent
                             ),
                             shape = RoundedCornerShape(12.dp)
@@ -270,7 +278,7 @@ fun ApprovalRequestScreen(
                                 text = "❌ Deny",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFF44336) // Red
+                                color = MaterialTheme.colorScheme.error
                             )
                         }
                     }
@@ -281,7 +289,7 @@ fun ApprovalRequestScreen(
                         painter = painterResource(id = android.R.drawable.ic_dialog_alert),
                         contentDescription = "Authentication Failed",
                         modifier = Modifier.size(80.dp),
-                        tint = Color.Red
+                        tint = MaterialTheme.colorScheme.error
                     )
                     
                     Spacer(modifier = Modifier.height(20.dp))
@@ -290,7 +298,7 @@ fun ApprovalRequestScreen(
                         text = "Authentication Failed",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Red,
+                        color = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 30.dp)
                     )

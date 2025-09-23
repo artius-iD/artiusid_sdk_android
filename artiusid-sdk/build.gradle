@@ -20,10 +20,37 @@ android {
         consumerProguardFiles "consumer-rules.pro"
     }
 
+    buildFeatures {
+        buildConfig true // Enable BuildConfig fields
+        compose true
+        viewBinding true
+    }
+    
     buildTypes {
         release {
-            minifyEnabled false
+            // ✅ CRITICAL: Enable code obfuscation and minification
+            minifyEnabled true
+            shrinkResources false // Keep false for library modules
+            
+            // ✅ Advanced ProGuard configuration for maximum security
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            
+            // ✅ Consumer ProGuard rules for host applications
+            consumerProguardFiles 'consumer-rules.pro'
+            
+            // ✅ Disable debugging and logging in release builds
+            buildConfigField "boolean", "DEBUG_MODE", "false"
+            buildConfigField "boolean", "ENABLE_LOGGING", "false"
+            
+            // ✅ Code signing verification
+            signingConfig signingConfigs.debug // Replace with production signing config
+        }
+        
+        debug {
+            minifyEnabled false
+            debuggable true
+            buildConfigField "boolean", "DEBUG_MODE", "true"
+            buildConfigField "boolean", "ENABLE_LOGGING", "true"
         }
     }
     

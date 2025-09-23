@@ -10,6 +10,7 @@ import com.artiusid.sdk.data.model.ApprovalRequest
 import com.artiusid.sdk.data.model.ApprovalRequestTestingRequest
 import com.artiusid.sdk.data.model.ApprovalRequestTestingResponse
 import com.artiusid.sdk.data.model.ApprovalResponse
+import com.artiusid.sdk.data.model.ApprovalResultData
 import com.artiusid.sdk.data.model.AuthenticationRequest
 import com.artiusid.sdk.data.model.AuthenticationResponse
 import com.artiusid.sdk.data.model.LoadCertificateRequest
@@ -57,6 +58,11 @@ interface ApiService {
     suspend fun sendApprovalRequestIOS(
         @Body request: ApprovalRequestTestingRequest
     ): ApprovalRequestTestingResponse
+
+    @POST("ApprovalResponseFunction")
+    suspend fun approval(
+        @Body request: ApprovalRequest
+    ): ApprovalResultData
 }
 
 // Separate API service for certificate loading (uses different base URL)

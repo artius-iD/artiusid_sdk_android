@@ -8,11 +8,13 @@ package com.artiusid.sample
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,9 +59,58 @@ import com.google.firebase.messaging.FirebaseMessaging
  * This sample app shows how to integrate with the artius.iD SDK that
  * launches the complete standalone application with full verification capabilities.
  */
-class BridgeMainActivity : ComponentActivity(), VerificationCallback, AuthenticationCallback {
+class BridgeMainActivity : FragmentActivity(), VerificationCallback, AuthenticationCallback {
     
-    private var isLoading by mutableStateOf(false)
+    /**
+     * Create Material3 ColorScheme from selected theme
+     */
+    private fun createColorSchemeFromTheme(theme: EnhancedThemeOption): ColorScheme {
+        val themeConfig = theme.themeConfig
+        val colors = themeConfig.colorScheme
+        
+        // Determine if this is a dark theme by checking background color luminance
+        val backgroundColor = android.graphics.Color.parseColor(colors.backgroundColorHex)
+        val luminance = (0.299 * android.graphics.Color.red(backgroundColor) + 
+                        0.587 * android.graphics.Color.green(backgroundColor) + 
+                        0.114 * android.graphics.Color.blue(backgroundColor)) / 255.0
+        val isDarkTheme = luminance < 0.5
+        
+        // Special handling for artius.iD theme - use light scheme even though it has dark accent colors
+        val isArtiusIDTheme = theme == EnhancedThemeOption.ARTIUSID_DEFAULT
+        
+        return if (isDarkTheme && !isArtiusIDTheme) {
+            // Use dark color scheme for dark themes (like artius.iD)
+            darkColorScheme(
+                primary = Color(android.graphics.Color.parseColor(colors.secondaryColorHex)), // Use secondary (orange) as primary for better contrast
+                onPrimary = Color(android.graphics.Color.parseColor(colors.onSecondaryColorHex)),
+                secondary = Color(android.graphics.Color.parseColor(colors.primaryColorHex)),
+                onSecondary = Color(android.graphics.Color.parseColor(colors.onPrimaryColorHex)),
+                background = Color(android.graphics.Color.parseColor(colors.backgroundColorHex)),
+                onBackground = Color(android.graphics.Color.parseColor(colors.onBackgroundColorHex)),
+                surface = Color(android.graphics.Color.parseColor(colors.surfaceColorHex)),
+                onSurface = Color(android.graphics.Color.parseColor(colors.onSurfaceColorHex)),
+                error = Color(android.graphics.Color.parseColor(colors.errorColorHex)),
+                onError = Color(android.graphics.Color.parseColor(colors.onPrimaryColorHex))
+            )
+        } else {
+            // Use light color scheme for light themes
+            lightColorScheme(
+                primary = Color(android.graphics.Color.parseColor(colors.primaryColorHex)),
+                onPrimary = Color(android.graphics.Color.parseColor(colors.onPrimaryColorHex)),
+                secondary = Color(android.graphics.Color.parseColor(colors.secondaryColorHex)),
+                onSecondary = Color(android.graphics.Color.parseColor(colors.onSecondaryColorHex)),
+                background = Color(android.graphics.Color.parseColor(colors.backgroundColorHex)),
+                onBackground = Color(android.graphics.Color.parseColor(colors.onBackgroundColorHex)),
+                surface = Color(android.graphics.Color.parseColor(colors.surfaceColorHex)),
+                onSurface = Color(android.graphics.Color.parseColor(colors.onSurfaceColorHex)),
+                error = Color(android.graphics.Color.parseColor(colors.errorColorHex)),
+                onError = Color(android.graphics.Color.parseColor(colors.onPrimaryColorHex))
+            )
+        }
+    }
+    
+    private var isVerificationLoading by mutableStateOf(false)
+    private var isApprovalLoading by mutableStateOf(false)
     private var lastResult by mutableStateOf("Application started - checking keychain status...")
     private var selectedTheme by mutableStateOf(EnhancedThemeOption.ARTIUSID_DEFAULT)
     private var selectedImageOverride by mutableStateOf(ImageOverrideOption.DEFAULT)
@@ -96,7 +147,10 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
         handleNotificationIntent(intent)
         
         setContent {
-            MaterialTheme {
+            // Create custom ColorScheme from selected theme
+            val customColorScheme = createColorSchemeFromTheme(selectedTheme)
+            
+            MaterialTheme(colorScheme = customColorScheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -111,13 +165,55 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                                     android.util.Log.d("BridgeMainActivity", "✅ User approved the request")
                                     approvalResponse = "approve"
                                     showApprovalRequestScreen = false
-                                    showApprovalResponseScreen = true
+                                    
+                                    // Clear notification state to prevent loop
+                                    AppNotificationState.reset()
+                                    
+                                    // Send approval response to server using SDK (like iOS)
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        try {
+                                            val result = ArtiusIDSDK.sendApprovalResponse(this@BridgeMainActivity, "yes")
+                                            if (result != null) {
+                                                android.util.Log.d("BridgeMainActivity", "✅ Approval response sent successfully: $result")
+                                            } else {
+                                                android.util.Log.e("BridgeMainActivity", "❌ Failed to send approval response")
+                                            }
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("BridgeMainActivity", "❌ Error sending approval response", e)
+                                        }
+                                        
+                                        // Navigate to response screen on main thread
+                                        CoroutineScope(Dispatchers.Main).launch {
+                                            showApprovalResponseScreen = true
+                                        }
+                                    }
                                 },
                                 onDeny = {
                                     android.util.Log.d("BridgeMainActivity", "❌ User denied the request")
                                     approvalResponse = "deny"
                                     showApprovalRequestScreen = false
-                                    showApprovalResponseScreen = true
+                                    
+                                    // Clear notification state to prevent loop
+                                    AppNotificationState.reset()
+                                    
+                                    // Send denial response to server using SDK (like iOS)
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        try {
+                                            val result = ArtiusIDSDK.sendApprovalResponse(this@BridgeMainActivity, "no")
+                                            if (result != null) {
+                                                android.util.Log.d("BridgeMainActivity", "✅ Denial response sent successfully: $result")
+                                            } else {
+                                                android.util.Log.e("BridgeMainActivity", "❌ Failed to send denial response")
+                                            }
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("BridgeMainActivity", "❌ Error sending denial response", e)
+                                        }
+                                        
+                                        // Navigate to response screen on main thread
+                                        CoroutineScope(Dispatchers.Main).launch {
+                                            showApprovalResponseScreen = true
+                                        }
+                                    }
                                 },
                                 onNavigateBack = {
                                     android.util.Log.d("BridgeMainActivity", "🔙 User navigated back from approval request")
@@ -205,7 +301,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             Text(
                 text = "🌉 Bridge to Complete Standalone Application",
                 fontSize = 16.sp,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
@@ -276,7 +372,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             // Action Buttons
             Button(
                 onClick = { startVerificationFlow() },
-                enabled = !isLoading,
+                enabled = !isVerificationLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -284,7 +380,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                     containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.primaryColorHex))
                 )
             ) {
-                if (isLoading) {
+                if (isVerificationLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
@@ -303,7 +399,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             
             Button(
                 onClick = { startAuthenticationFlow() },
-                enabled = !isLoading,
+                enabled = !isVerificationLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -323,7 +419,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             
             Button(
                 onClick = { sendApprovalRequest() },
-                enabled = !isLoading,
+                enabled = !isApprovalLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -331,12 +427,19 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                     containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.successColorHex))
                 )
             ) {
-                Text(
-                    text = "📋 Test Approval Process",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
-                )
+                if (isApprovalLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
+                    )
+                } else {
+                    Text(
+                        text = "📋 Test Approval Process",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -344,7 +447,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             // FCM Token Refresh Button (for debugging)
             OutlinedButton(
                 onClick = { refreshFCMToken() },
-                enabled = !isLoading,
+                enabled = true,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
@@ -834,7 +937,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     
     private fun startVerificationFlow() {
         try {
-            isLoading = true
+            isVerificationLoading = true
             
             android.util.Log.d("BridgeMainActivity", "🔍 Starting verification flow...")
             android.util.Log.d("BridgeMainActivity", "🎨 Selected Theme: ${selectedTheme.displayName}")
@@ -866,14 +969,14 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             ArtiusIDSDK.startVerification(this, this)
             
         } catch (e: Exception) {
-            isLoading = false
+            isVerificationLoading = false
             lastResult = "❌ Error starting verification bridge: ${e.message}"
         }
     }
     
     private fun startAuthenticationFlow() {
         try {
-            isLoading = true
+            isVerificationLoading = true
             
             // Initialize SDK Bridge with selected theme, shared context, and localization overrides
             val localizationOverrides = SampleAppLocalization.getStringOverrides(this)
@@ -901,14 +1004,14 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             ArtiusIDSDK.startAuthentication(this, this)
             
         } catch (e: Exception) {
-            isLoading = false
+            isVerificationLoading = false
             lastResult = "❌ Error starting authentication bridge: ${e.message}"
         }
     }
     
     private fun sendApprovalRequest() {
         try {
-            isLoading = true
+            isApprovalLoading = true
             android.util.Log.d("BridgeMainActivity", "📋 Starting approval request test...")
             
             CoroutineScope(Dispatchers.IO).launch {
@@ -919,7 +1022,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                     
                     // Update UI on main thread
                     runOnUiThread {
-                        isLoading = false
+                        isApprovalLoading = false
                         if (success) {
                             lastResult = "✅ Approval request sent successfully!\nRequest ID: $requestId\nMessage: $message"
                             android.util.Log.d("BridgeMainActivity", "✅ Approval request successful: $message")
@@ -931,7 +1034,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
                     
                 } catch (e: Exception) {
                     runOnUiThread {
-                        isLoading = false
+                        isApprovalLoading = false
                         lastResult = "❌ Approval request error: ${e.message}"
                         android.util.Log.e("BridgeMainActivity", "❌ Approval request exception", e)
                     }
@@ -939,7 +1042,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
             }
             
         } catch (e: Exception) {
-            isLoading = false
+            isApprovalLoading = false
             lastResult = "❌ Error starting approval request: ${e.message}"
             android.util.Log.e("BridgeMainActivity", "❌ Error starting approval request", e)
         }
@@ -1028,7 +1131,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     
     // VerificationCallback implementation
     override fun onVerificationSuccess(result: VerificationResult) {
-        isLoading = false
+        isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         
         // Parse the verification result data for the results screen
@@ -1054,7 +1157,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     }
     
     override fun onVerificationError(error: SDKError) {
-        isLoading = false
+        isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = """
             ❌ Verification Error (Bridge) [$timestamp]
@@ -1065,14 +1168,14 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     }
     
     override fun onVerificationCancelled() {
-        isLoading = false
+        isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = "⏹️ Verification Cancelled (Bridge) [$timestamp]\n🌉 Via Standalone App Bridge"
     }
     
     // AuthenticationCallback implementation
     override fun onAuthenticationSuccess(result: AuthenticationResult) {
-        isLoading = false
+        isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = """
             ✅ Authentication Success (Bridge) [$timestamp]
@@ -1085,7 +1188,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     }
     
     override fun onAuthenticationError(error: SDKError) {
-        isLoading = false
+        isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = """
             ❌ Authentication Error (Bridge) [$timestamp]
@@ -1096,7 +1199,7 @@ class BridgeMainActivity : ComponentActivity(), VerificationCallback, Authentica
     }
     
     override fun onAuthenticationCancelled() {
-        isLoading = false
+        isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = "⏹️ Authentication Cancelled (Bridge) [$timestamp]\n🌉 Via Standalone App Bridge"
     }

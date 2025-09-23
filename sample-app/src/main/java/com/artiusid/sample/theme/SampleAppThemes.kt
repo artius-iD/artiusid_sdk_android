@@ -33,53 +33,55 @@ object SampleAppThemes {
         ),
         
         colorScheme = SDKColorScheme(
-            primaryColorHex = "#263238", // Bluegray900
-            secondaryColorHex = "#F57C00", // Orange700
-            backgroundColorHex = "#263238",
-            surfaceColorHex = "#37474F",
-            onPrimaryColorHex = "#FFFFFF",
-            onSecondaryColorHex = "#263238",
-            onBackgroundColorHex = "#FFFFFF",
-            onSurfaceColorHex = "#FFFFFF",
+            primaryColorHex = "#22354D", // iOS Bluegray900 - for buttons and accents
+            secondaryColorHex = "#F58220", // iOS Yellow900 - bright accent color
+            backgroundColorHex = "#F8F9FA", // Light background for sample app compatibility
+            surfaceColorHex = "#FFFFFF", // White surface for cards/dialogs
+            onPrimaryColorHex = "#FFFFFF", // White text on dark primary
+            onSecondaryColorHex = "#22354D", // Dark text on bright secondary
+            onBackgroundColorHex = "#22354D", // Dark text on light background
+            onSurfaceColorHex = "#22354D", // Dark text on white surface
             successColorHex = "#4CAF50",
             errorColorHex = "#D32F2F",
             warningColorHex = "#FF9800",
-            primaryButtonColorHex = "#F57C00",
-            primaryButtonTextColorHex = "#FFFFFF"
+            primaryButtonColorHex = "#22354D", // iOS dark blue for primary buttons
+            primaryButtonTextColorHex = "#FFFFFF", // White text on dark buttons
+            secondaryButtonColorHex = "#F58220", // iOS yellow for secondary buttons
+            secondaryButtonTextColorHex = "#FFFFFF" // White text on yellow buttons
         ),
         
         iconTheme = SDKIconTheme(
             iconStyle = "default",
             mediumIconSize = 24f,
-            primaryIconColorHex = "#FFFFFF",
-            secondaryIconColorHex = "#9E9E9E",
-            accentIconColorHex = "#F57C00",
-            disabledIconColorHex = "#616161",
+            primaryIconColorHex = "#22354D", // Dark icons on light background
+            secondaryIconColorHex = "#6C757D", // Medium gray for secondary icons
+            accentIconColorHex = "#F58220", // iOS Yellow900 - bright accent
+            disabledIconColorHex = "#ADB5BD", // Light gray for disabled
             
             // Navigation & UI Icons
-            navigationIconColorHex = "#FFFFFF",
-            actionIconColorHex = "#F57C00",
+            navigationIconColorHex = "#22354D", // Dark navigation icons
+            actionIconColorHex = "#F58220", // Bright action icons
             
             // Instruction & Guide Icons
-            instructionIconColorHex = "#F57C00",
+            instructionIconColorHex = "#F58220", // iOS Yellow900 - exact match
             warningIconColorHex = "#FF9800",
             errorIconColorHex = "#D32F2F",
             successIconColorHex = "#4CAF50",
             
             // Document & Verification Icons
-            documentIconColorHex = "#F57C00",
-            cameraIconColorHex = "#FFFFFF",
-            scanIconColorHex = "#F57C00",
+            documentIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            cameraIconColorHex = "#FFFFFF", // iOS WhiteA700
+            scanIconColorHex = "#F58220", // iOS Yellow900 - exact match
             
             // Biometric & Security Icons
-            biometricIconColorHex = "#F57C00",
+            biometricIconColorHex = "#F58220", // iOS Yellow900 - exact match
             securityIconColorHex = "#4CAF50",
-            nfcIconColorHex = "#F57C00",
+            nfcIconColorHex = "#F58220", // iOS Yellow900 - exact match
             
             // Status Icons
             statusActiveIconColorHex = "#4CAF50",
             statusInactiveIconColorHex = "#9E9E9E",
-            statusProcessingIconColorHex = "#F57C00"
+            statusProcessingIconColorHex = "#F58220" // iOS Yellow900 - exact match
         ),
         
         textContent = SDKTextContent(

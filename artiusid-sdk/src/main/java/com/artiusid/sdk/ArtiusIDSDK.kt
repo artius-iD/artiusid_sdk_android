@@ -22,6 +22,7 @@ import com.artiusid.sdk.util.DeviceUtils
 import com.artiusid.sdk.utils.SharedContextManager
 import com.artiusid.sdk.localization.LocalizationManager
 import com.artiusid.sdk.utils.ImageOverrideInitializer
+import com.artiusid.sdk.security.SDKSecurityManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -64,12 +65,17 @@ object ArtiusIDSDK {
      * @param theme Theme configuration for branding the standalone app
      */
     fun initialize(
-        context: Context, 
+        context: Context,
         configuration: SDKConfiguration,
         theme: SDKThemeConfiguration
     ) {
         try {
             android.util.Log.i(TAG, "🌉 Initializing artius.iD SDK Bridge...")
+
+            // ✅ CRITICAL: Validate security environment first
+            if (!SDKSecurityManager.validateSecurityEnvironment(context)) {
+                throw SecurityException("SDK initialization blocked due to security violations")
+            }
 
             // Store configurations
             sdkConfiguration = configuration.copy(
@@ -450,6 +456,37 @@ object ArtiusIDSDK {
         }
     }
     
+    /**
+     * Send approval response (approve/deny) using the same logic as iOS ApprovalResponse
+     * @param context Application context
+     * @param approvalValue "yes" for approve, "no" for deny
+     * @return ApprovalResultData or null if failed
+     */
+    suspend fun sendApprovalResponse(context: Context, approvalValue: String): com.artiusid.sdk.data.model.ApprovalResultData? {
+        return try {
+            if (!_isInitialized) {
+                android.util.Log.e(TAG, "❌ SDK not initialized for approval response")
+                null
+            } else {
+                // Create approval API service using shared mTLS context
+                val okHttpClient = sharedContextManager?.getSharedOkHttpClient() 
+                    ?: throw IllegalStateException("Shared context not available")
+                
+                val retrofitFactory = com.artiusid.sdk.utils.RetrofitFactory(context)
+                val approvalApiService = retrofitFactory.createApprovalRequestApiService(okHttpClient)
+                
+                // Create ApprovalResponse utility exactly like iOS
+                val approvalResponse = com.artiusid.sdk.utils.ApprovalResponse(context, approvalApiService)
+                
+                // Send approval response
+                approvalResponse.sendApprovalResponse(approvalValue)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "❌ Error sending approval response", e)
+            null
+        }
+    }
+
     /**
      * Get shared context manager for mTLS and Firebase context sharing
      * Internal use only - for SDK components that need shared context
