@@ -987,110 +987,36 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
     }
     
     /**
-     * Provides real-time guidance to help user position their face correctly
-     * Based on iOS ARKit implementation
+     * Simplified positioning - skip face up/down/left/right for faster processing
+     * Only check basic distance requirements
      */
     private fun provideInitialInstructions(yaw: Float, pitch: Float, roll: Float, distanceToFace: Float): PositioningResult {
-        Log.e(TAG, "🎯 [POSITIONING] Yaw: $yaw°, Pitch: $pitch°, Distance: ${distanceToFace}cm")
+        Log.d(TAG, "🎯 [SIMPLIFIED POSITIONING] Distance: ${distanceToFace}cm")
         
-        val pitchAbs = abs(pitch)
-        val yawAbs = abs(yaw)
-        Log.e(TAG, "🎯 [POSITIONING] PitchAbs: $pitchAbs°, YawAbs: $yawAbs°")
-        Log.e(TAG, "🎯 [POSITIONING] Thresholds - Pitch: $INITIAL_PITCH_THRESHOLD°, Yaw: $INITIAL_YAW_THRESHOLD°")
-        
-        // Check distance first (similar to iOS relativePosition.y check)
+        // Only check distance - skip face orientation checks for speed
         if (distanceToFace < POSITIONING_DISTANCE_MIN) {
-            Log.e(TAG, "🎯 [POSITIONING] DISTANCE TOO CLOSE: ${distanceToFace}cm < ${POSITIONING_DISTANCE_MIN}cm -> Phone Down")
+            Log.d(TAG, "🎯 [POSITIONING] DISTANCE TOO CLOSE: ${distanceToFace}cm < ${POSITIONING_DISTANCE_MIN}cm")
             return PositioningResult(
                 isPositioned = false,
-                instructionText = "Move phone away.",  // iOS: kMsgPhoneTooClose
-                alignmentDirection = "Phone Down"  // Show hand lowering phone animation
+                instructionText = "Move phone away.",
+                alignmentDirection = ""  // No specific direction - just distance
             )
         } else if (distanceToFace > POSITIONING_DISTANCE_MAX) {
-            Log.e(TAG, "🎯 [POSITIONING] DISTANCE TOO FAR: ${distanceToFace}cm > ${POSITIONING_DISTANCE_MAX}cm -> Phone Up")
+            Log.d(TAG, "🎯 [POSITIONING] DISTANCE TOO FAR: ${distanceToFace}cm > ${POSITIONING_DISTANCE_MAX}cm")
             return PositioningResult(
                 isPositioned = false,
-                instructionText = "Move phone closer.",  // iOS: kMsgPhoneTooFar
-                alignmentDirection = "Phone Up"  // Show hand raising phone animation
+                instructionText = "Move phone closer.",
+                alignmentDirection = ""  // No specific direction - just distance
             )
         }
         
-        // Check face orientation (similar to iOS pitch/yaw checking)
-        Log.e(TAG, "🎯 [POSITIONING] Checking face orientation...")
-        
-        if (pitchAbs < INITIAL_PITCH_THRESHOLD && yawAbs < INITIAL_YAW_THRESHOLD) {
-            // Face is well positioned
-            Log.e(TAG, "🎯 [POSITIONING] FACE WELL POSITIONED -> Perfect! Hold steady...")
-            return PositioningResult(
-                isPositioned = true,
-                instructionText = "Perfect! Hold steady...",
-                alignmentDirection = ""
-            )
-        } else {
-            // Provide directional guidance
-            Log.e(TAG, "🎯 [POSITIONING] PROVIDING DIRECTIONAL GUIDANCE...")
-            return when {
-                pitchAbs > INITIAL_PITCH_THRESHOLD && yawAbs > INITIAL_YAW_THRESHOLD -> {
-                    // Diagonal movement needed
-                    Log.e(TAG, "🎯 [POSITIONING] DIAGONAL MOVEMENT: Pitch=${pitchAbs}° > ${INITIAL_PITCH_THRESHOLD}° AND Yaw=${yawAbs}° > ${INITIAL_YAW_THRESHOLD}°")
-                    val pitchDirection = if (pitch > 0) "Down" else "Up"
-                    val yawDirection = if (yaw > 0) "Left" else "Right"
-                    Log.e(TAG, "🎯 [POSITIONING] -> Face $pitchDirection-$yawDirection")
-                    PositioningResult(
-                        isPositioned = false,
-                        instructionText = "Look $pitchDirection and $yawDirection",
-                        alignmentDirection = "Face $pitchDirection-$yawDirection"
-                    )
-                }
-                pitchAbs > INITIAL_PITCH_THRESHOLD -> {
-                    Log.e(TAG, "🎯 [POSITIONING] PITCH ONLY: Pitch=${pitchAbs}° > ${INITIAL_PITCH_THRESHOLD}°")
-                    if (pitch > 0) {
-                        // Face is looking down, need to look up
-                        Log.e(TAG, "🎯 [POSITIONING] -> Face Up (pitch=${pitch}° > 0)")
-                        PositioningResult(
-                            isPositioned = false,
-                            instructionText = "Turn face up a little.",  // iOS: kMsgTurnFaceUp
-                            alignmentDirection = "Face Up"
-                        )
-                    } else {
-                        // Face is looking up, need to look down
-                        Log.e(TAG, "🎯 [POSITIONING] -> Face Down (pitch=${pitch}° < 0)")
-                        PositioningResult(
-                            isPositioned = false,
-                            instructionText = "Turn face down a little.",  // iOS: kMsgTurnFaceDown
-                            alignmentDirection = "Face Down"
-                        )
-                    }
-                }
-                yawAbs > INITIAL_YAW_THRESHOLD -> {
-                    Log.e(TAG, "🎯 [POSITIONING] YAW ONLY: Yaw=${yawAbs}° > ${INITIAL_YAW_THRESHOLD}°")
-                    if (yaw > 0) {
-                        // Face is turned right, need to turn left
-                        Log.e(TAG, "🎯 [POSITIONING] -> Face Left (yaw=${yaw}° > 0)")
-                        PositioningResult(
-                            isPositioned = false,
-                            instructionText = "Turn face left a little.",  // iOS: kMsgTurnFaceLeft
-                            alignmentDirection = "Face Left"
-                        )
-                    } else {
-                        // Face is turned left, need to turn right
-                        Log.e(TAG, "🎯 [POSITIONING] -> Face Right (yaw=${yaw}° < 0)")
-                        PositioningResult(
-                            isPositioned = false,
-                            instructionText = "Turn face right a little.",  // iOS: kMsgTurnFaceRight
-                            alignmentDirection = "Face Right"
-                        )
-                    }
-                }
-                else -> {
-                    PositioningResult(
-                        isPositioned = false,
-                        instructionText = "Center your face in the circle",
-                        alignmentDirection = ""
-                    )
-                }
-            }
-        }
+        // Skip face orientation checks - accept any face angle for faster processing
+        Log.d(TAG, "🎯 [POSITIONING] FACE POSITIONED - SKIPPING ORIENTATION CHECKS FOR SPEED")
+        return PositioningResult(
+            isPositioned = true,
+            instructionText = "Hold steady...",
+            alignmentDirection = ""
+        )
     }
 
     // Enhanced data classes for 3D face processing

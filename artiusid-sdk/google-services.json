@@ -7,15 +7,15 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:612058249806:ios:c7ec50d515862df798e11f",
+        "mobilesdk_app_id": "1:612058249806:android:4e74c1b83ec763f698e11f",
         "android_client_info": {
-          "package_name": "com.artiusid.app"
+          "package_name": "com.artiusid.android"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCFaBN6jkuduMDkYzAiTafX_0AtABcKJdg"
+          "current_key": "AIzaSyCZykoCkyrTho8ZgSjMY6E7yuAvVJ7ObF0"
         }
       ],
       "services": {

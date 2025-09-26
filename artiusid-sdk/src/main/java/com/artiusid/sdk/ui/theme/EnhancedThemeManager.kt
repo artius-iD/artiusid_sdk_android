@@ -12,6 +12,9 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.State
+import java.util.concurrent.CopyOnWriteArrayList
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -34,19 +37,101 @@ import com.artiusid.sdk.R
 object EnhancedThemeManager {
     
     private var currentThemeConfig: EnhancedSDKThemeConfiguration? = null
+    private val _currentThemeState = mutableStateOf<EnhancedSDKThemeConfiguration?>(null)
+    
+    // Callback system for theme changes (works across activities)
+    private val themeChangeListeners = CopyOnWriteArrayList<(EnhancedSDKThemeConfiguration?) -> Unit>()
+    
+    // Default artius.iD theme that matches iOS standalone app
+    private val defaultArtiusIDTheme = createDefaultArtiusIDTheme()
+    
+    init {
+        // Set default theme on initialization
+        currentThemeConfig = defaultArtiusIDTheme
+        _currentThemeState.value = defaultArtiusIDTheme
+    }
     
     /**
      * Set the current theme configuration
      */
     fun setThemeConfiguration(config: EnhancedSDKThemeConfiguration) {
         currentThemeConfig = config
+        _currentThemeState.value = config
+        
+        // Also update ColorManager to ensure gradient backgrounds use the new theme
+        ColorManager.setEnhancedTheme(config)
+        
+        // Notify all listeners (including MainActivity)
+        themeChangeListeners.forEach { listener ->
+            try {
+                listener(config)
+            } catch (e: Exception) {
+                android.util.Log.w("EnhancedThemeManager", "Theme listener failed: ${e.message}")
+            }
+        }
+        
+        android.util.Log.d("EnhancedThemeManager", "🎨 setThemeConfiguration called: ${config.brandName}")
+        android.util.Log.d("EnhancedThemeManager", "🎨 Reactive state set: ${_currentThemeState.value?.brandName ?: "default"}")
+        android.util.Log.d("EnhancedThemeManager", "🎨 Notified ${themeChangeListeners.size} listeners")
     }
     
     /**
      * Get the current theme configuration
      */
     fun getCurrentThemeConfig(): EnhancedSDKThemeConfiguration {
-        return currentThemeConfig ?: EnhancedSDKThemeConfiguration()
+        val theme = currentThemeConfig ?: defaultArtiusIDTheme
+        android.util.Log.d("EnhancedThemeManager", "🎨 getCurrentThemeConfig() returning: ${theme.brandName}")
+        android.util.Log.d("EnhancedThemeManager", "🎨 currentThemeConfig is ${if (currentThemeConfig == null) "null" else "not null"}")
+        return theme
+    }
+    
+    /**
+     * Get the current theme configuration as reactive State
+     */
+    fun getCurrentThemeState(): State<EnhancedSDKThemeConfiguration?> {
+        return _currentThemeState
+    }
+    
+    /**
+     * Register a listener for theme changes (for cross-activity communication)
+     */
+    fun addThemeChangeListener(listener: (EnhancedSDKThemeConfiguration?) -> Unit) {
+        themeChangeListeners.add(listener)
+        android.util.Log.d("EnhancedThemeManager", "🎨 Theme listener added. Total: ${themeChangeListeners.size}")
+    }
+    
+    /**
+     * Unregister a theme change listener
+     */
+    fun removeThemeChangeListener(listener: (EnhancedSDKThemeConfiguration?) -> Unit) {
+        themeChangeListeners.remove(listener)
+        android.util.Log.d("EnhancedThemeManager", "🎨 Theme listener removed. Total: ${themeChangeListeners.size}")
+    }
+    
+    /**
+     * Update the current theme configuration
+     */
+    fun updateCurrentThemeConfig(config: EnhancedSDKThemeConfiguration?) {
+        currentThemeConfig = config
+        _currentThemeState.value = config ?: defaultArtiusIDTheme
+        
+        // Also update ColorManager to ensure gradient backgrounds use the new theme
+        if (config != null) {
+            ColorManager.setEnhancedTheme(config)
+        }
+        
+        // Notify all listeners (including MainActivity)
+        themeChangeListeners.forEach { listener ->
+            try {
+                listener(config)
+            } catch (e: Exception) {
+                android.util.Log.w("EnhancedThemeManager", "Theme listener failed: ${e.message}")
+            }
+        }
+        
+        android.util.Log.d("EnhancedThemeManager", "🎨 Theme updated: ${config?.brandName ?: "default"}")
+        android.util.Log.d("EnhancedThemeManager", "🎨 Reactive state updated: ${_currentThemeState.value?.brandName ?: "default"}")
+        android.util.Log.d("EnhancedThemeManager", "🎨 Notified ${themeChangeListeners.size} listeners")
     }
     
     /**
@@ -315,11 +400,11 @@ object EnhancedThemeManager {
 /**
  * Composition Locals for theme access
  */
-val LocalSDKTheme = staticCompositionLocalOf { EnhancedSDKThemeConfiguration() }
-val LocalSDKTextContent = staticCompositionLocalOf { SDKTextContent() }
-val LocalSDKIconTheme = staticCompositionLocalOf { SDKIconTheme() }
-val LocalSDKComponentStyling = staticCompositionLocalOf { SDKComponentStyling() }
-val LocalSDKLayoutConfig = staticCompositionLocalOf { SDKLayoutConfig() }
+val LocalSDKTheme = staticCompositionLocalOf { EnhancedThemeManager.getCurrentThemeConfig() }
+val LocalSDKTextContent = staticCompositionLocalOf { EnhancedThemeManager.getCurrentThemeConfig().textContent }
+val LocalSDKIconTheme = staticCompositionLocalOf { EnhancedThemeManager.getCurrentThemeConfig().iconTheme }
+val LocalSDKComponentStyling = staticCompositionLocalOf { EnhancedThemeManager.getCurrentThemeConfig().componentStyling }
+val LocalSDKLayoutConfig = staticCompositionLocalOf { EnhancedThemeManager.getCurrentThemeConfig().layoutConfig }
 
 /**
  * Enhanced SDK Theme Provider
@@ -332,14 +417,201 @@ fun EnhancedSDKTheme(
     // Set the theme configuration in the manager
     EnhancedThemeManager.setThemeConfiguration(themeConfig)
     
+    // Create AppColorScheme from the theme configuration
+    val appColorScheme = createAppColorSchemeFromSDKTheme(themeConfig.colorScheme)
+    
     // Provide theme values through composition locals
     CompositionLocalProvider(
         LocalSDKTheme provides themeConfig,
         LocalSDKTextContent provides themeConfig.textContent,
         LocalSDKIconTheme provides themeConfig.iconTheme,
         LocalSDKComponentStyling provides themeConfig.componentStyling,
-        LocalSDKLayoutConfig provides themeConfig.layoutConfig
+        LocalSDKLayoutConfig provides themeConfig.layoutConfig,
+        LocalAppColorScheme provides appColorScheme
     ) {
         content()
     }
+}
+
+/**
+ * Create AppColorScheme from SDK theme configuration
+ */
+private fun createAppColorSchemeFromSDKTheme(colorScheme: SDKColorScheme): AppColorScheme {
+    // Helper function to safely parse colors with fallback
+    fun safeParseColor(hexColor: String, fallback: Long = 0xFF000000): Color {
+        return try {
+            Color(android.graphics.Color.parseColor(hexColor))
+        } catch (e: Exception) {
+            android.util.Log.w("EnhancedThemeManager", "Failed to parse color: $hexColor, using fallback")
+            Color(fallback)
+        }
+    }
+    
+    return object : AppColorScheme {
+        override val primary: Color = safeParseColor(colorScheme.primaryColorHex, 0xFF22354D)
+        override val primaryDark: Color = safeParseColor(colorScheme.primaryColorHex, 0xFF1A2B3D)
+        override val primaryLight: Color = safeParseColor(colorScheme.primaryColorHex, 0xFF3E517A)
+        override val onPrimary: Color = safeParseColor(colorScheme.onPrimaryColorHex, 0xFFFFFFFF)
+        
+        override val secondary: Color = safeParseColor(colorScheme.secondaryColorHex, 0xFFF58220)
+        override val secondaryDark: Color = safeParseColor(colorScheme.secondaryColorHex, 0xFFE57100)
+        override val secondaryLight: Color = safeParseColor(colorScheme.secondaryColorHex, 0xFFFFB74D)
+        override val onSecondary: Color = safeParseColor(colorScheme.onSecondaryColorHex, 0xFFFFFFFF)
+        
+        override val background: Color = safeParseColor(colorScheme.backgroundColorHex, 0xFF22354D)
+        override val backgroundSecondary: Color = safeParseColor(colorScheme.backgroundColorHex, 0xFF1A2332)
+        override val surface: Color = safeParseColor(colorScheme.surfaceColorHex, 0xFF22354D)
+        override val surfaceVariant: Color = safeParseColor(colorScheme.surfaceColorHex, 0xFF162029)
+        override val onBackground: Color = safeParseColor(colorScheme.onBackgroundColorHex, 0xFFFFFFFF)
+        override val onSurface: Color = safeParseColor(colorScheme.onSurfaceColorHex, 0xFFFFFFFF)
+        
+        override val textPrimary: Color = safeParseColor(colorScheme.onBackgroundColorHex, 0xFFFFFFFF)
+        override val textSecondary: Color = safeParseColor(colorScheme.onBackgroundColorHex, 0xFFFFFFFF).copy(alpha = 0.7f)
+        override val textDisabled: Color = safeParseColor(colorScheme.onBackgroundColorHex, 0xFFFFFFFF).copy(alpha = 0.5f)
+        override val textOnPrimary: Color = safeParseColor(colorScheme.onPrimaryColorHex, 0xFFFFFFFF)
+        override val textOnSecondary: Color = safeParseColor(colorScheme.onSecondaryColorHex, 0xFFFFFFFF)
+        
+        override val buttonPrimary: Color = safeParseColor(colorScheme.primaryButtonColorHex, 0xFFF58220)
+        override val buttonSecondary: Color = safeParseColor(colorScheme.secondaryButtonColorHex, 0xFFF58220)
+        override val buttonDisabled: Color = Color(0xFFE0E0E0)
+        override val buttonTextPrimary: Color = safeParseColor(colorScheme.primaryButtonTextColorHex, 0xFFFFFFFF)
+        override val buttonTextSecondary: Color = safeParseColor(colorScheme.secondaryButtonTextColorHex, 0xFFFFFFFF)
+        override val buttonTextDisabled: Color = Color(0xFFBDBDBD)
+        override val buttonOutline: Color = safeParseColor(colorScheme.primaryColorHex, 0xFF22354D)
+        
+        override val success: Color = safeParseColor(colorScheme.successColorHex, 0xFF4CAF50)
+        override val error: Color = safeParseColor(colorScheme.errorColorHex, 0xFFD32F2F)
+        override val warning: Color = safeParseColor(colorScheme.warningColorHex, 0xFFFF9800)
+        override val info: Color = safeParseColor(colorScheme.primaryColorHex, 0xFF2196F3)
+        override val onSuccess: Color = Color(0xFFFFFFFF)
+        override val onError: Color = Color(0xFFFFFFFF)
+        override val onWarning: Color = Color(0xFFFFFFFF)
+        override val onInfo: Color = Color(0xFFFFFFFF)
+        
+        override val iconPrimary: Color = safeParseColor(colorScheme.onBackgroundColorHex, 0xFFFFFFFF)
+        override val iconSecondary: Color = safeParseColor(colorScheme.secondaryColorHex, 0xFFF58220)
+        override val iconDisabled: Color = safeParseColor(colorScheme.onBackgroundColorHex, 0xFFFFFFFF).copy(alpha = 0.5f)
+        override val iconOnPrimary: Color = safeParseColor(colorScheme.onPrimaryColorHex, 0xFFFFFFFF)
+        override val iconOnSecondary: Color = safeParseColor(colorScheme.onSecondaryColorHex, 0xFFFFFFFF)
+        
+        override val overlay: Color = Color(0x80000000)
+        override val overlayLight: Color = Color(0x40000000)
+        override val scrim: Color = Color(0xB3000000)
+        
+        override val border: Color = safeParseColor(colorScheme.onBackgroundColorHex, 0xFFFFFFFF).copy(alpha = 0.2f)
+        override val borderLight: Color = safeParseColor(colorScheme.onBackgroundColorHex, 0xFFFFFFFF).copy(alpha = 0.1f)
+        override val borderFocus: Color = safeParseColor(colorScheme.secondaryColorHex, 0xFFF58220)
+        
+        override val faceDetectionAligned: Color = safeParseColor(colorScheme.successColorHex, 0xFF4CAF50)
+        override val faceDetectionMisaligned: Color = safeParseColor(colorScheme.errorColorHex, 0xFFD32F2F)
+        override val faceSegmentComplete: Color = safeParseColor(colorScheme.successColorHex, 0xFF4CAF50)
+        override val faceSegmentIncomplete: Color = safeParseColor(colorScheme.errorColorHex, 0xFFD32F2F)
+        
+        override val documentDetectionAligned: Color = safeParseColor(colorScheme.successColorHex, 0xFF4CAF50)
+        override val documentDetectionMisaligned: Color = safeParseColor(colorScheme.errorColorHex, 0xFFD32F2F)
+        
+        override val gradientStart: Color = safeParseColor(colorScheme.backgroundColorHex, 0xFF22354D)
+        override val gradientEnd: Color = safeParseColor(colorScheme.surfaceColorHex, 0xFF22354D)
+    }
+}
+
+/**
+ * Create the default artius.iD theme that matches the iOS standalone application
+ */
+private fun createDefaultArtiusIDTheme(): EnhancedSDKThemeConfiguration {
+    return EnhancedSDKThemeConfiguration(
+        brandName = "artius.iD",
+        
+        typography = SDKTypography(
+            fontFamily = "default",
+            headlineLarge = 32f,
+            headlineMedium = 28f,
+            titleLarge = 22f,
+            bodyLarge = 16f,
+            bodyMedium = 14f,
+            headlineWeight = "bold",
+            titleWeight = "medium",
+            bodyWeight = "normal"
+        ),
+        
+        colorScheme = SDKColorScheme(
+            // CORRECTED FROM iOS SCREENSHOTS
+            primaryColorHex = "#FFFFFF", // White - primary color should be white, not dark blue
+            secondaryColorHex = "#F58220", // Orange from iOS screenshots - used for buttons and icons
+            backgroundColorHex = "#22354D", // Dark blue background from iOS screenshots
+            surfaceColorHex = "#22354D", // Dark blue surface matching background
+            onPrimaryColorHex = "#22354D", // Dark blue text on white primary
+            onSecondaryColorHex = "#FFFFFF", // White text on orange secondary
+            onBackgroundColorHex = "#FFFFFF", // White text on dark blue background
+            onSurfaceColorHex = "#FFFFFF", // White text on dark blue surface
+            successColorHex = "#4CAF50",
+            errorColorHex = "#D32F2F",
+            warningColorHex = "#FF9800",
+            primaryButtonColorHex = "#F58220", // Orange background - use secondary color for buttons
+            primaryButtonTextColorHex = "#FFFFFF", // White text on orange buttons
+            secondaryButtonColorHex = "#F58220", // Orange background - use secondary color for buttons
+            secondaryButtonTextColorHex = "#FFFFFF" // White text on orange buttons
+        ),
+        
+        iconTheme = SDKIconTheme(
+            iconStyle = "default",
+            mediumIconSize = 24f,
+            primaryIconColorHex = "#F58220", // Orange - use secondary color for icons
+            secondaryIconColorHex = "#F58220", // Orange - use secondary color for icons
+            accentIconColorHex = "#F58220", // Orange - use secondary color for icons
+            disabledIconColorHex = "#ADB5BD", // Light gray for disabled
+            
+            // Navigation & UI Icons - USE SECONDARY COLOR (ORANGE)
+            navigationIconColorHex = "#F58220", // Orange - use secondary color for icons
+            actionIconColorHex = "#F58220", // Orange - use secondary color for icons
+            
+            // Instruction & Guide Icons - USE SECONDARY COLOR (ORANGE)
+            instructionIconColorHex = "#F58220", // Orange - use secondary color for icons
+            warningIconColorHex = "#FF9800",
+            errorIconColorHex = "#D32F2F",
+            successIconColorHex = "#4CAF50",
+            
+            // Document & Verification Icons
+            documentIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            cameraIconColorHex = "#FFFFFF", // iOS WhiteA700
+            scanIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            
+            // Biometric & Security Icons
+            biometricIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            securityIconColorHex = "#4CAF50",
+            nfcIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            
+            // Status Icons
+            statusActiveIconColorHex = "#4CAF50",
+            statusInactiveIconColorHex = "#9E9E9E",
+            statusProcessingIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            
+            // Custom Icon Mappings for Authentication Screens
+            customIcons = mapOf(
+                "auth_success" to "approval", // Success screen image - high quality approval icon
+                "auth_processing" to "img_processing" // Processing screen image (if needed)
+            )
+        ),
+        
+        textContent = SDKTextContent(
+            welcomeTitle = "artius.iD Verification",
+            welcomeSubtitle = "Secure identity verification powered by artius.iD",
+            documentScanTitle = "Scan Your ID",
+            passportScanTitle = "Scan Your Passport",
+            faceScanTitle = "Face Verification",
+            processingTitle = "Processing",
+            verificationSuccessTitle = "Verification Complete"
+        ),
+        
+        componentStyling = SDKComponentStyling(
+            buttonCornerRadius = 8f,
+            cardCornerRadius = 12f,
+            buttonHeight = 48f
+        ),
+        
+        layoutConfig = SDKLayoutConfig(
+            screenPadding = 16f,
+            componentSpacing = 16f
+        )
+    )
 }

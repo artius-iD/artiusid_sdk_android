@@ -7,6 +7,10 @@
     <!-- Internet permission for API calls -->
     <uses-permission android:name="android.permission.INTERNET" />
     
+    <!-- Biometric permissions for authentication (matches iOS Face ID/Touch ID) -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+    
     <!-- NFC permissions for passport reading -->
     <uses-permission android:name="android.permission.NFC" />
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
@@ -16,6 +20,14 @@
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <application>
+        
+        <!-- Authentication Activity - Matches iOS AuthenticationProgressView exactly -->
+        <activity
+            android:name=".ui.activities.AuthenticationActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
+            android:screenOrientation="portrait"
+            android:launchMode="singleTop" />
         
         <!-- Standalone App Activity - Bridge to complete standalone application -->
         <activity

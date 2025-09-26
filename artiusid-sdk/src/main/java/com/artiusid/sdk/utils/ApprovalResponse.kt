@@ -25,17 +25,8 @@ class ApprovalResponse(
     companion object {
         private const val TAG = "ApprovalResponse"
         
-        /**
-         * Convert Android Secure ID to iOS-compatible UUID format
-         * CRITICAL: Server expects iOS UUID format for device lookup
-         */
-        private fun convertAndroidIdToUUID(androidId: String): String {
-            // Ensure we have enough characters, pad with zeros if needed
-            val paddedId = androidId.padEnd(32, '0').take(32)
-            
-            // Format as UUID: 8-4-4-4-12 and uppercase like iOS
-            return "${paddedId.substring(0, 8)}-${paddedId.substring(8, 12)}-${paddedId.substring(12, 16)}-${paddedId.substring(16, 20)}-${paddedId.substring(20, 32)}".uppercase()
-        }
+        // REMOVED: No longer converting Android ID to iOS UUID format
+        // Use native Android UUID format instead
     }
 
     /**
@@ -45,18 +36,17 @@ class ApprovalResponse(
      */
     suspend fun sendApprovalResponse(approvalValue: String): ApprovalResultData? {
         return try {
-            // Get device ID in iOS UUID format (like iOS device.identifierForVendor?.uuidString)
-            val androidId = android.provider.Settings.Secure.getString(
+            // Get device ID in native Android format
+            val deviceId = android.provider.Settings.Secure.getString(
                 context.contentResolver,
                 android.provider.Settings.Secure.ANDROID_ID
             ) ?: ""
-            val deviceId = convertAndroidIdToUUID(androidId)
             
             // Get request ID from notification state (like iOS AppNotificationState.shared.requestId)
             val requestId = AppNotificationState.requestId.value
             
             Log.d(TAG, "📤 Sending approval response:")
-            Log.d(TAG, "📤   Device ID: $deviceId (iOS UUID format)")
+            Log.d(TAG, "📤   Device ID: $deviceId (native Android format)")
             Log.d(TAG, "📤   Request ID: $requestId")
             Log.d(TAG, "📤   Response Value: $approvalValue")
             

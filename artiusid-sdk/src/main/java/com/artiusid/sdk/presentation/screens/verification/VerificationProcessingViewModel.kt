@@ -195,10 +195,8 @@ class VerificationProcessingViewModel @Inject constructor(
                     Log.d(TAG, "[STRICT] ID images present. Sizes: front=${frontImageBitmap.width}x${frontImageBitmap.height}, back=${backImageBitmap.width}x${backImageBitmap.height}, face=${faceImageBitmap.width}x${faceImageBitmap.height}")
                 }
 
-                // Get device information in iOS UUID format for server compatibility
-                val androidId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
-                // Convert Android ID to iOS-style UUID format (8-4-4-4-12 pattern) for server compatibility
-                val deviceId = convertAndroidIdToUUID(androidId)
+                // Get device information in native Android format
+                val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
                 val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}; Android: ${Build.VERSION.RELEASE}"
                 // Retrieve FCM token securely (match iOS Keychain)
                 // Get FCM token using shared context (sample app's token)
@@ -580,17 +578,7 @@ class VerificationProcessingViewModel @Inject constructor(
     companion object {
         private const val TAG = "VerifProcessVM"
         
-        /**
-         * Convert Android Secure ID to iOS-compatible UUID format
-         * iOS uses UUID format like: "A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
-         * Android uses Secure ID like: "b911b2b9bf9076ad"
-         */
-        private fun convertAndroidIdToUUID(androidId: String): String {
-            // Ensure we have enough characters, pad with zeros if needed
-            val paddedId = androidId.padEnd(32, '0').take(32)
-            
-            // Format as UUID: 8-4-4-4-12
-            return "${paddedId.substring(0, 8)}-${paddedId.substring(8, 12)}-${paddedId.substring(12, 16)}-${paddedId.substring(16, 20)}-${paddedId.substring(20, 32)}".uppercase()
-        }
+        // REMOVED: No longer converting Android ID to iOS UUID format
+        // Use native Android UUID format instead
     }
 } 

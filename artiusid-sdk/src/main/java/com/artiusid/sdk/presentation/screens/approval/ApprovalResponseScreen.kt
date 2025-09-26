@@ -21,8 +21,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.artiusid.sdk.R
 import com.artiusid.sdk.data.model.AppNotificationState
-import com.artiusid.sdk.ui.theme.GradientBackground
-import com.artiusid.sdk.ui.theme.Yellow900
+import com.artiusid.sdk.ui.theme.AppColors
+import com.artiusid.sdk.ui.theme.ColorManager
+import androidx.compose.foundation.background
 import kotlinx.coroutines.delay
 
 /**
@@ -68,7 +69,14 @@ fun ApprovalResponseScreen(
         }
     }
     
-    GradientBackground {
+    // Use theme-based background
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = ColorManager.getGradientBrush()
+            )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -93,7 +101,7 @@ fun ApprovalResponseScreen(
                 text = if (isApproved) "Request Approved" else "Request Declined",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isApproved) Color.Green else Color.Red,
+                color = if (isApproved) AppColors.success else AppColors.error,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -110,7 +118,7 @@ fun ApprovalResponseScreen(
                     "You responded ${response.lowercase()}."
                 },
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.7f),
+                color = AppColors.textPrimary.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -126,7 +134,7 @@ fun ApprovalResponseScreen(
                     .fillMaxWidth()
                     .height(59.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Yellow900
+                    containerColor = AppColors.secondary
                 ),
                 shape = RoundedCornerShape(12.58.dp)
             ) {
@@ -134,7 +142,7 @@ fun ApprovalResponseScreen(
                     text = "Done",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = AppColors.buttonTextPrimary
                 )
             }
         }

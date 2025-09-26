@@ -12,6 +12,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -31,8 +32,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.artiusid.sdk.R
 import com.artiusid.sdk.data.model.AppNotificationState
 import com.artiusid.sdk.presentation.components.FaceIdAnimation
-import com.artiusid.sdk.ui.theme.GradientBackground
-import com.artiusid.sdk.ui.theme.Yellow900
+import com.artiusid.sdk.ui.theme.AppColors
+import com.artiusid.sdk.ui.theme.ColorManager
 import com.artiusid.sdk.utils.BiometricAuthHelper
 import com.artiusid.sdk.utils.BiometricStatus
 import com.artiusid.sdk.utils.BiometricType
@@ -122,7 +123,14 @@ fun ApprovalRequestScreen(
         }
     }
     
-    GradientBackground {
+    // Use theme-based background
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = ColorManager.getGradientBrush()
+            )
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -144,7 +152,7 @@ fun ApprovalRequestScreen(
                 text = notificationTitle,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = AppColors.textPrimary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -173,15 +181,15 @@ fun ApprovalRequestScreen(
                     FaceIdAnimation(
                         modifier = Modifier.size(120.dp),
                         isScanning = true,
-                        scanColor = Yellow900,
-                        faceColor = Color.White
+                        scanColor = AppColors.secondary,
+                        faceColor = AppColors.textPrimary
                     )
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     Text(
                         text = "Authenticating with Face ID...",
-                        color = Color.White,
+                        color = AppColors.textPrimary,
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center
                     )
@@ -190,7 +198,7 @@ fun ApprovalRequestScreen(
                     
                     Text(
                         text = "Please look at your device camera",
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = AppColors.textPrimary.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -205,15 +213,15 @@ fun ApprovalRequestScreen(
                     FaceIdAnimation(
                         modifier = Modifier.size(80.dp),
                         isScanning = false,
-                        scanColor = Color.Green,
-                        faceColor = Color.Green
+                        scanColor = AppColors.success,
+                        faceColor = AppColors.success
                     )
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
                         text = "Authentication Successful",
-                        color = Color.Green,
+                        color = AppColors.success,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -233,7 +241,7 @@ fun ApprovalRequestScreen(
                                 .fillMaxWidth()
                                 .height(59.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Yellow900
+                                containerColor = AppColors.secondary
                             ),
                             shape = RoundedCornerShape(12.58.dp)
                         ) {
@@ -241,7 +249,7 @@ fun ApprovalRequestScreen(
                                 text = "Approve",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                                color = AppColors.buttonTextPrimary
                             )
                         }
                         
@@ -253,10 +261,10 @@ fun ApprovalRequestScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(59.dp),
-                            border = androidx.compose.foundation.BorderStroke(2.dp, Yellow900),
+                            border = androidx.compose.foundation.BorderStroke(2.dp, AppColors.secondary),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Yellow900,
-                                containerColor = Color.Transparent
+                                contentColor = AppColors.secondary,
+                                containerColor = AppColors.surface
                             ),
                             shape = RoundedCornerShape(12.58.dp)
                         ) {
@@ -264,7 +272,7 @@ fun ApprovalRequestScreen(
                                 text = "Deny",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = Yellow900
+                                color = AppColors.secondary
                             )
                         }
                     }
@@ -275,8 +283,8 @@ fun ApprovalRequestScreen(
                     FaceIdAnimation(
                         modifier = Modifier.size(100.dp),
                         isScanning = false,
-                        scanColor = Color.Red,
-                        faceColor = Color.Red.copy(alpha = 0.8f)
+                        scanColor = AppColors.error,
+                        faceColor = AppColors.error.copy(alpha = 0.8f)
                     )
                     
                     Spacer(modifier = Modifier.height(20.dp))
@@ -286,7 +294,7 @@ fun ApprovalRequestScreen(
                         text = "Face ID Authentication Failed",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Red,
+                        color = AppColors.error,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 30.dp)
                     )
@@ -296,7 +304,7 @@ fun ApprovalRequestScreen(
                     Text(
                         text = "Authentication required to proceed with approval request.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = AppColors.textPrimary.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 30.dp)
                     )
@@ -310,7 +318,7 @@ fun ApprovalRequestScreen(
                             .fillMaxWidth()
                             .height(59.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Yellow900
+                            containerColor = AppColors.secondary
                         ),
                         shape = RoundedCornerShape(12.58.dp)
                     ) {
@@ -318,7 +326,7 @@ fun ApprovalRequestScreen(
                             text = "Back Home",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            color = AppColors.buttonTextPrimary
                         )
                     }
                 }
@@ -329,7 +337,7 @@ fun ApprovalRequestScreen(
                         text = "Account is not active for approval requests.",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Red,
+                        color = AppColors.error,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 30.dp)
                     )
@@ -342,7 +350,7 @@ fun ApprovalRequestScreen(
                             .fillMaxWidth()
                             .height(59.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Yellow900
+                            containerColor = AppColors.secondary
                         ),
                         shape = RoundedCornerShape(12.58.dp)
                     ) {
@@ -350,7 +358,7 @@ fun ApprovalRequestScreen(
                             text = "Back Home",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black
+                            color = AppColors.buttonTextPrimary
                         )
                     }
                 }

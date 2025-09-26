@@ -540,7 +540,7 @@ fun ProgressCircleView(
             // Removed "Now blink!" text - only show head turning instruction
             Text(
                 text = stringResource(R.string.face_turn_head_slowly),
-                color = Color.White.copy(alpha = 0.8f),
+                color = AppColors.textSecondary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Normal,
                 textAlign = TextAlign.Center
@@ -551,9 +551,9 @@ fun ProgressCircleView(
 
 private fun getSegmentColor(index: Int, segmentStatus: List<Boolean>): Color {
     return if (segmentStatus.getOrNull(index) == true) {
-        Color.Green
+        Color.Green // Use green for completed segments
     } else {
         // All incomplete segments should be red (no orange highlighting)
-        Color.Red.copy(alpha = 0.6f)
+        Color.Red.copy(alpha = 0.6f) // Use red for incomplete segments
     }
 } 

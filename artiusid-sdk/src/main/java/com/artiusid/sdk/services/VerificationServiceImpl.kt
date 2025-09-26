@@ -52,13 +52,13 @@ class VerificationServiceImpl(
         val client = getClient()
         val url = UrlBuilder.getVerificationUrl(context) // Use dynamic URL builder
         val body = verificationData.toRequestBody(CONTENT_TYPE.toMediaType())
-        // Use the same iOS User-Agent string as certificate registration
-        val iosUserAgent = "ArtiusID/1.0 (iPhone; iOS 17.5.1; Scale/3.00)"
+        // Use proper Android User-Agent string
+        val androidUserAgent = "ArtiusID-Android"
         val request = Request.Builder()
             .url(url)
             .post(body)
             .addHeader("Content-Type", CONTENT_TYPE)
-            .addHeader("User-Agent", iosUserAgent)
+            .addHeader("User-Agent", androidUserAgent)
             .build()
         Log.d(TAG, "Verification request URL: $url")
         Log.d(TAG, "Verification request headers: ${request.headers}")

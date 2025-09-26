@@ -159,6 +159,9 @@ object ArtiusIDSDK {
             sdkConfiguration = configuration
             enhancedThemeConfiguration = enhancedTheme
             
+            // Update the theme manager with the new theme
+            com.artiusid.sdk.ui.theme.EnhancedThemeManager.updateCurrentThemeConfig(enhancedTheme)
+            
             // Initialize localization with overrides from host app
             com.artiusid.sdk.utils.LocalizationManager.initialize(configuration.localizationOverrides)
             
@@ -365,14 +368,17 @@ object ArtiusIDSDK {
     }
     
     /**
-     * Start complete authentication flow using standalone application
+     * Start complete authentication flow matching iOS standalone application exactly
+     * Shows biometric prompt + progress screen + API authentication
      * 
      * @param activity Host activity
      * @param callback Callback to receive authentication results
      */
     fun startAuthentication(activity: Activity, callback: AuthenticationCallback) {
         try {
-            android.util.Log.d(TAG, "🚀 Starting authentication via standalone app bridge...")
+            android.util.Log.d(TAG, "🚀 Starting authentication flow matching iOS standalone app...")
+            android.util.Log.d(TAG, "📱 Host activity: ${activity::class.simpleName}")
+            android.util.Log.d(TAG, "📱 Host package: ${activity.packageName}")
             
             if (!_isInitialized) {
                 callback.onAuthenticationError(SDKError(
@@ -385,13 +391,19 @@ object ArtiusIDSDK {
             // Store callback for when authentication completes
             authenticationCallback = callback
             
-            // Launch standalone application via bridge
-            standaloneAppBridge.startAuthentication(activity, callback)
+            // Launch authentication screen that matches iOS flow exactly
+            val intent = android.content.Intent(activity, com.artiusid.sdk.ui.activities.AuthenticationActivity::class.java)
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
             
-            android.util.Log.d(TAG, "✅ Launched standalone application for authentication")
+            android.util.Log.d(TAG, "🚀 Launching AuthenticationActivity...")
+            activity.startActivity(intent)
+            
+            android.util.Log.d(TAG, "✅ Launched authentication screen matching iOS standalone app")
             
         } catch (e: Exception) {
             android.util.Log.e(TAG, "❌ Failed to start authentication flow", e)
+            android.util.Log.e(TAG, "❌ Error details: ${e.message}")
+            e.printStackTrace()
             callback.onAuthenticationError(SDKError(
                 code = SDKErrorCode.UNKNOWN_ERROR,
                 message = "Failed to start authentication: ${e.message}",

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.artiusid.sdk.ui.theme.AppColors
 
 @Composable
 fun CustomBackButton(
@@ -39,14 +40,14 @@ fun CustomBackButton(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.3f))
+                .background(AppColors.surface.copy(alpha = 0.3f))
                 .clickable { onBackClick() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "Back",
-                tint = Color.White,
+                tint = AppColors.textPrimary,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -56,7 +57,7 @@ fun CustomBackButton(
             Spacer(modifier = Modifier.width(16.dp))
             Text(
                 text = navTitle,
-                color = Color.White,
+                color = AppColors.secondary, // Use orange color for title like in iOS screenshot
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
             )

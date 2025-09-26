@@ -13,6 +13,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
 import com.artiusid.sdk.models.SDKColorScheme
+import com.artiusid.sdk.models.SDKTypography
+import com.artiusid.sdk.models.SDKIconTheme
+import com.artiusid.sdk.models.SDKTextContent
+import com.artiusid.sdk.models.SDKComponentStyling
+import com.artiusid.sdk.models.SDKLayoutConfig
 
 /**
  * Global Color Manager
@@ -36,6 +41,14 @@ object ColorManager {
     private var currentScheme: AppColorScheme = DarkColorScheme()
     private var enhancedTheme: EnhancedSDKThemeConfiguration? = null
     private var isUsingEnhancedTheme = false
+    
+    // Default artius.iD theme that matches iOS standalone app
+    private val defaultArtiusIDTheme = createDefaultArtiusIDTheme()
+    
+    init {
+        // Apply default artius.iD theme on initialization
+        setEnhancedTheme(defaultArtiusIDTheme)
+    }
     
     /**
      * Set enhanced theme configuration (takes priority over legacy color schemes)
@@ -230,3 +243,104 @@ fun ProvideAppColorScheme(
 val AppColors: AppColorScheme
     @Composable
     get() = LocalAppColorScheme.current
+
+/**
+ * Create the default artius.iD theme that matches the iOS standalone application
+ */
+private fun createDefaultArtiusIDTheme(): EnhancedSDKThemeConfiguration {
+    return EnhancedSDKThemeConfiguration(
+        brandName = "artius.iD",
+        
+        typography = SDKTypography(
+            fontFamily = "default",
+            headlineLarge = 32f,
+            headlineMedium = 28f,
+            titleLarge = 22f,
+            bodyLarge = 16f,
+            bodyMedium = 14f,
+            headlineWeight = "bold",
+            titleWeight = "medium",
+            bodyWeight = "normal"
+        ),
+        
+        colorScheme = SDKColorScheme(
+            // CORRECTED FROM iOS SCREENSHOTS
+            primaryColorHex = "#FFFFFF", // White - primary color should be white, not dark blue
+            secondaryColorHex = "#F58220", // Orange from iOS screenshots - used for buttons and icons
+            backgroundColorHex = "#22354D", // Dark blue background from iOS screenshots
+            surfaceColorHex = "#22354D", // Dark blue surface matching background
+            onPrimaryColorHex = "#22354D", // Dark blue text on white primary
+            onSecondaryColorHex = "#FFFFFF", // White text on orange secondary
+            onBackgroundColorHex = "#FFFFFF", // White text on dark blue background
+            onSurfaceColorHex = "#FFFFFF", // White text on dark blue surface
+            successColorHex = "#4CAF50",
+            errorColorHex = "#D32F2F",
+            warningColorHex = "#FF9800",
+            primaryButtonColorHex = "#F58220", // Orange background - use secondary color for buttons
+            primaryButtonTextColorHex = "#FFFFFF", // White text on orange buttons
+            secondaryButtonColorHex = "#F58220", // Orange background - use secondary color for buttons
+            secondaryButtonTextColorHex = "#FFFFFF" // White text on orange buttons
+        ),
+        
+        iconTheme = SDKIconTheme(
+            iconStyle = "default",
+            mediumIconSize = 24f,
+            primaryIconColorHex = "#F58220", // Orange - use secondary color for icons
+            secondaryIconColorHex = "#F58220", // Orange - use secondary color for icons
+            accentIconColorHex = "#F58220", // Orange - use secondary color for icons
+            disabledIconColorHex = "#ADB5BD", // Light gray for disabled
+            
+            // Navigation & UI Icons - USE SECONDARY COLOR (ORANGE)
+            navigationIconColorHex = "#F58220", // Orange - use secondary color for icons
+            actionIconColorHex = "#F58220", // Orange - use secondary color for icons
+            
+            // Instruction & Guide Icons - USE SECONDARY COLOR (ORANGE)
+            instructionIconColorHex = "#F58220", // Orange - use secondary color for icons
+            warningIconColorHex = "#FF9800",
+            errorIconColorHex = "#D32F2F",
+            successIconColorHex = "#4CAF50",
+            
+            // Document & Verification Icons
+            documentIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            cameraIconColorHex = "#FFFFFF", // iOS WhiteA700
+            scanIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            
+            // Biometric & Security Icons
+            biometricIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            securityIconColorHex = "#4CAF50",
+            nfcIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            
+            // Status Icons
+            statusActiveIconColorHex = "#4CAF50",
+            statusInactiveIconColorHex = "#9E9E9E",
+            statusProcessingIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            
+            // Custom Icon Mappings for Authentication Screens
+            customIcons = mapOf(
+                "auth_success" to "approval", // Success screen image - high quality approval icon
+                "auth_processing" to "img_processing" // Processing screen image (if needed)
+            )
+        ),
+        
+        textContent = SDKTextContent(
+            welcomeTitle = "artius.iD Verification",
+            welcomeSubtitle = "Secure identity verification powered by artius.iD",
+            documentScanTitle = "Scan Your ID",
+            passportScanTitle = "Scan Your Passport",
+            faceScanTitle = "Face Verification",
+            processingTitle = "Processing",
+            verificationSuccessTitle = "Verification Complete"
+        ),
+        
+        componentStyling = SDKComponentStyling(
+            buttonCornerRadius = 8f,
+            cardCornerRadius = 12f,
+            buttonHeight = 48f
+        ),
+        
+        layoutConfig = SDKLayoutConfig(
+            screenPadding = 16f,
+            componentSpacing = 16f
+        )
+    )
+}

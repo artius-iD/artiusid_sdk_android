@@ -24,19 +24,8 @@ class SendApprovalRequest(
     companion object {
         private const val TAG = "SendApprovalRequest"
         
-        /**
-         * Convert Android Secure ID to iOS-compatible UUID format
-         * CRITICAL: Server expects iOS UUID format for device lookup
-         * iOS: "A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
-         * Android: "b911b2b9bf9076ad" -> "B911B2B9-BF90-76AD-0000-000000000000"
-         */
-        private fun convertAndroidIdToUUID(androidId: String): String {
-            // Ensure we have enough characters, pad with zeros if needed
-            val paddedId = androidId.padEnd(32, '0').take(32)
-            
-            // Format as UUID: 8-4-4-4-12 and uppercase like iOS
-            return "${paddedId.substring(0, 8)}-${paddedId.substring(8, 12)}-${paddedId.substring(12, 16)}-${paddedId.substring(16, 20)}-${paddedId.substring(20, 32)}".uppercase()
-        }
+        // REMOVED: No longer converting Android ID to iOS UUID format
+        // Use native Android UUID format instead
     }
     
     /**
@@ -45,13 +34,11 @@ class SendApprovalRequest(
      */
     suspend fun send(): Pair<Boolean, Int?> {
         return try {
-            // Get device ID in iOS UUID format for server compatibility
-            val androidId = android.provider.Settings.Secure.getString(
+            // Get device ID in native Android format
+            val deviceId = android.provider.Settings.Secure.getString(
                 context.contentResolver,
                 android.provider.Settings.Secure.ANDROID_ID
             ) ?: ""
-            // Convert to iOS-compatible UUID format - CRITICAL for server device lookup
-            val deviceId = convertAndroidIdToUUID(androidId)
             
             // Get member ID from verification state (like standalone Android app)
             val verificationStateManager = VerificationStateManager(context)
@@ -72,8 +59,8 @@ class SendApprovalRequest(
                     timeout = 30 // ✅ CRITICAL: iOS includes this field!
                 )
             
-            Log.d(TAG, "🔧 Android ID: $androidId -> UUID: $deviceId")
-            Log.d(TAG, "Sending approval request for deviceId: $deviceId (iOS UUID format)")
+            Log.d(TAG, "🔧 Using native Android device ID: $deviceId")
+            Log.d(TAG, "Sending approval request for deviceId: $deviceId (native Android format)")
             Log.d(TAG, "Account Number (Member ID): $accountNumber")
             Log.d(TAG, "Using approval request ApiService exactly like iOS")
             Log.d(TAG, "✅ Server should now find device mapping with UUID format")

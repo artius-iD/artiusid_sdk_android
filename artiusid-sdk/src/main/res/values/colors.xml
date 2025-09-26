@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand Colors -->
-    <color name="primary">#FF6200EE</color>
-    <color name="primary_variant">#FF3700B3</color>
-    <color name="secondary">#FF03DAC5</color>
-    <color name="secondary_variant">#FF018786</color>
+    <!-- Brand Colors - Updated to match iOS Standalone App -->
+    <color name="primary">#22354D</color>
+    <color name="primary_variant">#1A2B3D</color>
+    <color name="secondary">#F58220</color>
+    <color name="secondary_variant">#E57100</color>
     
     <!-- Basic Colors -->
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     
-    <!-- Background Colors -->
-    <color name="background">#FFFFFFFF</color>
-    <color name="surface">#FFFFFFFF</color>
-    <color name="on_primary">#FFFFFFFF</color>
-    <color name="on_secondary">#FF000000</color>
-    <color name="on_background">#FF000000</color>
-    <color name="on_surface">#FF000000</color>
+    <!-- Background Colors - Updated to match iOS Screenshot Dark Theme -->
+    <color name="background">#22354D</color>
+    <color name="surface">#22354D</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="on_background">#FFFFFF</color>
+    <color name="on_surface">#FFFFFF</color>
     
-    <!-- Text Colors -->
-    <color name="text_primary">#000000</color>
-    <color name="text_secondary">#757575</color>
+    <!-- Text Colors - Updated to match iOS Screenshot Dark Theme -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3FFFFFF</color>
     
     <!-- Error Colors -->
     <color name="error">#FFB00020</color>

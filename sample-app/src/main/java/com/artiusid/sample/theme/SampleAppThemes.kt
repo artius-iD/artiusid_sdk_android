@@ -15,7 +15,8 @@ import com.artiusid.sdk.models.*
 object SampleAppThemes {
     
     /**
-     * artius.iD Default Theme - Matches standalone app
+     * artius.iD Default Theme - REBUILT from iOS Screenshots
+     * Based on the actual iOS standalone app screenshots provided
      */
     val ARTIUSID_DEFAULT = EnhancedSDKThemeConfiguration(
         brandName = "artius.iD",
@@ -33,55 +34,64 @@ object SampleAppThemes {
         ),
         
         colorScheme = SDKColorScheme(
-            primaryColorHex = "#22354D", // iOS Bluegray900 - for buttons and accents
-            secondaryColorHex = "#F58220", // iOS Yellow900 - bright accent color
-            backgroundColorHex = "#F8F9FA", // Light background for sample app compatibility
-            surfaceColorHex = "#FFFFFF", // White surface for cards/dialogs
-            onPrimaryColorHex = "#FFFFFF", // White text on dark primary
-            onSecondaryColorHex = "#22354D", // Dark text on bright secondary
-            onBackgroundColorHex = "#22354D", // Dark text on light background
-            onSurfaceColorHex = "#22354D", // Dark text on white surface
+            // CORRECTED FROM iOS SCREENSHOTS
+            primaryColorHex = "#FFFFFF", // White - primary color should be white, not dark blue
+            secondaryColorHex = "#F58220", // Orange from iOS screenshots - used for "artius.iD", "Face Scan", buttons, icons
+            backgroundColorHex = "#22354D", // Dark blue background from iOS screenshots
+            surfaceColorHex = "#22354D", // Dark blue surface matching background
+            onPrimaryColorHex = "#22354D", // Dark blue text on white primary
+            onSecondaryColorHex = "#FFFFFF", // White text on orange secondary
+            onBackgroundColorHex = "#FFFFFF", // White text on dark blue background
+            onSurfaceColorHex = "#FFFFFF", // White text on dark blue surface
             successColorHex = "#4CAF50",
             errorColorHex = "#D32F2F",
             warningColorHex = "#FF9800",
-            primaryButtonColorHex = "#22354D", // iOS dark blue for primary buttons
-            primaryButtonTextColorHex = "#FFFFFF", // White text on dark buttons
-            secondaryButtonColorHex = "#F58220", // iOS yellow for secondary buttons
-            secondaryButtonTextColorHex = "#FFFFFF" // White text on yellow buttons
+            // BUTTON COLORS - Use secondary color (orange) for buttons
+            primaryButtonColorHex = "#F58220", // Orange button background - use secondary color
+            primaryButtonTextColorHex = "#FFFFFF", // White text on orange button
+            secondaryButtonColorHex = "#F58220", // Orange button background - use secondary color
+            secondaryButtonTextColorHex = "#FFFFFF" // White text on orange button
         ),
         
         iconTheme = SDKIconTheme(
             iconStyle = "default",
             mediumIconSize = 24f,
-            primaryIconColorHex = "#22354D", // Dark icons on light background
-            secondaryIconColorHex = "#6C757D", // Medium gray for secondary icons
-            accentIconColorHex = "#F58220", // iOS Yellow900 - bright accent
+            // ICONS USE SECONDARY COLOR (ORANGE)
+            primaryIconColorHex = "#F58220", // Orange - use secondary color for icons
+            secondaryIconColorHex = "#F58220", // Orange - use secondary color for icons
+            accentIconColorHex = "#F58220", // Orange - use secondary color for icons
             disabledIconColorHex = "#ADB5BD", // Light gray for disabled
             
-            // Navigation & UI Icons
-            navigationIconColorHex = "#22354D", // Dark navigation icons
-            actionIconColorHex = "#F58220", // Bright action icons
+            // Navigation & UI Icons - USE SECONDARY COLOR (ORANGE)
+            navigationIconColorHex = "#F58220", // Orange - use secondary color for icons
+            actionIconColorHex = "#F58220", // Orange - use secondary color for icons
             
-            // Instruction & Guide Icons
-            instructionIconColorHex = "#F58220", // iOS Yellow900 - exact match
-            warningIconColorHex = "#FF9800",
-            errorIconColorHex = "#D32F2F",
-            successIconColorHex = "#4CAF50",
+            // Instruction & Guide Icons - USE SECONDARY COLOR (ORANGE)
+            instructionIconColorHex = "#F58220", // Orange - use secondary color for icons
+            warningIconColorHex = "#F58220", // Orange - use secondary color for icons
+            errorIconColorHex = "#F58220", // Orange - use secondary color for icons
+            successIconColorHex = "#F58220", // Orange - use secondary color for icons
             
-            // Document & Verification Icons
-            documentIconColorHex = "#F58220", // iOS Yellow900 - exact match
-            cameraIconColorHex = "#FFFFFF", // iOS WhiteA700
-            scanIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            // Document & Verification Icons - USE SECONDARY COLOR (ORANGE)
+            documentIconColorHex = "#F58220", // Orange - use secondary color for icons
+            cameraIconColorHex = "#F58220", // Orange - use secondary color for icons
+            scanIconColorHex = "#F58220", // Orange - use secondary color for icons
             
-            // Biometric & Security Icons
-            biometricIconColorHex = "#F58220", // iOS Yellow900 - exact match
-            securityIconColorHex = "#4CAF50",
-            nfcIconColorHex = "#F58220", // iOS Yellow900 - exact match
+            // Biometric & Security Icons - USE SECONDARY COLOR (ORANGE)
+            biometricIconColorHex = "#F58220", // Orange - use secondary color for icons
+            securityIconColorHex = "#F58220", // Orange - use secondary color for icons
+            nfcIconColorHex = "#F58220", // Orange - use secondary color for icons
             
-            // Status Icons
-            statusActiveIconColorHex = "#4CAF50",
-            statusInactiveIconColorHex = "#9E9E9E",
-            statusProcessingIconColorHex = "#F58220" // iOS Yellow900 - exact match
+            // Status Icons - USE SECONDARY COLOR (ORANGE)
+            statusActiveIconColorHex = "#F58220", // Orange - use secondary color for icons
+            statusInactiveIconColorHex = "#F58220", // Orange - use secondary color for icons
+            statusProcessingIconColorHex = "#F58220", // Orange - use secondary color for icons
+            
+            // Custom Icon Mappings for Authentication Screens
+            customIcons = mapOf(
+                "auth_success" to "approval", // Success screen image - high quality approval icon
+                "auth_processing" to "img_processing" // Processing screen image (if needed)
+            )
         ),
         
         textContent = SDKTextContent(

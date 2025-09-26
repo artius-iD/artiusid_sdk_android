@@ -81,15 +81,15 @@ class APIManager(private val context: Context) {
                 }.toString()
                 val body = jsonBody.toRequestBody("application/json".toMediaTypeOrNull())
 
-                // Use the iOS User-Agent string
-                val iosUserAgent = "ArtiusID/1.0 (iPhone; iOS 17.5.1; Scale/3.00)"
-                Log.d(TAG, "Using User-Agent: $iosUserAgent")
+                // Use proper Android User-Agent string
+                val androidUserAgent = "ArtiusID-Android"
+                Log.d(TAG, "Using User-Agent: $androidUserAgent")
 
                 val req = Request.Builder()
                     .url(fullUrl)
                     .post(body)
                     .addHeader("Content-Type", "application/json")
-                    .addHeader("User-Agent", iosUserAgent)
+                    .addHeader("User-Agent", androidUserAgent)
                     .build()
 
                 Log.d(TAG, "Certificate registration REQUEST:")
@@ -98,7 +98,7 @@ class APIManager(private val context: Context) {
                 Log.d(TAG, "Sending certificate registration request...")
 
                 val response = client.newCall(req).execute()
-                val responseBody = response.body?.string()
+                val responseBody = response.body?.string() ?: ""
                 if (!response.isSuccessful) {
                     Log.e(TAG, "Certificate registration failed: ${response.code} - $responseBody")
                     throw IOException("Certificate registration failed: ${response.code} - $responseBody")

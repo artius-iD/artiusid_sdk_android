@@ -110,16 +110,15 @@ class TLSSessionManager(private val context: Context) {
                 .addInterceptor { chain ->
                     val originalRequest = chain.request()
                     val newRequest = originalRequest.newBuilder()
-                        // Match iOS User-Agent format exactly: "ArtiusID/5 (iPhone; iOS 17.5.1; Scale/3.00)"
-                        // Android equivalent: "ArtiusID/5 (Android; API 34; Pixel 7)"
-                        .header("User-Agent", "ArtiusID/5 (Android; API ${android.os.Build.VERSION.SDK_INT}; ${android.os.Build.MODEL})")
+                        // Use proper Android User-Agent format
+                        .header("User-Agent", "ArtiusID-Android")
                         // Match iOS headers exactly
                         .header("Content-Type", "application/json")
                         .build()
                     
                     // Log the headers being sent for debugging
                     Log.d(TAG, "📤 Sending headers:")
-                    Log.d(TAG, "📤   User-Agent: ArtiusID/5 (Android; API ${android.os.Build.VERSION.SDK_INT}; ${android.os.Build.MODEL})")
+                    Log.d(TAG, "📤   User-Agent: ArtiusID-Android")
                     Log.d(TAG, "📤   Content-Type: application/json")
                     
                     chain.proceed(newRequest)

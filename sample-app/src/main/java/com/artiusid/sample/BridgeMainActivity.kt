@@ -79,32 +79,32 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         val isArtiusIDTheme = theme == EnhancedThemeOption.ARTIUSID_DEFAULT
         
         return if (isDarkTheme && !isArtiusIDTheme) {
-            // Use dark color scheme for dark themes (like artius.iD)
+            // Use dark color scheme for dark themes - HARDCODED to preserve current sample app appearance
             darkColorScheme(
-                primary = Color(android.graphics.Color.parseColor(colors.secondaryColorHex)), // Use secondary (orange) as primary for better contrast
-                onPrimary = Color(android.graphics.Color.parseColor(colors.onSecondaryColorHex)),
-                secondary = Color(android.graphics.Color.parseColor(colors.primaryColorHex)),
-                onSecondary = Color(android.graphics.Color.parseColor(colors.onPrimaryColorHex)),
-                background = Color(android.graphics.Color.parseColor(colors.backgroundColorHex)),
-                onBackground = Color(android.graphics.Color.parseColor(colors.onBackgroundColorHex)),
-                surface = Color(android.graphics.Color.parseColor(colors.surfaceColorHex)),
-                onSurface = Color(android.graphics.Color.parseColor(colors.onSurfaceColorHex)),
-                error = Color(android.graphics.Color.parseColor(colors.errorColorHex)),
-                onError = Color(android.graphics.Color.parseColor(colors.onPrimaryColorHex))
+                primary = Color(0xFFF58220), // Orange - hardcoded from current theme
+                onPrimary = Color(0xFF22354D), // Dark blue - hardcoded
+                secondary = Color(0xFF22354D), // Dark blue - hardcoded
+                onSecondary = Color(0xFFFFFFFF), // White - hardcoded
+                background = Color(0xFFF8F9FA), // Light background - hardcoded
+                onBackground = Color(0xFF22354D), // Dark text - hardcoded
+                surface = Color(0xFFFFFFFF), // White surface - hardcoded
+                onSurface = Color(0xFF22354D), // Dark text - hardcoded
+                error = Color(0xFFD32F2F), // Red - hardcoded
+                onError = Color(0xFFFFFFFF) // White - hardcoded
             )
         } else {
-            // Use light color scheme for light themes
+            // Use light color scheme for light themes - HARDCODED to preserve current sample app appearance
             lightColorScheme(
-                primary = Color(android.graphics.Color.parseColor(colors.primaryColorHex)),
-                onPrimary = Color(android.graphics.Color.parseColor(colors.onPrimaryColorHex)),
-                secondary = Color(android.graphics.Color.parseColor(colors.secondaryColorHex)),
-                onSecondary = Color(android.graphics.Color.parseColor(colors.onSecondaryColorHex)),
-                background = Color(android.graphics.Color.parseColor(colors.backgroundColorHex)),
-                onBackground = Color(android.graphics.Color.parseColor(colors.onBackgroundColorHex)),
-                surface = Color(android.graphics.Color.parseColor(colors.surfaceColorHex)),
-                onSurface = Color(android.graphics.Color.parseColor(colors.onSurfaceColorHex)),
-                error = Color(android.graphics.Color.parseColor(colors.errorColorHex)),
-                onError = Color(android.graphics.Color.parseColor(colors.onPrimaryColorHex))
+                primary = Color(0xFF22354D), // Dark blue - hardcoded from current theme
+                onPrimary = Color(0xFFFFFFFF), // White - hardcoded
+                secondary = Color(0xFFF58220), // Orange - hardcoded
+                onSecondary = Color(0xFF22354D), // Dark blue - hardcoded
+                background = Color(0xFFF8F9FA), // Light background - hardcoded
+                onBackground = Color(0xFF22354D), // Dark text - hardcoded
+                surface = Color(0xFFFFFFFF), // White surface - hardcoded
+                onSurface = Color(0xFF22354D), // Dark text - hardcoded
+                error = Color(0xFFD32F2F), // Red - hardcoded
+                onError = Color(0xFFFFFFFF) // White - hardcoded
             )
         }
     }
@@ -377,20 +377,20 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.primaryColorHex))
+                    containerColor = Color(0xFF22354D) // Hardcoded dark blue to preserve sample app appearance
                 )
             ) {
                 if (isVerificationLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
+                        color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
                     )
                 } else {
                     Text(
                         text = "🔍 Start Verification (Bridge)",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
+                        color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
                     )
                 }
             }
@@ -404,14 +404,14 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.secondaryColorHex))
+                    containerColor = Color(0xFFF58220) // Hardcoded orange to preserve sample app appearance
                 )
             ) {
                 Text(
                     text = "🔐 Start Authentication (Bridge)",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onSecondaryColorHex))
+                    color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
                 )
             }
             
@@ -424,20 +424,20 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.successColorHex))
+                    containerColor = Color(0xFF4CAF50) // Hardcoded green to preserve sample app appearance
                 )
             ) {
                 if (isApprovalLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
+                        color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
                     )
                 } else {
                     Text(
                         text = "📋 Test Approval Process",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.onPrimaryColorHex))
+                        color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
                     )
                 }
             }
@@ -451,9 +451,9 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.primaryColorHex))),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF22354D)), // Hardcoded dark blue
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.primaryColorHex)),
+                    contentColor = Color(0xFF22354D), // Hardcoded dark blue to preserve sample app appearance
                     containerColor = Color.Transparent
                 )
             ) {
@@ -461,7 +461,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     text = "🔥 Refresh FCM Token",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(android.graphics.Color.parseColor(selectedTheme.themeConfig.colorScheme.primaryColorHex))
+                    color = Color(0xFF22354D) // Hardcoded dark blue to preserve sample app appearance
                 )
             }
             
@@ -622,7 +622,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             Card(
                 modifier = Modifier.size(40.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(android.graphics.Color.parseColor(colorHex))
+                    containerColor = Color(android.graphics.Color.parseColor(colorHex)) // Keep dynamic for color swatches
                 )
             ) {}
             Text(

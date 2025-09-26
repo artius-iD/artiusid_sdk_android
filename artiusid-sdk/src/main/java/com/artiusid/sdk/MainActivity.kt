@@ -20,13 +20,19 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.artiusid.sdk.navigation.AppNavigation
 import com.artiusid.sdk.presentation.screens.root.RootScreen
-import com.artiusid.sdk.ui.theme.ArtiusIDTheme
+import com.artiusid.sdk.ui.theme.EnhancedSDKTheme
+import com.artiusid.sdk.ui.theme.EnhancedThemeManager
+import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
 import com.artiusid.sdk.utils.FirebaseTokenManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -87,7 +93,33 @@ class StandaloneAppActivity : FragmentActivity() {
         // NFC handling is done via ReaderMode, no need for intent handling
         
         setContent {
-            ArtiusIDTheme {
+            // Use local state for theme that can be updated via callback
+            val initialTheme = EnhancedThemeManager.getCurrentThemeConfig()
+            android.util.Log.d("MainActivity", "🎨 MainActivity starting with theme: ${initialTheme.brandName}")
+            
+            val (localTheme, setLocalTheme) = remember { 
+                mutableStateOf(initialTheme) 
+            }
+            
+            // Register theme change listener with proper cleanup
+            DisposableEffect(Unit) {
+                val listener = { newTheme: EnhancedSDKThemeConfiguration? ->
+                    android.util.Log.d("MainActivity", "🎨 Theme change callback received: ${newTheme?.brandName ?: "null"}")
+                    setLocalTheme(newTheme ?: EnhancedThemeManager.getCurrentThemeConfig())
+                }
+                EnhancedThemeManager.addThemeChangeListener(listener)
+                
+                onDispose {
+                    EnhancedThemeManager.removeThemeChangeListener(listener)
+                }
+            }
+            
+            // Debug logging to see theme changes
+            android.util.Log.d("MainActivity", "🎨 Current theme in MainActivity: ${localTheme.brandName}")
+            
+            EnhancedSDKTheme(
+                themeConfig = localTheme
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
