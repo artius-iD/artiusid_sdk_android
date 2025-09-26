@@ -42,14 +42,16 @@ class ImageOverrideManager private constructor(
         
         /**
          * Initialize the ImageOverrideManager singleton
+         * If already initialized, updates with new overrides
          */
         fun initialize(
             context: Context, 
             overrides: SDKImageOverrides,
             imageLoader: ImageLoader? = null
         ): ImageOverrideManager {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: ImageOverrideManager(
+            return synchronized(this) {
+                // Always create a new instance to ensure overrides are updated
+                ImageOverrideManager(
                     context.applicationContext,
                     overrides,
                     imageLoader ?: ImageLoader(context)
@@ -78,6 +80,7 @@ class ImageOverrideManager private constructor(
          */
         private fun countActiveOverrides(overrides: SDKImageOverrides): Int {
             var count = 0
+            
             
             // Count all non-null field overrides
             if (overrides.faceOverlay != null) count++

@@ -46,6 +46,15 @@ class ApprovalRequestViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ApprovalRequestUiState>(ApprovalRequestUiState.Authenticating)
     val uiState: StateFlow<ApprovalRequestUiState> = _uiState.asStateFlow()
     
+    /**
+     * Reset the ViewModel state for a new approval request
+     * This ensures each approval request starts fresh
+     */
+    fun resetForNewRequest() {
+        Log.d(TAG, "🔄 Resetting ViewModel state for new approval request")
+        _uiState.value = ApprovalRequestUiState.Authenticating
+    }
+    
     fun authenticate(context: Context) {
         viewModelScope.launch {
             try {

@@ -51,6 +51,11 @@ object SampleImageOverrides {
         errorIcon = "corporate/corporate_error.png",
         systemErrorIcon = "corporate/corporate_error.png", // Reuse error icon
         
+        // Approval-specific icons - NEW: Support for approval screens
+        approvalIcon = "corporate/corporate_brand_image.png",           // General approval icon
+        approvalRequestIcon = "corporate/corporate_brand_image.png",    // Approval request illustration  
+        declinedIcon = "corporate/corporate_failed.png",               // Declined/rejected icon
+        
         // Processing and verification images
         crossPlatformImage = "corporate/corporate_brand_image.png", // Use brand image for processing
         

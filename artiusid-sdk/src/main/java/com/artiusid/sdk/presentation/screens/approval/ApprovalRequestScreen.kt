@@ -12,11 +12,19 @@ import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
+import com.artiusid.sdk.ui.components.ThemedImage
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableIntStateOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,60 +75,127 @@ fun ApprovalRequestScreen(
     val notificationTitle by AppNotificationState.notificationTitle.collectAsState()
     val notificationDescription by AppNotificationState.notificationDescription.collectAsState()
     
-    // Trigger authentication when screen loads (like iOS onAppear)
-    LaunchedEffect(Unit) {
-        viewModel.authenticate(context)
-        
-        // Delay slightly to let the UI state update, then trigger biometric auth
-        kotlinx.coroutines.delay(500)
-        
-        // Use BiometricAuthHelper for cleaner Face ID authentication
+    // Track biometric retry attempts (max 3 attempts)
+    var biometricAttempts by remember { mutableIntStateOf(0) }
+    val maxBiometricAttempts = 3
+    
+    // Function to start biometric authentication with retry logic
+    fun startBiometricAuthentication() {
         val activity = context.findActivity()
         
         if (activity is FragmentActivity) {
-            android.util.Log.d("ApprovalRequestScreen", "✅ Found FragmentActivity - checking Face ID availability")
+            android.util.Log.d("ApprovalRequestScreen", "✅ Found FragmentActivity - checking biometric availability (attempt ${biometricAttempts + 1}/$maxBiometricAttempts)")
             
-            when (BiometricAuthHelper.getBiometricStatus(context)) {
-                BiometricStatus.Available -> {
-                    android.util.Log.d("ApprovalRequestScreen", "✅ Face ID available - starting authentication")
+            val biometricManager = BiometricManager.from(context)
+            when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
+                BiometricManager.BIOMETRIC_SUCCESS -> {
+                    android.util.Log.d("ApprovalRequestScreen", "✅ Biometric authentication available - starting biometric prompt")
                     
-                    BiometricAuthHelper.authenticateFaceIdOnly(
-                        activity = activity,
-                        onSuccess = {
-                            android.util.Log.d("ApprovalRequestScreen", "✅ Face ID authentication succeeded")
-                            viewModel.onBiometricAuthenticationSuccess()
-                        },
-                        onError = { error ->
-                            android.util.Log.e("ApprovalRequestScreen", "❌ Face ID authentication failed: $error")
-                            viewModel.onBiometricAuthenticationFailed()
-                        },
-                        onUserCancel = {
-                            android.util.Log.d("ApprovalRequestScreen", "⚠️ User canceled Face ID authentication")
-                            viewModel.onBiometricAuthenticationFailed()
-                        }
-                    )
+                    val executor = ContextCompat.getMainExecutor(context)
+                    val biometricPrompt = BiometricPrompt(activity, executor,
+                        object : BiometricPrompt.AuthenticationCallback() {
+                            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                                super.onAuthenticationError(errorCode, errString)
+                                android.util.Log.e("ApprovalRequestScreen", "❌ Biometric authentication error: $errString (attempt ${biometricAttempts + 1}/$maxBiometricAttempts)")
+                                
+                                // Check if user cancelled or if it's a retryable error
+                                if (errorCode == BiometricPrompt.ERROR_USER_CANCELED || 
+                                    errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                                    // User cancelled - fail immediately
+                                    viewModel.onBiometricAuthenticationFailed()
+                                } else {
+                                    // Other errors - retry if attempts remaining
+                                    biometricAttempts++
+                                    if (biometricAttempts < maxBiometricAttempts) {
+                                        android.util.Log.d("ApprovalRequestScreen", "🔄 Retrying biometric authentication...")
+                                        CoroutineScope(Dispatchers.Main).launch {
+                                            delay(1000) // Brief delay before retry
+                                            startBiometricAuthentication()
+                                        }
+                                    } else {
+                                        android.util.Log.e("ApprovalRequestScreen", "❌ Max biometric attempts reached - failing")
+                                        viewModel.onBiometricAuthenticationFailed()
+                                    }
+                                }
+                            }
+
+                            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                                super.onAuthenticationSucceeded(result)
+                                android.util.Log.d("ApprovalRequestScreen", "✅ Biometric authentication succeeded on attempt ${biometricAttempts + 1}")
+                                viewModel.onBiometricAuthenticationSuccess()
+                            }
+
+                            override fun onAuthenticationFailed() {
+                                super.onAuthenticationFailed()
+                                android.util.Log.w("ApprovalRequestScreen", "⚠️ Biometric authentication failed (attempt ${biometricAttempts + 1}/$maxBiometricAttempts)")
+                                
+                                // Increment attempts and retry if possible
+                                biometricAttempts++
+                                if (biometricAttempts < maxBiometricAttempts) {
+                                    android.util.Log.d("ApprovalRequestScreen", "🔄 Retrying biometric authentication...")
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        delay(1000) // Brief delay before retry
+                                        startBiometricAuthentication()
+                                    }
+                                } else {
+                                    android.util.Log.e("ApprovalRequestScreen", "❌ Max biometric attempts reached - failing")
+                                    viewModel.onBiometricAuthenticationFailed()
+                                }
+                            }
+                        })
+
+                    val attemptText = if (biometricAttempts > 0) " (Attempt ${biometricAttempts + 1}/$maxBiometricAttempts)" else ""
+                    val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                        .setTitle("Approval Authentication$attemptText")
+                        .setSubtitle("Authenticate to approve this request")
+                        .setNegativeButtonText("Cancel")
+                        .build()
+
+                    biometricPrompt.authenticate(promptInfo)
                 }
-                BiometricStatus.NoHardware -> {
-                    android.util.Log.w("ApprovalRequestScreen", "⚠️ No Face ID hardware - proceeding without")
+                BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
+                    android.util.Log.w("ApprovalRequestScreen", "⚠️ No biometric hardware - proceeding without")
                     viewModel.onBiometricAuthenticationSuccess()
                 }
-                BiometricStatus.HardwareUnavailable -> {
-                    android.util.Log.w("ApprovalRequestScreen", "⚠️ Face ID hardware unavailable - proceeding without")
+                BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
+                    android.util.Log.w("ApprovalRequestScreen", "⚠️ Biometric hardware unavailable - proceeding without")
                     viewModel.onBiometricAuthenticationSuccess()
                 }
-                BiometricStatus.NoneEnrolled -> {
-                    android.util.Log.w("ApprovalRequestScreen", "⚠️ No Face ID enrolled - user needs to set up Face ID")
+                BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                    android.util.Log.w("ApprovalRequestScreen", "⚠️ No biometrics enrolled - user needs to set up biometrics")
                     viewModel.onBiometricAuthenticationFailed()
                 }
                 else -> {
-                    android.util.Log.e("ApprovalRequestScreen", "❌ Face ID not available")
+                    android.util.Log.e("ApprovalRequestScreen", "❌ Biometric authentication not possible")
                     viewModel.onBiometricAuthenticationFailed()
                 }
             }
         } else {
-            android.util.Log.e("ApprovalRequestScreen", "❌ No FragmentActivity found - cannot trigger Face ID")
+            android.util.Log.e("ApprovalRequestScreen", "❌ No FragmentActivity found - cannot trigger biometric authentication")
             viewModel.onBiometricAuthenticationFailed()
         }
+    }
+    
+    // Get notification data to trigger re-authentication on new requests
+    val requestId by AppNotificationState.requestId.collectAsState()
+    
+    // Trigger authentication when screen loads or when a new request comes in (like iOS onAppear)
+    LaunchedEffect(requestId) {
+        android.util.Log.d("ApprovalRequestScreen", "🔄 New approval request detected (ID: $requestId) - resetting state")
+        
+        // Reset ViewModel state for new approval request
+        viewModel.resetForNewRequest()
+        
+        // Reset biometric attempts counter for new request
+        biometricAttempts = 0
+        
+        viewModel.authenticate(context)
+        
+        // Delay slightly to let the UI state update, then trigger biometric auth
+        delay(500)
+        
+        // Start initial biometric authentication
+        startBiometricAuthentication()
     }
     
     // Use theme-based background
@@ -138,9 +213,10 @@ fun ApprovalRequestScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Approval Request Image (like iOS approval_request image)
-            Image(
-                painter = painterResource(id = R.drawable.approval_reqeust), // Note: Using existing resource
+            // Approval Request Image (like iOS approval_request image) - supports corporate image overrides
+            ThemedImage(
+                defaultResourceId = R.drawable.approval_reqeust, // Note: Using existing resource
+                overrideKey = "approval_request_icon",
                 contentDescription = "Approval Request",
                 modifier = Modifier
                     .size(width = 353.dp, height = 254.dp)
@@ -152,7 +228,7 @@ fun ApprovalRequestScreen(
                 text = notificationTitle,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = AppColors.textPrimary,
+                color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -188,8 +264,8 @@ fun ApprovalRequestScreen(
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     Text(
-                        text = "Authenticating with Face ID...",
-                        color = AppColors.textPrimary,
+                        text = "Authenticating...",
+                        color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center
                     )
@@ -197,8 +273,8 @@ fun ApprovalRequestScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     Text(
-                        text = "Please look at your device camera",
-                        color = AppColors.textPrimary.copy(alpha = 0.7f),
+                        text = "Please authenticate to continue",
+                        color = com.artiusid.sdk.ui.theme.ThemedTextColors.getSecondaryTextColor(),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -241,7 +317,7 @@ fun ApprovalRequestScreen(
                                 .fillMaxWidth()
                                 .height(59.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = AppColors.secondary
+                                containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                             ),
                             shape = RoundedCornerShape(12.58.dp)
                         ) {
@@ -249,7 +325,7 @@ fun ApprovalRequestScreen(
                                 text = "Approve",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = AppColors.buttonTextPrimary
+                                color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor()
                             )
                         }
                         
@@ -261,10 +337,10 @@ fun ApprovalRequestScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(59.dp),
-                            border = androidx.compose.foundation.BorderStroke(2.dp, AppColors.secondary),
+                            border = androidx.compose.foundation.BorderStroke(2.dp, com.artiusid.sdk.ui.theme.ThemedButtonColors.getSecondaryButtonColor()),
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = AppColors.secondary,
-                                containerColor = AppColors.surface
+                                contentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getSecondaryButtonColor(),
+                                containerColor = Color.Transparent
                             ),
                             shape = RoundedCornerShape(12.58.dp)
                         ) {
@@ -272,7 +348,7 @@ fun ApprovalRequestScreen(
                                 text = "Deny",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = AppColors.secondary
+                                color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getSecondaryButtonTextColor()
                             )
                         }
                     }
@@ -304,7 +380,7 @@ fun ApprovalRequestScreen(
                     Text(
                         text = "Authentication required to proceed with approval request.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = AppColors.textPrimary.copy(alpha = 0.8f),
+                        color = com.artiusid.sdk.ui.theme.ThemedTextColors.getSecondaryTextColor(),
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 30.dp)
                     )
@@ -318,7 +394,7 @@ fun ApprovalRequestScreen(
                             .fillMaxWidth()
                             .height(59.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = AppColors.secondary
+                            containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                         ),
                         shape = RoundedCornerShape(12.58.dp)
                     ) {
@@ -326,7 +402,7 @@ fun ApprovalRequestScreen(
                             text = "Back Home",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = AppColors.buttonTextPrimary
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor()
                         )
                     }
                 }

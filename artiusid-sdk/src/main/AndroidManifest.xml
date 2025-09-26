@@ -29,6 +29,14 @@
             android:screenOrientation="portrait"
             android:launchMode="singleTop" />
         
+        <!-- Approval Activity - Handles approval notifications with proper SDK theming -->
+        <activity
+            android:name=".ui.activities.ApprovalActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar"
+            android:screenOrientation="portrait"
+            android:launchMode="singleTop" />
+        
         <!-- Standalone App Activity - Bridge to complete standalone application -->
         <activity
             android:name=".standalone.StandaloneAppActivity"

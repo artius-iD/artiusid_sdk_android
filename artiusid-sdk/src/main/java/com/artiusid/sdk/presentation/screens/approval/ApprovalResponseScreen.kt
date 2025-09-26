@@ -7,6 +7,7 @@
 package com.artiusid.sdk.presentation.screens.approval
 
 import androidx.compose.foundation.Image
+import com.artiusid.sdk.ui.components.ThemedImage
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -85,11 +86,10 @@ fun ApprovalResponseScreen(
             verticalArrangement = Arrangement.Center
         ) {
             
-            // Approval Result Image (like iOS approved/declined images)
-            Image(
-                painter = painterResource(
-                    id = if (isApproved) R.drawable.img_success else R.drawable.declined
-                ),
+            // Approval Result Image (like iOS approved/declined images) - supports corporate image overrides
+            ThemedImage(
+                defaultResourceId = if (isApproved) R.drawable.img_success else R.drawable.declined,
+                overrideKey = if (isApproved) "success_icon" else "declined_icon",
                 contentDescription = if (isApproved) "Approved" else "Declined",
                 modifier = Modifier
                     .size(width = 353.dp, height = 254.dp)
@@ -101,7 +101,7 @@ fun ApprovalResponseScreen(
                 text = if (isApproved) "Request Approved" else "Request Declined",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isApproved) AppColors.success else AppColors.error,
+                color = if (isApproved) com.artiusid.sdk.ui.theme.ThemedStatusColors.getSuccessColor() else com.artiusid.sdk.ui.theme.ThemedStatusColors.getErrorColor(),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -118,7 +118,7 @@ fun ApprovalResponseScreen(
                     "You responded ${response.lowercase()}."
                 },
                 style = MaterialTheme.typography.bodyLarge,
-                color = AppColors.textPrimary.copy(alpha = 0.7f),
+                color = com.artiusid.sdk.ui.theme.ThemedTextColors.getSecondaryTextColor(),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,7 +134,7 @@ fun ApprovalResponseScreen(
                     .fillMaxWidth()
                     .height(59.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AppColors.secondary
+                    containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                 ),
                 shape = RoundedCornerShape(12.58.dp)
             ) {
@@ -142,7 +142,7 @@ fun ApprovalResponseScreen(
                     text = "Done",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = AppColors.buttonTextPrimary
+                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor()
                 )
             }
         }

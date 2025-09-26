@@ -59,7 +59,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // Handle notification data similar to iOS handleNotification
         handleNotification(remoteMessage.data)
 
-        // Show notification if app is in foreground
+        // Show notification
         showNotification(remoteMessage)
     }
 
@@ -134,16 +134,24 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             )
             notificationManager.createNotificationChannel(channel)
         }
-        // Create intent to launch the host app's main activity (sample app)
+        
+        // Check if this is an approval notification
+        val approvalTitle = remoteMessage.data["approvalTitle"]
+        val approvalDescription = remoteMessage.data["approvalDescription"]
+        val requestId = remoteMessage.data["requestId"]
+        
+        // MATCH iOS ARCHITECTURE: Always launch main activity, let state management handle navigation
+        // This ensures consistent behavior whether app is open or closed
         val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            // Add notification data as extras so BridgeMainActivity can handle it
+            if (approvalTitle != null && approvalDescription != null) {
+                putExtra("approvalTitle", approvalTitle)
+                putExtra("approvalDescription", approvalDescription)
+                requestId?.let { putExtra("requestId", it) }
+                Log.d(TAG, "🚀 Adding approval data to main activity intent - Title: $approvalTitle")
+            }
         } ?: Intent(this, StandaloneAppActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        
-        // Add notification data to intent for sample app handling
-        remoteMessage.data["approvalTitle"]?.let { intent.putExtra("approvalTitle", it) }
-        remoteMessage.data["approvalDescription"]?.let { intent.putExtra("approvalDescription", it) }
-        remoteMessage.data["requestId"]?.let { intent.putExtra("requestId", it) }
         
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
