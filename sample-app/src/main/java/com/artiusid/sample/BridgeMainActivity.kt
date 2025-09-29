@@ -143,9 +143,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         requestNotificationPermissions()
 
         // Check FCM token, certificate, and member ID status on startup
-        checkFCMTokenStatus()
-        checkCertificateStatus()
-        checkMemberIdStatus()
+        // IMPORTANT: Must get FCM token first, then request certificate if needed
+        initializeAppCredentials()
 
         // Handle notification intent if app was launched from notification
         handleNotificationIntent(intent)
@@ -482,6 +481,26 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 }
             }
             
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Temporary button to clear certificate for testing sandbox environment
+            Button(
+                onClick = { clearExistingCertificate() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF5722) // Orange/red for clear action
+                )
+            ) {
+                Text(
+                    text = "🧹 Clear Certificate (Test)",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFFFFFF)
+                )
+            }
+            
             Spacer(modifier = Modifier.height(8.dp))
             
             // FCM Token Refresh Button (for debugging)
@@ -739,6 +758,78 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         }
     }
     
+    /**
+     * Initialize app credentials in the correct sequence:
+     * 1. Get FCM token first
+     * 2. Request certificate using FCM token (if none exists)
+     * 3. Check member ID status
+     */
+    private fun initializeAppCredentials() {
+        android.util.Log.d("BridgeMainActivity", "🔐 Starting credential initialization sequence...")
+        
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Step 1: Ensure we have FCM token
+                android.util.Log.d("BridgeMainActivity", "📱 Step 1: Getting FCM token...")
+                val fcmTokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this@BridgeMainActivity)
+                val fcmToken = fcmTokenManager?.getFCMTokenAsync()
+                
+                runOnUiThread {
+                    if (!fcmToken.isNullOrEmpty()) {
+                        fcmTokenStatus = "✅ Available"
+                        fcmTokenPreview = fcmToken.take(20) + "..."
+                        lastResult = "✅ FCM Token retrieved: ${fcmToken.take(20)}..."
+                        android.util.Log.d("BridgeMainActivity", "✅ FCM token available: ${fcmToken.take(20)}...")
+                    } else {
+                        fcmTokenStatus = "❌ Failed"
+                        lastResult = "❌ FCM Token retrieval failed"
+                        android.util.Log.e("BridgeMainActivity", "❌ FCM token retrieval failed")
+                        return@runOnUiThread
+                    }
+                }
+                
+                // Step 2: Ensure we have certificate (request if needed)
+                android.util.Log.d("BridgeMainActivity", "🔐 Step 2: Ensuring certificate exists...")
+                val apiManager = com.artiusid.sdk.services.APIManager(this@BridgeMainActivity)
+                val deviceId = fcmToken ?: return@launch // Use FCM token as device ID like iOS
+                val serviceUrl = com.artiusid.sdk.utils.UrlBuilder.getLoadCertificateBaseUrl(this@BridgeMainActivity)
+                
+                try {
+                    // This will check if certificate exists, and if not, request one
+                    apiManager.ensureCertificate(deviceId, serviceUrl)
+                    
+                    runOnUiThread {
+                        val currentResult = lastResult
+                        lastResult = "$currentResult\n✅ Certificate ensured (generated or found)"
+                        android.util.Log.d("BridgeMainActivity", "✅ Certificate ensured successfully")
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        val currentResult = lastResult
+                        lastResult = "$currentResult\n❌ Certificate error: ${e.message}"
+                        android.util.Log.e("BridgeMainActivity", "❌ Certificate ensure failed", e)
+                    }
+                }
+                
+                // Step 3: Check certificate status
+                runOnUiThread {
+                    checkCertificateStatus()
+                }
+                
+                // Step 4: Check member ID status
+                runOnUiThread {
+                    checkMemberIdStatus()
+                }
+                
+            } catch (e: Exception) {
+                runOnUiThread {
+                    lastResult = "❌ Credential initialization error: ${e.message}"
+                    android.util.Log.e("BridgeMainActivity", "❌ Credential initialization failed", e)
+                }
+            }
+        }
+    }
+    
     private fun checkFCMTokenStatus() {
         android.util.Log.d("BridgeMainActivity", "🔍 Checking FCM token status...")
         
@@ -892,6 +983,32 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         }
     }
 
+    private fun clearExistingCertificate() {
+        try {
+            android.util.Log.d("BridgeMainActivity", "🧹 Clearing existing certificate for sandbox environment...")
+            
+            // Method 1: Use APIManager to clear certificate and key
+            val apiManager = com.artiusid.sdk.services.APIManager(this)
+            apiManager.clearAndReloadIdentity()
+            
+            // Method 2: Also clear from CertificateManager directly
+            val certManager = com.artiusid.sdk.utils.CertificateManager(this)
+            certManager.removeCertificatePem()
+            certManager.removeKeyPair()
+            
+            android.util.Log.d("BridgeMainActivity", "✅ Certificate cleared successfully")
+            
+            // Update UI to show certificate status
+            checkCertificateStatus()
+            
+            lastResult = "✅ Certificate cleared successfully - ready for sandbox registration"
+            
+        } catch (e: Exception) {
+            android.util.Log.e("BridgeMainActivity", "❌ Error clearing certificate", e)
+            lastResult = "❌ Error clearing certificate: ${e.message}"
+        }
+    }
+    
     private fun checkMemberIdStatus() {
         android.util.Log.d("BridgeMainActivity", "👤 Checking member ID status...")
         

@@ -11,12 +11,12 @@ import android.content.SharedPreferences
 
 object UrlBuilder {
     
-    // Base URLs matching iOS AppConstants
-    private const val VERIFICATION_BASE_URL = "https://service-mobile.#env#artiusid.dev"
-    private const val AUTHENTICATION_BASE_URL = "https://service-mobile.#env#artiusid.dev"
-    private const val APPROVAL_RESPONSE_URL = "https://service-mobile.#env#artiusid.dev"
-    private const val APPROVAL_REQUEST_URL = "https://service-mobile.#env#artiusid.dev"
-    private const val LOAD_CERTIFICATE_URL = "https://service-registration.#env#artiusid.dev"
+    // Base URLs matching new API endpoints
+    private const val VERIFICATION_BASE_URL = "https://sandbox.mobile.artiusid.dev"
+    private const val AUTHENTICATION_BASE_URL = "https://sandbox.mobile.artiusid.dev"
+    private const val APPROVAL_RESPONSE_URL = "https://sandbox.mobile.artiusid.dev"
+    private const val APPROVAL_REQUEST_URL = "https://sandbox.mobile.artiusid.dev"
+    private const val LOAD_CERTIFICATE_URL = "https://sandbox.registration.artiusid.dev"
     
     // Service paths matching iOS ServiceTypes
     private const val VERIFICATION_PATH = "verifi/api/verification"
@@ -55,16 +55,14 @@ object UrlBuilder {
     }
     
     private fun getBaseUrl(serviceType: ServiceType, environment: Environment): String {
-        val baseUrl = when (serviceType) {
+        // Return the fixed sandbox URLs (no environment replacement needed)
+        return when (serviceType) {
             ServiceType.VERIFICATION -> VERIFICATION_BASE_URL
             ServiceType.AUTHENTICATION -> AUTHENTICATION_BASE_URL
             ServiceType.APPROVAL_REQUEST -> APPROVAL_REQUEST_URL
             ServiceType.APPROVAL_RESPONSE -> APPROVAL_RESPONSE_URL
             ServiceType.LOAD_CERTIFICATE -> LOAD_CERTIFICATE_URL
         }
-        
-        val envDomain = getEnvironmentDomain(environment)
-        return baseUrl.replace("#env#", envDomain)
     }
     
     private fun getServicePath(serviceType: ServiceType): String {
@@ -81,7 +79,9 @@ object UrlBuilder {
         val environment = getEnvironmentFromSettings(context)
         val baseUrl = getBaseUrl(serviceType, environment)
         val path = getServicePath(serviceType)
-        return "$baseUrl/$path"
+        val fullUrl = "$baseUrl/$path"
+        android.util.Log.d("UrlBuilder", "🌐 Built endpoint URL for $serviceType: $fullUrl")
+        return fullUrl
     }
     
     fun buildBaseUrl(context: Context, serviceType: ServiceType): String {

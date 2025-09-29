@@ -60,13 +60,18 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
         // iOS-like positioning thresholds (adjusted to show more directional arrows)
         private const val INITIAL_PITCH_THRESHOLD = 3.0 // degrees (stricter)
         private const val INITIAL_YAW_THRESHOLD = 2.5 // degrees (lowered to trigger Face Left/Right more easily)
-        private const val POSITIONING_DISTANCE_MIN = 30.0f // cm (stricter)
-        private const val POSITIONING_DISTANCE_MAX = 45.0f // cm (stricter)
+        private const val POSITIONING_DISTANCE_MIN = 20.0f // cm (more comfortable - closer to user)
+        private const val POSITIONING_DISTANCE_MAX = 60.0f // cm (more comfortable - allows further distance)
         
         // Strict thresholds for final selfie capture when looking straight forward
         private const val SELFIE_YAW_THRESHOLD = 5.0f // ±5° for left/right
         private const val SELFIE_PITCH_THRESHOLD = 5.0f // ±5° for up/down
         private const val SELFIE_ROLL_THRESHOLD = 10.0f // ±10° for head tilt
+        
+        // Minimum rotation thresholds for segment completion (require more significant head movement)
+        private const val MIN_YAW_ROTATION_FOR_SEGMENT = 25.0 // degrees - minimum yaw rotation to trigger segment (increased)
+        private const val MIN_PITCH_ROTATION_FOR_SEGMENT = 25.0 // degrees - minimum pitch rotation to trigger segment (increased)
+        private const val MIN_ROTATION_MAGNITUDE_FOR_SEGMENT = 30.0 // degrees - minimum combined rotation magnitude (increased)
     }
     
     private val faceDetector: FaceDetector = FaceDetection.getClient(
@@ -480,16 +485,30 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
         if (recentPitchDegrees.size > YAW_WINDOW_SIZE) recentPitchDegrees.removeAt(0)
         val averageYaw = recentYawDegrees.average()
         val averagePitch = recentPitchDegrees.average()
-        Log.d(TAG, "Guided capture: averageYaw=$averageYaw, averagePitch=$averagePitch")
-        val segmentIndex = calculateSegmentIndex(averageYaw, averagePitch, roll.toDouble())
-        if (segmentIndex >= 0 && segmentIndex < _segmentStatus.value.size) {
-            if (!visitedSegments.contains(segmentIndex)) {
-                val newSegmentStatus = _segmentStatus.value.toMutableList()
-                newSegmentStatus[segmentIndex] = true
-                _segmentStatus.value = newSegmentStatus
-                visitedSegments.add(segmentIndex)
-                Log.d(TAG, "[SegmentFill] Segment $segmentIndex visited. Total: ${visitedSegments.size}/8. Visited: $visitedSegments")
+        
+        // Calculate rotation magnitude to ensure significant head movement
+        val rotationMagnitude = Math.sqrt(averageYaw * averageYaw + averagePitch * averagePitch)
+        
+        Log.d(TAG, "Guided capture: averageYaw=$averageYaw, averagePitch=$averagePitch, magnitude=$rotationMagnitude")
+        
+        // Only trigger segment if rotation is significant enough
+        val hasSignificantYawRotation = Math.abs(averageYaw) >= MIN_YAW_ROTATION_FOR_SEGMENT
+        val hasSignificantPitchRotation = Math.abs(averagePitch) >= MIN_PITCH_ROTATION_FOR_SEGMENT
+        val hasSignificantMagnitude = rotationMagnitude >= MIN_ROTATION_MAGNITUDE_FOR_SEGMENT
+        
+        if (hasSignificantYawRotation || hasSignificantPitchRotation || hasSignificantMagnitude) {
+            val segmentIndex = calculateSegmentIndex(averageYaw, averagePitch, roll.toDouble())
+            if (segmentIndex >= 0 && segmentIndex < _segmentStatus.value.size) {
+                if (!visitedSegments.contains(segmentIndex)) {
+                    val newSegmentStatus = _segmentStatus.value.toMutableList()
+                    newSegmentStatus[segmentIndex] = true
+                    _segmentStatus.value = newSegmentStatus
+                    visitedSegments.add(segmentIndex)
+                    Log.d(TAG, "[SegmentFill] Segment $segmentIndex visited with significant rotation (magnitude: $rotationMagnitude°). Total: ${visitedSegments.size}/8. Visited: $visitedSegments")
+                }
             }
+        } else {
+            Log.d(TAG, "[SegmentFill] Rotation not significant enough - yaw: ${Math.abs(averageYaw)}° (need ${MIN_YAW_ROTATION_FOR_SEGMENT}°), pitch: ${Math.abs(averagePitch)}° (need ${MIN_PITCH_ROTATION_FOR_SEGMENT}°), magnitude: $rotationMagnitude° (need ${MIN_ROTATION_MAGNITUDE_FOR_SEGMENT}°)")
         }
         _currentInstruction.value = "Move your head to fill all segments (${visitedSegments.size}/8)"
         detectBlink(face) // Only for future use
@@ -987,34 +1006,56 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
     }
     
     /**
-     * Simplified positioning - skip face up/down/left/right for faster processing
-     * Only check basic distance requirements
+     * Enhanced positioning - ensure face fits properly in overlay before starting liveness
+     * Check distance, face size, and basic orientation
      */
     private fun provideInitialInstructions(yaw: Float, pitch: Float, roll: Float, distanceToFace: Float): PositioningResult {
-        Log.d(TAG, "🎯 [SIMPLIFIED POSITIONING] Distance: ${distanceToFace}cm")
+        Log.d(TAG, "🎯 [ENHANCED POSITIONING] Distance: ${distanceToFace}cm, Yaw: $yaw°, Pitch: $pitch°")
         
-        // Only check distance - skip face orientation checks for speed
+        // First check distance requirements
         if (distanceToFace < POSITIONING_DISTANCE_MIN) {
             Log.d(TAG, "🎯 [POSITIONING] DISTANCE TOO CLOSE: ${distanceToFace}cm < ${POSITIONING_DISTANCE_MIN}cm")
             return PositioningResult(
                 isPositioned = false,
                 instructionText = "Move phone away.",
-                alignmentDirection = ""  // No specific direction - just distance
+                alignmentDirection = ""
             )
         } else if (distanceToFace > POSITIONING_DISTANCE_MAX) {
             Log.d(TAG, "🎯 [POSITIONING] DISTANCE TOO FAR: ${distanceToFace}cm > ${POSITIONING_DISTANCE_MAX}cm")
             return PositioningResult(
                 isPositioned = false,
                 instructionText = "Move phone closer.",
-                alignmentDirection = ""  // No specific direction - just distance
+                alignmentDirection = ""
             )
         }
         
-        // Skip face orientation checks - accept any face angle for faster processing
-        Log.d(TAG, "🎯 [POSITIONING] FACE POSITIONED - SKIPPING ORIENTATION CHECKS FOR SPEED")
+        // Check if face is reasonably centered (not too tilted) before starting liveness
+        val isReasonablyCentered = Math.abs(yaw) < INITIAL_YAW_THRESHOLD * 3 && Math.abs(pitch) < INITIAL_PITCH_THRESHOLD * 3
+        val isExtremelyTilted = Math.abs(roll) > 30.0f // Don't start if head is extremely tilted
+        
+        if (!isReasonablyCentered) {
+            Log.d(TAG, "🎯 [POSITIONING] FACE NOT CENTERED - Yaw: $yaw°, Pitch: $pitch°")
+            return PositioningResult(
+                isPositioned = false,
+                instructionText = "Center your face in the circle.",
+                alignmentDirection = ""
+            )
+        }
+        
+        if (isExtremelyTilted) {
+            Log.d(TAG, "🎯 [POSITIONING] HEAD TOO TILTED - Roll: $roll°")
+            return PositioningResult(
+                isPositioned = false,
+                instructionText = "Keep your head straight.",
+                alignmentDirection = ""
+            )
+        }
+        
+        // Face is properly positioned - can start liveness check
+        Log.d(TAG, "🎯 [POSITIONING] FACE PROPERLY POSITIONED - READY FOR LIVENESS CHECK")
         return PositioningResult(
             isPositioned = true,
-            instructionText = "Hold steady...",
+            instructionText = "Perfect! Hold steady...",
             alignmentDirection = ""
         )
     }

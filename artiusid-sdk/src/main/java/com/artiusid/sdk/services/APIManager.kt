@@ -69,11 +69,17 @@ class APIManager(private val context: Context) {
         Log.d(TAG, "Loading certificate from: $fullUrl")
         return withContext(Dispatchers.IO) {
             try {
+                // Certificate registration endpoint should NOT use mTLS or strict certificate pinning
+                // This endpoint provides the client certificate, so it must be accessible without one
+                Log.d(TAG, "🔓 Creating plain OkHttpClient for certificate registration (NO mTLS, NO pinning)")
                 val client = OkHttpClient.Builder()
                     .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    // Use system default SSL context (no custom pinning or mTLS)
                     .build()
+                
+                Log.d(TAG, "🔓 Plain client created successfully - will use system trust store only")
 
                 val jsonBody = JSONObject().apply {
                     put("deviceId", request.deviceId)
