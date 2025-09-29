@@ -112,6 +112,12 @@ object EnhancedThemeManager {
      * Update the current theme configuration
      */
     fun updateCurrentThemeConfig(config: EnhancedSDKThemeConfiguration?) {
+        android.util.Log.d("EnhancedThemeManager", "🎨 updateCurrentThemeConfig called with: ${config?.brandName ?: "null"}")
+        if (config != null) {
+            android.util.Log.d("EnhancedThemeManager", "🎨 New theme background: ${config.colorScheme.backgroundColorHex}")
+            android.util.Log.d("EnhancedThemeManager", "🎨 New theme primary button: ${config.colorScheme.primaryButtonColorHex}")
+        }
+        
         currentThemeConfig = config
         _currentThemeState.value = config ?: defaultArtiusIDTheme
         
@@ -414,13 +420,15 @@ fun EnhancedSDKTheme(
     themeConfig: EnhancedSDKThemeConfiguration,
     content: @Composable () -> Unit
 ) {
-    // Set the theme configuration in the manager
-    EnhancedThemeManager.setThemeConfiguration(themeConfig)
+    // Log the theme being applied for debugging
+    android.util.Log.d("EnhancedSDKTheme", "🎨 Applying theme: ${themeConfig.brandName}")
     
     // Create AppColorScheme from the theme configuration
     val appColorScheme = createAppColorSchemeFromSDKTheme(themeConfig.colorScheme)
     
     // Provide theme values through composition locals
+    // NOTE: We don't call setThemeConfiguration here to avoid overriding the globally set theme
+    // The theme should be set by the SDK initialization or theme selection
     CompositionLocalProvider(
         LocalSDKTheme provides themeConfig,
         LocalSDKTextContent provides themeConfig.textContent,

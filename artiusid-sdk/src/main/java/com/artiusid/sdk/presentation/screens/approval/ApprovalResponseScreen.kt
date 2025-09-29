@@ -133,16 +133,13 @@ fun ApprovalResponseScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(59.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
-                ),
+                colors = com.artiusid.sdk.ui.theme.AppButtonDefaults.primaryButtonColors(),
                 shape = RoundedCornerShape(12.58.dp)
             ) {
                 Text(
                     text = "Done",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor()
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

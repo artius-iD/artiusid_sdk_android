@@ -184,40 +184,48 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 ) {
                     when {
                         showApprovalRequestScreen -> {
-                            // Create ViewModel manually (without Hilt to avoid dependency issues)
-                            val viewModelFactory = remember {
-                                object : ViewModelProvider.Factory {
-                                    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                                        if (modelClass.isAssignableFrom(ApprovalRequestViewModel::class.java)) {
-                                            // Create a mock ApiService instance for approval flow
-                                            val apiService = object : ApiService {
-                                                override suspend fun verify(clientId: Int, clientGroupId: Int, request: LinkedHashMap<String, Any>) = 
-                                                    throw NotImplementedError("Not needed for approval flow")
-                                                override suspend fun authenticate(clientId: Int, clientGroupId: Int, accountNumber: String, request: com.artiusid.sdk.data.model.AuthenticationRequest) = 
-                                                    throw NotImplementedError("Not needed for approval flow")
-                                                override suspend fun sendApprovalResponse(request: com.artiusid.sdk.data.model.ApprovalRequest) = 
-                                                    throw NotImplementedError("Not needed for approval flow")
-                                                override suspend fun loadCertificate(clientId: Int, clientGroupId: Int, request: com.artiusid.sdk.data.model.LoadCertificateRequest) = 
-                                                    throw NotImplementedError("Not needed for approval flow")
-                                                override suspend fun loadCertificate(request: com.artiusid.sdk.data.model.LoadCertificateRequest) = 
-                                                    throw NotImplementedError("Not needed for approval flow")
-                                                override suspend fun sendApprovalRequestIOS(request: com.artiusid.sdk.data.model.ApprovalRequestTestingRequest) = 
-                                                    throw NotImplementedError("Not needed for approval flow")
-                                                override suspend fun approval(request: com.artiusid.sdk.data.model.ApprovalRequest) = 
-                                                    throw NotImplementedError("Not needed for approval flow")
+                            // Get current theme configuration directly from EnhancedThemeManager
+                            val themeConfig = com.artiusid.sdk.ui.theme.EnhancedThemeManager.getCurrentThemeConfig()
+                            android.util.Log.d("BridgeMainActivity", "🎨 Approval Request - Using theme: ${themeConfig.brandName}")
+                            
+                            // Wrap approval screens with SDK theme context (like AuthenticationActivity does)
+                            com.artiusid.sdk.ui.theme.EnhancedSDKTheme(
+                                themeConfig = themeConfig
+                            ) {
+                                // Create ViewModel manually (without Hilt to avoid dependency issues)
+                                val viewModelFactory = remember {
+                                    object : ViewModelProvider.Factory {
+                                        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                                            if (modelClass.isAssignableFrom(ApprovalRequestViewModel::class.java)) {
+                                                // Create a mock ApiService instance for approval flow
+                                                val apiService = object : ApiService {
+                                                    override suspend fun verify(clientId: Int, clientGroupId: Int, request: LinkedHashMap<String, Any>) = 
+                                                        throw NotImplementedError("Not needed for approval flow")
+                                                    override suspend fun authenticate(clientId: Int, clientGroupId: Int, accountNumber: String, request: com.artiusid.sdk.data.model.AuthenticationRequest) = 
+                                                        throw NotImplementedError("Not needed for approval flow")
+                                                    override suspend fun sendApprovalResponse(request: com.artiusid.sdk.data.model.ApprovalRequest) = 
+                                                        throw NotImplementedError("Not needed for approval flow")
+                                                    override suspend fun loadCertificate(clientId: Int, clientGroupId: Int, request: com.artiusid.sdk.data.model.LoadCertificateRequest) = 
+                                                        throw NotImplementedError("Not needed for approval flow")
+                                                    override suspend fun loadCertificate(request: com.artiusid.sdk.data.model.LoadCertificateRequest) = 
+                                                        throw NotImplementedError("Not needed for approval flow")
+                                                    override suspend fun sendApprovalRequestIOS(request: com.artiusid.sdk.data.model.ApprovalRequestTestingRequest) = 
+                                                        throw NotImplementedError("Not needed for approval flow")
+                                                    override suspend fun approval(request: com.artiusid.sdk.data.model.ApprovalRequest) = 
+                                                        throw NotImplementedError("Not needed for approval flow")
+                                                }
+                                                @Suppress("UNCHECKED_CAST")
+                                                return ApprovalRequestViewModel(apiService) as T
                                             }
-                                            @Suppress("UNCHECKED_CAST")
-                                            return ApprovalRequestViewModel(apiService) as T
+                                            throw IllegalArgumentException("Unknown ViewModel class")
                                         }
-                                        throw IllegalArgumentException("Unknown ViewModel class")
                                     }
                                 }
-                            }
-                            
-                            val viewModel = viewModel<ApprovalRequestViewModel>(factory = viewModelFactory)
-                            
-                            // Use SDK approval screens (like authentication screens) for proper theming
-                            com.artiusid.sdk.presentation.screens.approval.ApprovalRequestScreen(
+                                
+                                val viewModel = viewModel<ApprovalRequestViewModel>(factory = viewModelFactory)
+                                
+                                // Use SDK approval screens (like authentication screens) for proper theming
+                                com.artiusid.sdk.presentation.screens.approval.ApprovalRequestScreen(
                                 onNavigateToApprovalResponse = { response ->
                                     android.util.Log.d("BridgeMainActivity", "📝 Approval response: $response")
                                     approvalResponse = if (response == "yes") "approve" else "deny"
@@ -253,20 +261,30 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                                 viewModel = viewModel
                             )
                         }
+                        }
                         showApprovalResponseScreen -> {
-                            // Use SDK approval response screen for proper theming
-                            com.artiusid.sdk.presentation.screens.approval.ApprovalResponseScreen(
-                                response = if (approvalResponse == "approve") "yes" else "no",
-                                onNavigateToHome = {
-                                    android.util.Log.d("BridgeMainActivity", "🏠 Returning to home from approval response")
-                                    showApprovalResponseScreen = false
-                                    approvalRequestId = null
-                                    approvalTitle = ""
-                                    approvalDescription = ""
-                                    approvalResponse = ""
-                                    AppNotificationState.reset()
-                                }
-                            )
+                            // Get current theme configuration directly from EnhancedThemeManager
+                            val themeConfig = com.artiusid.sdk.ui.theme.EnhancedThemeManager.getCurrentThemeConfig()
+                            android.util.Log.d("BridgeMainActivity", "🎨 Approval Response - Using theme: ${themeConfig.brandName}")
+                            
+                            // Wrap approval response screen with SDK theme context (like AuthenticationActivity does)
+                            com.artiusid.sdk.ui.theme.EnhancedSDKTheme(
+                                themeConfig = themeConfig
+                            ) {
+                                // Use SDK approval response screen for proper theming
+                                com.artiusid.sdk.presentation.screens.approval.ApprovalResponseScreen(
+                                    response = if (approvalResponse == "approve") "yes" else "no",
+                                    onNavigateToHome = {
+                                        android.util.Log.d("BridgeMainActivity", "🏠 Returning to home from approval response")
+                                        showApprovalResponseScreen = false
+                                        approvalRequestId = null
+                                        approvalTitle = ""
+                                        approvalDescription = ""
+                                        approvalResponse = ""
+                                        AppNotificationState.reset()
+                                    }
+                                )
+                            }
                         }
                         showResultsScreen && verificationResultData != null -> {
                             VerificationResultsScreen(
@@ -309,7 +327,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             )
             
             Text(
-                text = "🌉 Bridge to Complete Standalone Application",
+                text = "Secure identity verification and authentication",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
@@ -336,7 +354,15 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     
                     ThemeDropdown(
                         selectedTheme = selectedTheme,
-                        onThemeSelected = { selectedTheme = it }
+                        onThemeSelected = { 
+                            android.util.Log.d("BridgeMainActivity", "🎨 Theme dropdown changed to: ${it.displayName}")
+                            android.util.Log.d("BridgeMainActivity", "🎨 New theme brand name: ${it.themeConfig.brandName}")
+                            android.util.Log.d("BridgeMainActivity", "🎨 New theme background: ${it.themeConfig.colorScheme.backgroundColorHex}")
+                            android.util.Log.d("BridgeMainActivity", "🎨 New theme primary button: ${it.themeConfig.colorScheme.primaryButtonColorHex}")
+                            selectedTheme = it
+                            // Re-initialize SDK with new theme configuration
+                            initializeSDK()
+                        }
                     )
                 }
             }
@@ -401,7 +427,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     )
                 } else {
                     Text(
-                        text = "🔍 Start Verification (Bridge)",
+                        text = "🔍 Start Verification",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
@@ -422,7 +448,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 )
             ) {
                 Text(
-                    text = "🔐 Start Authentication (Bridge)",
+                    text = "🔐 Start Authentication",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
@@ -698,6 +724,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             )
             
             // Initialize SDK with enhanced theme
+            android.util.Log.d("BridgeMainActivity", "🎨 Initializing SDK with theme: ${selectedTheme.themeConfig.brandName}")
             ArtiusIDSDK.initializeWithEnhancedTheme(
                 context = this,
                 configuration = sdkConfig,
@@ -1157,13 +1184,12 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         
         // Also update the text result for debugging
         lastResult = """
-            ✅ Verification Success (Bridge) [$timestamp]
+            ✅ Verification Success [$timestamp]
             ID: ${result.verificationId}
             Confidence: ${(result.confidence * 100).toInt()}%
             Document: ${result.documentType ?: "Unknown"}
             Processing Time: ${result.processingTime}ms
             Session: ${result.sessionId}
-            🌉 Via Standalone App Bridge
         """.trimIndent()
     }
     
@@ -1171,17 +1197,16 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = """
-            ❌ Verification Error (Bridge) [$timestamp]
+            ❌ Verification Error [$timestamp]
             Code: ${error.code}
             Message: ${error.message}
-            🌉 Via Standalone App Bridge
         """.trimIndent()
     }
     
     override fun onVerificationCancelled() {
         isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-        lastResult = "⏹️ Verification Cancelled (Bridge) [$timestamp]\n🌉 Via Standalone App Bridge"
+        lastResult = "⏹️ Verification Cancelled [$timestamp]"
     }
     
     // AuthenticationCallback implementation
@@ -1189,12 +1214,11 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = """
-            ✅ Authentication Success (Bridge) [$timestamp]
+            ✅ Authentication Success [$timestamp]
             ID: ${result.authenticationId}
             Confidence: ${(result.confidence * 100).toInt()}%
             Processing Time: ${result.processingTime}ms
             Session: ${result.sessionId}
-            🌉 Via Standalone App Bridge
         """.trimIndent()
     }
     
@@ -1202,17 +1226,16 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = """
-            ❌ Authentication Error (Bridge) [$timestamp]
+            ❌ Authentication Error [$timestamp]
             Code: ${error.code}
             Message: ${error.message}
-            🌉 Via Standalone App Bridge
         """.trimIndent()
     }
     
     override fun onAuthenticationCancelled() {
         isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-        lastResult = "⏹️ Authentication Cancelled (Bridge) [$timestamp]\n🌉 Via Standalone App Bridge"
+        lastResult = "⏹️ Authentication Cancelled [$timestamp]"
     }
 }
 

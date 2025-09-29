@@ -316,16 +316,13 @@ fun ApprovalRequestScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(59.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
-                            ),
+                            colors = com.artiusid.sdk.ui.theme.AppButtonDefaults.primaryButtonColors(),
                             shape = RoundedCornerShape(12.58.dp)
                         ) {
                             Text(
                                 text = "Approve",
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor()
+                                fontWeight = FontWeight.Bold
                             )
                         }
                         
@@ -337,18 +334,13 @@ fun ApprovalRequestScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(59.dp),
-                            border = androidx.compose.foundation.BorderStroke(2.dp, com.artiusid.sdk.ui.theme.ThemedButtonColors.getSecondaryButtonColor()),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getSecondaryButtonColor(),
-                                containerColor = Color.Transparent
-                            ),
+                            colors = com.artiusid.sdk.ui.theme.AppButtonDefaults.outlinedButtonColors(),
                             shape = RoundedCornerShape(12.58.dp)
                         ) {
                             Text(
                                 text = "Deny",
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getSecondaryButtonTextColor()
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -393,16 +385,13 @@ fun ApprovalRequestScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(59.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
-                        ),
+                        colors = com.artiusid.sdk.ui.theme.AppButtonDefaults.primaryButtonColors(),
                         shape = RoundedCornerShape(12.58.dp)
                     ) {
                         Text(
                             text = "Back Home",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor()
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
