@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sample App Localization Override File
+  
+  This file allows the sample app to customize all text strings used in the embedded SDK.
+  Any string defined here will override the corresponding string in the SDK.
+  
+  To customize SDK text:
+  1. Uncomment the string you want to override
+  2. Change the text to your desired value
+  3. The SDK will automatically use your custom text
+-->
+<resources>
+    <!-- Sample App Specific -->
+    <string name="app_name">artius.iD Sample</string>
+    
+    <!-- ========================================= -->
+    <!-- LOCALIZATION CUSTOMIZATION INSTRUCTIONS -->
+    <!-- ========================================= -->
+    <!-- 
+    To customize any SDK text string:
+    1. Add the string definition below with your custom text
+    2. The SDK will automatically use your custom text instead of the default
+    3. See examples below for how to customize strings
+    
+    Available strings to customize:
+    - All button labels (button_verify_now, button_start_now, etc.)
+    - All screen titles and subtitles
+    - All instruction text
+    - All error messages
+    - All status messages
+    - All tips and help text
+    
+    For a complete list of available strings, see:
+    artiusid-sdk/src/main/res/values/strings.xml
+    -->
+    
+    <!-- ========================================= -->
+    <!-- SDK STRING OVERRIDES                     -->
+    <!-- Uncomment and modify any string below    -->
+    <!-- to customize the SDK's text              -->
+    <!-- ========================================= -->
+    
+    <!-- Common/Generic Strings -->
+    <!-- <string name="ok">OK</string> -->
+    <!-- <string name="cancel">Cancel</string> -->
+    <!-- <string name="retry">Retry</string> -->
+    <!-- <string name="back">Back</string> -->
+    <!-- <string name="next">Next</string> -->
+    <!-- <string name="done">Done</string> -->
+    <!-- <string name="error">Error</string> -->
+    <!-- <string name="success">Success</string> -->
+    <!-- <string name="warning">Warning</string> -->
+    <!-- <string name="info">Info</string> -->
+    <!-- <string name="help">Help</string> -->
+    <!-- <string name="settings">Settings</string> -->
+    <!-- <string name="close">Close</string> -->
+    <!-- <string name="menu">Menu</string> -->
+    <!-- <string name="loading">Loading…</string> -->
+    <!-- <string name="processing">Processing…</string> -->
+    <!-- <string name="please_wait">Please wait…</string> -->
+    
+    <!-- Button Labels -->
+    <!-- <string name="button_verify_now">Verify Now</string> -->
+    <!-- <string name="button_authenticate">Authenticate</string> -->
+    <!-- <string name="button_approve">Approve</string> -->
+    <!-- <string name="button_deny">Deny</string> -->
+    <!-- <string name="button_try_again">Try Again</string> -->
+    <!-- <string name="button_back_home">Back Home</string> -->
+    <!-- <string name="button_go_back">Go Back</string> -->
+    <!-- <string name="button_start_now">Start Now</string> -->
+    <!-- <string name="button_continue">Continue</string> -->
+    <!-- <string name="button_skip">Skip</string> -->
+    
+    <!-- Home Screen -->
+    <!-- <string name="welcome_to">Welcome to</string> -->
+    <!-- <string name="home_intro_title_1">Best way to secure</string> -->
+    <!-- <string name="home_intro_title_2">your</string> -->
+    <!-- <string name="home_intro_title_3">true</string> -->
+    <!-- <string name="home_intro_title_4">identity</string> -->
+    
+    <!-- Verification Steps Screen -->
+    <!-- <string name="verification_steps_title">Verification Steps</string> -->
+    <!-- <string name="verification_steps_subtitle">Complete these steps to verify your identity</string> -->
+    <!-- <string name="step_document_scan">Scan Document</string> -->
+    <!-- <string name="step_face_scan">Face Verification</string> -->
+    <!-- <string name="step_processing">Processing</string> -->
+    
+    <!-- Document Selection -->
+    <!-- <string name="select_document_title">Select Document Type</string> -->
+    <!-- <string name="select_document_subtitle">Choose the type of document you want to verify</string> -->
+    <!-- <string name="document_type_state_id">State ID / Driver's License</string> -->
+    <!-- <string name="document_type_passport">Passport</string> -->
+    
+    <!-- Document Scan Instructions -->
+    <!-- <string name="document_scan_title">Scan Your Document</string> -->
+    <!-- <string name="document_scan_subtitle">Position your document within the frame</string> -->
+    <!-- <string name="document_scan_front_title">Scan Front of ID</string> -->
+    <!-- <string name="document_scan_back_title">Scan Back of ID</string> -->
+    <!-- <string name="passport_scan_title">Scan Your Passport</string> -->
+    <!-- <string name="passport_scan_subtitle">Position the information page within the frame</string> -->
+    
+    <!-- Document Scan Tips -->
+    <!-- <string name="tip_good_lighting">Use good lighting</string> -->
+    <!-- <string name="tip_avoid_glare">Avoid glare and shadows</string> -->
+    <!-- <string name="tip_fill_frame">Fill the entire frame</string> -->
+    <!-- <string name="tip_hold_steady">Hold steady for best results</string> -->
+    
+    <!-- Face Scan Instructions -->
+    <!-- <string name="face_scan_title">Face Verification</string> -->
+    <!-- <string name="face_scan_subtitle">Position your face in the circle</string> -->
+    <!-- <string name="face_scan_intro_title">Face Verification</string> -->
+    <!-- <string name="face_scan_intro_subtitle">We'll take a photo to verify your identity</string> -->
+    
+    <!-- Face Scan Tips -->
+    <!-- <string name="face_tip_no_glasses">Remove glasses if possible</string> -->
+    <!-- <string name="face_tip_no_hat">Remove hat or head covering</string> -->
+    <!-- <string name="face_tip_no_mask">Remove face mask</string> -->
+    <!-- <string name="face_tip_good_light">Use good lighting</string> -->
+    
+    <!-- Face Scan Status -->
+    <!-- <string name="face_scan_searching">Looking for face…</string> -->
+    <!-- <string name="face_scan_found">Face found</string> -->
+    <!-- <string name="face_scan_align">Align your face</string> -->
+    <!-- <string name="face_scan_hold_still">Hold still</string> -->
+    <!-- <string name="face_scan_capturing">Capturing…</string> -->
+    <!-- <string name="face_scan_complete">Complete!</string> -->
+    <!-- <string name="face_blink_to_complete">Please blink to complete</string> -->
+    <!-- <string name="face_liveness_completed">Liveness check completed!</string> -->
+    <!-- <string name="face_position_in_circle">Position your face in the circle</string> -->
+    <!-- <string name="face_centered_taking_selfie">Face centered! Taking selfie…</string> -->
+    
+    <!-- NFC Passport Scan -->
+    <!-- <string name="nfc_scan_title">Scan NFC Chip</string> -->
+    <!-- <string name="nfc_scan_subtitle">Hold your phone near the passport</string> -->
+    <!-- <string name="nfc_scan_instruction">Place your phone on the passport and hold steady</string> -->
+    <!-- <string name="nfc_scan_searching">Searching for NFC chip…</string> -->
+    <!-- <string name="nfc_scan_found">NFC chip found</string> -->
+    <!-- <string name="nfc_scan_reading">Reading chip data…</string> -->
+    <!-- <string name="nfc_scan_complete">NFC scan complete</string> -->
+    <!-- <string name="nfc_scan_failed">NFC scan failed</string> -->
+    <!-- <string name="nfc_scan_retry">Retry NFC Scan</string> -->
+    
+    <!-- Processing Screen -->
+    <!-- <string name="verification_processing">Processing verification…</string> -->
+    <!-- <string name="verification_uploading">Uploading images…</string> -->
+    <!-- <string name="verification_analyzing">Analyzing documents…</string> -->
+    <!-- <string name="verification_complete">Verification complete!</string> -->
+    <!-- <string name="verification_successful">Verification Successful</string> -->
+    <!-- <string name="verification_failed">Verification Failed</string> -->
+    
+    <!-- Results Screen -->
+    <!-- <string name="verification_success_description">Click to view your Verification details.</string> -->
+    <!-- <string name="verification_account_details">Account Details</string> -->
+    <!-- <string name="verify_details_member_label">Member</string> -->
+    <!-- <string name="verify_details_first_name_label">First Name</string> -->
+    <!-- <string name="verify_details_last_name_label">Last Name</string> -->
+    <!-- <string name="verify_details_document_score_label">Document Score</string> -->
+    <!-- <string name="verify_details_face_score_label">Face Score</string> -->
+    <!-- <string name="verify_details_overall_score_label">Overall Score</string> -->
+    
+    <!-- Error Messages -->
+    <!-- <string name="error_document_validation">Document image validation error, please select document type and re-capture document data</string> -->
+    <!-- <string name="error_face_validation">Face image capture validation error, please re-capture face image</string> -->
+    <!-- <string name="error_general">General error has occurred, please GO BACK and try again (400)</string> -->
+    <!-- <string name="error_ocr">Unable to capture data from the front of your government document.</string> -->
+    <!-- <string name="error_barcode">Unable to decode Barcode from the image of the document.</string> -->
+    <!-- <string name="error_preprocessing">Unable to process your document image. Please rescan your passport with better lighting and focus.</string> -->
+    <!-- <string name="error_mrz">Unable to capture Machine-Readable Zone (MRZ) data from your document image</string> -->
+    
+    <!-- Permission Messages -->
+    <!-- <string name="permission_camera_title">Camera Permission Required</string> -->
+    <!-- <string name="permission_camera_message">We need camera access to scan your documents and take your photo</string> -->
+    <!-- <string name="permission_camera_grant">Grant Camera Permission</string> -->
+    
+    <!-- ========================================= -->
+    <!-- EXAMPLE CUSTOMIZATIONS                   -->
+    <!-- These are active examples showing how    -->
+    <!-- to customize the SDK's text              -->
+    <!-- ========================================= -->
+    
+    <!-- Example: Custom welcome message -->
+    <string name="welcome_to">Welcome to Our Secure Platform</string>
+    
+    <!-- Example: Custom button text -->
+    <string name="button_start_now">Begin Verification</string>
+    
+    <!-- Example: Custom processing message -->
+    <string name="verification_processing">Securely processing your information…</string>
+    
+    <!-- Example: Custom success message -->
+    <string name="verification_successful">Identity Verified Successfully!</string>
+    
+    <!-- Example: Custom document selection -->
+    <string name="select_document_title">Choose Your ID Document</string>
+    <string name="select_document_subtitle">Select the document you\'d like to verify</string>
+    
+    <!-- Example: Custom face scan instructions -->
+    <string name="face_scan_intro_title">Selfie Verification</string>
+    <string name="face_scan_intro_subtitle">We\'ll capture a secure selfie to verify your identity</string>
+    
+</resources>

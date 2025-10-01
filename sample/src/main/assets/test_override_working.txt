@@ -1,0 +1,3 @@
+This file exists to test that asset loading is working.
+If you can see this in the logs, then asset loading is functional.
+Corporate theme override assets are now available.
