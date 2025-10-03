@@ -56,6 +56,8 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
+import com.artiusid.sdk.utils.UrlBuilder
+import com.artiusid.sample.config.AppUrlConfig
 
 /**
  * Sample App demonstrating the artius.iD SDK Integration
@@ -118,6 +120,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     private var lastResult by mutableStateOf("Application started - checking keychain status...")
     private var selectedTheme by mutableStateOf(EnhancedThemeOption.ARTIUSID_DEFAULT)
     private var selectedImageOverride by mutableStateOf(ImageOverrideOption.DEFAULT)
+    private var selectedEnvironment by mutableStateOf("Sandbox")
+    private var selectedDomain by mutableStateOf("artiusid.dev")
     private var verificationResultData by mutableStateOf<VerificationResultData?>(null)
     private var showResultsScreen by mutableStateOf(false)
     private var fcmTokenStatus by mutableStateOf("❌ Not available")
@@ -135,6 +139,14 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Set URL configuration from config file
+        UrlBuilder.setConfiguration(AppUrlConfig.getConfiguration())
+        
+        // Initialize environment and domain state from configuration
+        val config = UrlBuilder.getCurrentConfiguration()
+        selectedEnvironment = config.environment
+        selectedDomain = config.domain
 
         // Initialize SDK on startup so it's available for all operations
         initializeSDK()
@@ -403,6 +415,73 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
+                }
+            }
+            
+            // Environment and Domain Configuration
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "🌐 Environment & Domain Configuration",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    // Environment Selection
+                    Text(
+                        text = "Environment:",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    EnvironmentDropdown(
+                        selectedEnvironment = selectedEnvironment,
+                        onEnvironmentSelected = { 
+                            selectedEnvironment = it
+                            UrlBuilder.setEnvironment(this@BridgeMainActivity, it)
+                            // Re-initialize SDK with new configuration
+                            initializeSDK()
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Domain Selection
+                    Text(
+                        text = "Domain:",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    DomainDropdown(
+                        selectedDomain = selectedDomain,
+                        onDomainSelected = { 
+                            selectedDomain = it
+                            UrlBuilder.setDomain(this@BridgeMainActivity, it)
+                            // Re-initialize SDK with new configuration
+                            initializeSDK()
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Show current configuration
+                    Text(
+                        text = "📍 Current: ${UrlBuilder.getCurrentConfiguration(this@BridgeMainActivity)}",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
             }
             
@@ -1458,6 +1537,107 @@ private fun ImageOverrideDropdown(
                     },
                     onClick = {
                         onOverrideSelected(override)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EnvironmentDropdown(
+    selectedEnvironment: String,
+    onEnvironmentSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val availableEnvironments = UrlBuilder.getAvailableEnvironments()
+    
+    Box {
+        OutlinedButton(
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = selectedEnvironment,
+                    fontWeight = FontWeight.Medium
+                )
+                Text("▼", fontSize = 12.sp)
+            }
+        }
+        
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            availableEnvironments.forEach { environment ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = environment,
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
+                    onClick = {
+                        onEnvironmentSelected(environment)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DomainDropdown(
+    selectedDomain: String,
+    onDomainSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val availableDomains = listOf(
+        "artiusid.dev",
+        "artiusid.com", 
+        "artiusid.net",
+        "localhost:8080"
+    )
+    
+    Box {
+        OutlinedButton(
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = selectedDomain,
+                    fontWeight = FontWeight.Medium
+                )
+                Text("▼", fontSize = 12.sp)
+            }
+        }
+        
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            availableDomains.forEach { domain ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = domain,
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
+                    onClick = {
+                        onDomainSelected(domain)
                         expanded = false
                     }
                 )

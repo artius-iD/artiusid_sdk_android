@@ -109,6 +109,13 @@ class TLSSessionManager(private val context: Context) {
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .addInterceptor { chain ->
                     val originalRequest = chain.request()
+                    
+                    // SECURITY: Enforce HTTPS-only connections
+                    if (!originalRequest.url.isHttps) {
+                        Log.e(TAG, "🚨 SECURITY VIOLATION: Attempted HTTP connection to ${originalRequest.url}")
+                        throw SecurityException("HTTP connections are not allowed. Only HTTPS is permitted for mTLS.")
+                    }
+                    
                     val newRequest = originalRequest.newBuilder()
                         // Use proper Android User-Agent format
                         .header("User-Agent", "ArtiusID-Android")
@@ -120,6 +127,7 @@ class TLSSessionManager(private val context: Context) {
                     Log.d(TAG, "📤 Sending headers:")
                     Log.d(TAG, "📤   User-Agent: ArtiusID-Android")
                     Log.d(TAG, "📤   Content-Type: application/json")
+                    Log.d(TAG, "🔒 HTTPS connection verified: ${newRequest.url}")
                     
                     chain.proceed(newRequest)
                 }

@@ -8,15 +8,9 @@ package com.artiusid.sdk.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.artiusid.sdk.config.UrlConfiguration
 
 object UrlBuilder {
-    
-    // Base URLs matching new API endpoints
-    private const val VERIFICATION_BASE_URL = "https://sandbox.mobile.artiusid.dev"
-    private const val AUTHENTICATION_BASE_URL = "https://sandbox.mobile.artiusid.dev"
-    private const val APPROVAL_RESPONSE_URL = "https://sandbox.mobile.artiusid.dev"
-    private const val APPROVAL_REQUEST_URL = "https://sandbox.mobile.artiusid.dev"
-    private const val LOAD_CERTIFICATE_URL = "https://sandbox.registration.artiusid.dev"
     
     // Service paths matching iOS ServiceTypes
     private const val VERIFICATION_PATH = "verifi/api/verification"
@@ -25,43 +19,88 @@ object UrlBuilder {
     private const val APPROVAL_RESPONSE_PATH = "ApprovalResponseFunction"
     private const val LOAD_CERTIFICATE_PATH = "LoadCertificateFunction"
     
+    // Current configuration - can be set by sample app
+    private var currentConfiguration: UrlConfiguration? = null
+    
     enum class Environment {
-        DEVELOPMENT, QA, STAGING, PRODUCTION
+        SANDBOX, DEVELOPMENT, QA, STAGING, PRODUCTION
     }
     
     enum class ServiceType {
         VERIFICATION, AUTHENTICATION, APPROVAL_REQUEST, APPROVAL_RESPONSE, LOAD_CERTIFICATE
     }
     
+    /**
+     * Set URL configuration from sample app
+     * This allows the sample app to pass a configuration file to the SDK
+     */
+    fun setConfiguration(configuration: UrlConfiguration) {
+        if (configuration.isValid()) {
+            currentConfiguration = configuration
+            android.util.Log.d("UrlBuilder", "🔧 Configuration set: ${configuration.getDescription()}")
+        } else {
+            android.util.Log.e("UrlBuilder", "❌ Invalid configuration provided")
+        }
+    }
+    
+    /**
+     * Get current configuration or create default
+     */
+    fun getCurrentConfiguration(): UrlConfiguration {
+        return currentConfiguration ?: UrlConfiguration.SANDBOX_DEV
+    }
+    
     private fun getEnvironmentFromSettings(context: Context): Environment {
         val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-        val envString = prefs.getString("environment", "Staging") ?: "Staging"
+        val envString = prefs.getString("environment", "Sandbox") ?: "Sandbox"
         return when (envString) {
+            "Sandbox" -> Environment.SANDBOX
             "Development" -> Environment.DEVELOPMENT
             "QA" -> Environment.QA
             "Staging" -> Environment.STAGING
             "Production" -> Environment.PRODUCTION
-            else -> Environment.STAGING
+            else -> Environment.SANDBOX
         }
     }
     
-    private fun getEnvironmentDomain(environment: Environment): String {
+    private fun getDomainFromSettings(context: Context): String {
+        val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        return prefs.getString("domain", "artiusid.dev") ?: "artiusid.dev"
+    }
+    
+    private fun getEnvironmentPrefix(environment: Environment): String {
         return when (environment) {
-            Environment.DEVELOPMENT -> "dev."
-            Environment.QA -> "qa."
-            Environment.STAGING -> "stage."
-            Environment.PRODUCTION -> ""
+            Environment.SANDBOX -> "sandbox"
+            Environment.DEVELOPMENT -> "dev"
+            Environment.QA -> "qa"
+            Environment.STAGING -> "stage"
+            Environment.PRODUCTION -> "prod"
         }
     }
     
-    private fun getBaseUrl(serviceType: ServiceType, environment: Environment): String {
-        // Return the fixed sandbox URLs (no environment replacement needed)
+    private fun getBaseUrl(serviceType: ServiceType, @Suppress("UNUSED_PARAMETER") context: Context): String {
+        val config = getCurrentConfiguration()
+        val environment = stringToEnvironment(config.environment)
+        val domain = config.domain
+        val envPrefix = getEnvironmentPrefix(environment)
+        
         return when (serviceType) {
-            ServiceType.VERIFICATION -> VERIFICATION_BASE_URL
-            ServiceType.AUTHENTICATION -> AUTHENTICATION_BASE_URL
-            ServiceType.APPROVAL_REQUEST -> APPROVAL_REQUEST_URL
-            ServiceType.APPROVAL_RESPONSE -> APPROVAL_RESPONSE_URL
-            ServiceType.LOAD_CERTIFICATE -> LOAD_CERTIFICATE_URL
+            ServiceType.VERIFICATION, 
+            ServiceType.AUTHENTICATION, 
+            ServiceType.APPROVAL_REQUEST, 
+            ServiceType.APPROVAL_RESPONSE -> "https://$envPrefix.mobile.$domain"
+            ServiceType.LOAD_CERTIFICATE -> "https://$envPrefix.registration.$domain"
+        }
+    }
+    
+    private fun stringToEnvironment(envString: String): Environment {
+        return when (envString) {
+            "Sandbox" -> Environment.SANDBOX
+            "Development" -> Environment.DEVELOPMENT
+            "QA" -> Environment.QA
+            "Staging" -> Environment.STAGING
+            "Production" -> Environment.PRODUCTION
+            else -> Environment.SANDBOX
         }
     }
     
@@ -76,8 +115,7 @@ object UrlBuilder {
     }
     
     fun buildEndpointUrl(context: Context, serviceType: ServiceType): String {
-        val environment = getEnvironmentFromSettings(context)
-        val baseUrl = getBaseUrl(serviceType, environment)
+        val baseUrl = getBaseUrl(serviceType, context)
         val path = getServicePath(serviceType)
         val fullUrl = "$baseUrl/$path"
         android.util.Log.d("UrlBuilder", "🌐 Built endpoint URL for $serviceType: $fullUrl")
@@ -85,8 +123,7 @@ object UrlBuilder {
     }
     
     fun buildBaseUrl(context: Context, serviceType: ServiceType): String {
-        val environment = getEnvironmentFromSettings(context)
-        val baseUrl = getBaseUrl(serviceType, environment)
+        val baseUrl = getBaseUrl(serviceType, context)
         return "$baseUrl/"
     }
     
@@ -111,5 +148,37 @@ object UrlBuilder {
     fun getVerificationHistoryUrl(context: Context): String {
         val base = getVerificationUrl(context)
         return "$base/history"
+    }
+    
+    // Configuration helper functions for sample app
+    fun setEnvironment(context: Context, environment: String) {
+        val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        prefs.edit().putString("environment", environment).apply()
+        android.util.Log.d("UrlBuilder", "🔧 Environment set to: $environment")
+    }
+    
+    fun setDomain(context: Context, domain: String) {
+        val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        prefs.edit().putString("domain", domain).apply()
+        android.util.Log.d("UrlBuilder", "🌐 Domain set to: $domain")
+    }
+    
+    fun getCurrentEnvironment(context: Context): String {
+        return getEnvironmentFromSettings(context).name
+    }
+    
+    fun getCurrentDomain(context: Context): String {
+        return getDomainFromSettings(context)
+    }
+    
+    fun getAvailableEnvironments(): List<String> {
+        return Environment.values().map { it.name }
+    }
+    
+    // Get current configuration as a readable string
+    fun getCurrentConfiguration(context: Context): String {
+        val env = getCurrentEnvironment(context)
+        val domain = getCurrentDomain(context)
+        return "$env.$domain"
     }
 } 

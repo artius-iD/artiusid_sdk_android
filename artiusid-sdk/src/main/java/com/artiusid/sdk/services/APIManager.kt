@@ -76,6 +76,19 @@ class APIManager(private val context: Context) {
                     .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    // SECURITY: Enforce HTTPS-only connections for certificate registration
+                    .addInterceptor { chain ->
+                        val originalRequest = chain.request()
+                        
+                        // SECURITY: Enforce HTTPS-only connections
+                        if (!originalRequest.url.isHttps) {
+                            Log.e(TAG, "🚨 SECURITY VIOLATION: Attempted HTTP connection to ${originalRequest.url}")
+                            throw SecurityException("HTTP connections are not allowed. Only HTTPS is permitted for certificate registration.")
+                        }
+                        
+                        Log.d(TAG, "🔒 HTTPS connection verified for certificate registration: ${originalRequest.url}")
+                        chain.proceed(originalRequest)
+                    }
                     // Use system default SSL context (no custom pinning or mTLS)
                     .build()
                 
