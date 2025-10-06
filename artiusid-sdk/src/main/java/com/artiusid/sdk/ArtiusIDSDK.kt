@@ -444,7 +444,8 @@ object ArtiusIDSDK {
             if (!_isInitialized) {
                 Triple(false, "SDK not initialized", null)
             } else {
-                // Create approval API service using shared mTLS context
+                // Create approval API service using shared mTLS context (like iOS requiresTLS: true)
+                android.util.Log.d(TAG, "🔐 Using mTLS for approval testing (matching iOS requiresTLS: true)")
                 val okHttpClient = sharedContextManager?.getSharedOkHttpClient() 
                     ?: throw IllegalStateException("Shared context not available")
                 

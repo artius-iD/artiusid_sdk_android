@@ -244,10 +244,11 @@ private fun CameraPreview(
     LaunchedEffect(Unit) {
         Log.d("PassportScan", "Initializing PassportTextAnalyzer")
         textAnalyzer = PassportTextAnalyzer(
+            context = context,
             onMRZDetected = onMRZDetected,
             onTextRecognized = onTextRecognized,
             onPassportCaptured = { bitmap ->
-                Log.d("PassportScan", "📸 Passport captured: ${bitmap.width}x${bitmap.height}")
+                Log.d("PassportScan", "📸 Government Passport captured: ${bitmap.width}x${bitmap.height}")
                 // TODO: Store or process captured passport image
             }
         )

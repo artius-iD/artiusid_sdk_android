@@ -93,19 +93,19 @@
     <string name="document_back_scan_button">Scan Back of My ID</string>
     <string name="document_back_instruction">ALIGN ID BACK IN FRAME AS SHOWN</string>
     
-    <!-- Passport Scanning -->
-    <string name="passport_nav_title">Passport</string>
-    <string name="passport_intro_title">Scan Passport</string>
-    <string name="passport_intro_description">Continue your verification by scanning your passport. Make sure MRZ code at the bottom is clear and visible in the camera.</string>
-    <string name="passport_scan_button">Scan My Passport</string>
-    <string name="passport_instruction">ALIGN PASSPORT IN FRAME AS SHOWN</string>
+    <!-- Government Passport Scanning -->
+    <string name="passport_nav_title">Government Passport</string>
+    <string name="passport_intro_title">Scan Government Passport</string>
+    <string name="passport_intro_description">Continue your verification by scanning your government passport. Make sure MRZ code at the bottom is clear and visible in the camera.</string>
+    <string name="passport_scan_button">Scan My Government Passport</string>
+    <string name="passport_instruction">ALIGN GOVERNMENT PASSPORT IN FRAME AS SHOWN</string>
     
-    <!-- Passport Scanning Status Messages -->
-    <string name="passport_status_not_started">HOLD PASSPORT HORIZONTALLY</string>
+    <!-- Government Passport Scanning Status Messages -->
+    <string name="passport_status_not_started">HOLD GOVERNMENT PASSPORT HORIZONTALLY</string>
     <string name="passport_status_scanning">SCANNING MRZ ON LEFT SIDE…</string>
     <string name="passport_status_mrz_detected">MRZ DETECTED - HOLD STEADY</string>
     <string name="passport_status_validating">VALIDATING MRZ DATA…</string>
-    <string name="passport_status_completed">✓ PASSPORT SCAN COMPLETE</string>
+    <string name="passport_status_completed">✓ GOVERNMENT PASSPORT SCAN COMPLETE</string>
     <string name="passport_status_failed">SCAN FAILED - TRY AGAIN</string>
     
     <!-- Passport Chip/NFC Scanning -->

@@ -88,7 +88,7 @@ fun SelectDocumentTypeScreen(
                 ) {
                     ThemedDocumentIcon(
                         iconRes = R.drawable.stateid_icon,
-                        contentDescription = "State ID",
+                        contentDescription = "Government ID",
                         overrideKey = "state_id_icon",
                         modifier = Modifier
                             .size(width = 50.dp, height = 35.dp)
@@ -99,7 +99,7 @@ fun SelectDocumentTypeScreen(
                         horizontalAlignment = Alignment.Start
                     ) {
                         Text(
-                            text = "State ID",
+                            text = "Government ID",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
@@ -143,7 +143,7 @@ fun SelectDocumentTypeScreen(
                 ) {
                     ThemedDocumentIcon(
                         iconRes = R.drawable.passport_icon,
-                        contentDescription = "Passport",
+                        contentDescription = "Government Passport",
                         overrideKey = "passport_icon",
                         modifier = Modifier
                             .size(width = 35.dp, height = 50.dp)
@@ -154,14 +154,14 @@ fun SelectDocumentTypeScreen(
                         horizontalAlignment = Alignment.Start
                     ) {
                         Text(
-                            text = "Passport",
+                            text = "Government Passport",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
                             modifier = Modifier.padding(vertical = 2.dp)
                         )
                         Text(
-                            text = "Need to scan your passport document",
+                            text = "Need to scan your government passport document",
                             fontSize = 16.sp,
                             color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor(),
                             modifier = Modifier.padding(vertical = 2.dp)

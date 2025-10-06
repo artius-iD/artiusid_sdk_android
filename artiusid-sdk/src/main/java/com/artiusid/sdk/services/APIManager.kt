@@ -62,11 +62,39 @@ class APIManager(private val context: Context) {
         certManager.removeKeyPair()
     }
 
+    // Load certificate using full URL (for UrlBuilder integration)
+    suspend fun loadCertificateFromFullUrl(deviceId: String, fullUrl: String) {
+        val certManager = CertificateManager(context)
+        if (certManager.loadCertificatePem() == null) {
+            Log.d(TAG, "No certificate PEM found, generating Keystore keypair and CSR...")
+            val csr = certManager.generateCSR(deviceId)
+            
+            Log.d(TAG, "Using full certificate URL: $fullUrl")
+            val response = loadCertificateFromUrl(fullUrl, LoadCertificateRequest(deviceId, csr))
+            certManager.storeCertificatePem(response.certificate)
+            Log.d(TAG, "Certificate registration and PEM storage complete")
+        } else {
+            Log.d(TAG, "Existing certificate PEM found")
+        }
+    }
+
+    // Load certificate from full URL (no path appending)
+    suspend fun loadCertificateFromUrl(fullUrl: String, request: LoadCertificateRequest): LoadCertificateResponse {
+        Log.d(TAG, "Loading certificate from full URL: $fullUrl")
+        return performCertificateRequest(fullUrl, request)
+    }
+
     // Load certificate endpoint - does NOT use mTLS (exactly like iOS)
     suspend fun loadCertificate(serviceUrl: String, request: LoadCertificateRequest): LoadCertificateResponse {
         // Append /LoadCertificateFunction to match iOS endpoint exactly
-        val fullUrl = "$serviceUrl/LoadCertificateFunction"
+        val cleanUrl = serviceUrl.removeSuffix("/")
+        val fullUrl = "$cleanUrl/LoadCertificateFunction"
         Log.d(TAG, "Loading certificate from: $fullUrl")
+        return performCertificateRequest(fullUrl, request)
+    }
+
+    // Common certificate request logic
+    private suspend fun performCertificateRequest(fullUrl: String, request: LoadCertificateRequest): LoadCertificateResponse {
         return withContext(Dispatchers.IO) {
             try {
                 // Certificate registration endpoint should NOT use mTLS or strict certificate pinning
@@ -113,7 +141,7 @@ class APIManager(private val context: Context) {
 
                 Log.d(TAG, "Certificate registration REQUEST:")
                 Log.d(TAG, "  Headers: ${req.headers}")
-                Log.d(TAG, "  Body: $jsonBody")
+                Log.d(TAG, "  Body length: ${jsonBody.length} chars")
                 Log.d(TAG, "Sending certificate registration request...")
 
                 val response = client.newCall(req).execute()
@@ -138,7 +166,7 @@ class APIManager(private val context: Context) {
                 }
                 return@withContext LoadCertificateResponse(certificate = certificate)
             } catch (e: Exception) {
-                Log.e(TAG, "Error in loadCertificate", e)
+                Log.e(TAG, "Error in certificate registration", e)
                 throw e
             }
         }

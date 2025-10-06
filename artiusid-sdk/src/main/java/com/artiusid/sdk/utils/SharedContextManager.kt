@@ -91,7 +91,7 @@ class SharedContextManager(
             Log.d(TAG, "  - Environment in SharedPreferences: $environment")
             
             // Use UrlBuilder to get the correct certificate URL
-            val certificateUrl = com.artiusid.sdk.utils.UrlBuilder.getLoadCertificateBaseUrl(hostContext)
+            val certificateUrl = com.artiusid.sdk.utils.UrlBuilder.getLoadCertificateUrl(hostContext)
             Log.d(TAG, "  - Certificate URL from UrlBuilder: $certificateUrl")
             
             // Check if certificate files are accessible in host context
@@ -108,8 +108,8 @@ class SharedContextManager(
             }
             
             val apiManager = APIManager(hostContext)
-            // Use the certificate URL from UrlBuilder instead of the base URL
-            apiManager.ensureCertificate(deviceId, certificateUrl.removeSuffix("/"))
+            // Use the full certificate URL from UrlBuilder (already includes /LoadCertificateFunction)
+            apiManager.loadCertificateFromFullUrl(deviceId, certificateUrl)
             
             Log.d(TAG, "✅ Shared certificate ready")
         } catch (e: Exception) {

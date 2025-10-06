@@ -17,32 +17,32 @@ enum class DocumentRecaptureType(
     val actionText: String = "Recapture Document"
 ) {
     PASSPORT_MRZ_ERROR(
-        title = "Passport MRZ Issue",
-        message = "Unable to read passport MRZ clearly. Please ensure the text lines at the bottom are clearly visible and try again.",
-        actionText = "Recapture Passport"
+        title = "Government Passport MRZ Issue",
+        message = "Unable to read government passport MRZ clearly. Please ensure the text lines at the bottom are clearly visible and try again.",
+        actionText = "Recapture Government Passport"
     ),
     
     PASSPORT_OCR_ERROR(
-        title = "Passport Text Issue", 
-        message = "Unable to read passport text clearly. Please ensure good lighting and try again.",
-        actionText = "Recapture Passport"
+        title = "Government Passport Text Issue", 
+        message = "Unable to read government passport text clearly. Please ensure good lighting and try again.",
+        actionText = "Recapture Government Passport"
     ),
     
     STATE_ID_FRONT_ERROR(
-        title = "State ID Front Issue",
-        message = "Unable to read the front of your State ID clearly. Please ensure all text is visible and try again.",
+        title = "Government ID Front Issue",
+        message = "Unable to read the front of your Government ID clearly. Please ensure all text is visible and try again.",
         actionText = "Recapture Front"
     ),
     
     STATE_ID_BACK_ERROR(
-        title = "State ID Back Issue",
-        message = "Unable to read the back of your State ID clearly. Please ensure the barcode is clearly visible and try again.",
+        title = "Government ID Back Issue",
+        message = "Unable to read the back of your Government ID clearly. Please ensure the barcode is clearly visible and try again.",
         actionText = "Recapture Back"
     ),
     
     STATE_ID_BARCODE_ERROR(
         title = "Barcode Read Issue",
-        message = "Unable to read the barcode on your State ID. Please ensure the barcode is clearly visible and try again.",
+        message = "Unable to read the barcode on your Government ID. Please ensure the barcode is clearly visible and try again.",
         actionText = "Recapture Back"
     ),
     

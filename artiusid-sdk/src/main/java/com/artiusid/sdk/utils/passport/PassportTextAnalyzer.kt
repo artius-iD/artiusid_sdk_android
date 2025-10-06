@@ -27,12 +27,15 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import android.graphics.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import com.artiusid.sdk.utils.CameraSoundManager
+import android.content.Context
 
 /**
  * Camera analyzer for passport MRZ detection using ML Kit Text Recognition
  * Processes camera frames to extract MRZ data from passport documents
  */
 class PassportTextAnalyzer(
+    private val context: Context,
     private val onMRZDetected: (PassportMRZData, Bitmap) -> Unit,
     private val onTextRecognized: (List<String>) -> Unit,
     private val onPassportCaptured: ((Bitmap) -> Unit)? = null
@@ -52,6 +55,7 @@ class PassportTextAnalyzer(
             .setMinFaceSize(0.1f)
             .build()
     )
+    private val soundManager = CameraSoundManager(context)
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private var lastAnalysisTime = 0L
     private var isProcessing = false
@@ -378,7 +382,12 @@ class PassportTextAnalyzer(
                         
                         // Capture the passport image when face is detected
                         onPassportCaptured?.invoke(bitmap)
-                        Log.d(TAG, "📸 Passport image captured!")
+                        Log.d(TAG, "📸 Government Passport image captured!")
+                        
+                        // Play camera capture sound
+                        coroutineScope.launch {
+                            soundManager.playCaptureSound()
+                        }
                         
                         // Now proceed to text recognition
                         coroutineScope.launch {
@@ -928,6 +937,7 @@ class PassportTextAnalyzer(
         try {
             textRecognizer.close()
             faceDetector.close()
+            soundManager.cleanup()
         } catch (e: Exception) {
             Log.w(TAG, "Error closing ML Kit detectors: ${e.message}")
         }

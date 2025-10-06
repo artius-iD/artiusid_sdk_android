@@ -24,6 +24,9 @@ import com.artiusid.sdk.presentation.screens.document.DocumentInfoExtractor
 import com.artiusid.sdk.presentation.screens.document.DocumentType
 import com.google.mlkit.vision.barcode.common.Barcode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.artiusid.sdk.utils.CameraSoundManager
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,6 +36,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DocumentScanViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val documentScanManager: DocumentScanManager,
     private val barcodeScanManager: BarcodeScanManager
 ) : ViewModel() {
@@ -57,6 +61,7 @@ class DocumentScanViewModel @Inject constructor(
     // New fields for OCR and comparison
     private val documentInfoExtractor = DocumentInfoExtractor()
     private val comparisonManager = DocumentComparisonManager()
+    private val soundManager = CameraSoundManager(context)
     private var frontOcrData: Map<String, String>? = null
     private var barcodeData: AAMVABarcodeParser.AAMVAData? = null
     private var hasRetriedScan = false // Track if we've already retried
@@ -88,7 +93,12 @@ class DocumentScanViewModel @Inject constructor(
                         
                         // Store the front image for verification
                         ImageStorage.setFrontImage(bitmap)
-                        android.util.Log.d("DocumentScanViewModel", "Front image saved to ImageStorage")
+                        android.util.Log.d("DocumentScanViewModel", "📸 Government ID front image saved to ImageStorage")
+                        
+                        // Play camera capture sound
+                        viewModelScope.launch {
+                            soundManager.playCaptureSound()
+                        }
                         
                         // Extract OCR data from front image
                         android.util.Log.d("DocumentScanViewModel", "About to start OCR extraction...")
@@ -115,6 +125,12 @@ class DocumentScanViewModel @Inject constructor(
                             _uiState.value = DocumentScanUiState.Success(documentResult)
                             android.util.Log.d("DocumentScanViewModel", "Setting isProcessingComplete to true")
                             _isProcessingComplete.value = true
+                            
+                            // Play success approval chime
+                            viewModelScope.launch {
+                                soundManager.playSuccessSound()
+                            }
+                            
                             android.util.Log.d("DocumentScanViewModel", "Front scan processing complete - should navigate to back scan")
                         } catch (e: Exception) {
                             android.util.Log.e("DocumentScanViewModel", "OCR extraction failed: ${e.message}", e)
@@ -169,7 +185,12 @@ class DocumentScanViewModel @Inject constructor(
                     android.util.Log.d("DocumentScanViewModel", "[BACK] Barcode data preview: ${barcodeDataString.take(50)}")
                     // Store the back image for verification
                     ImageStorage.setBackImage(bitmap)
-                    android.util.Log.d("DocumentScanViewModel", "[BACK] Back image set: ${bitmap.width}x${bitmap.height}")
+                    android.util.Log.d("DocumentScanViewModel", "📸 Government ID back image set: ${bitmap.width}x${bitmap.height}")
+                    
+                    // Play camera capture sound
+                    viewModelScope.launch {
+                        soundManager.playCaptureSound()
+                    }
                 } else {
                     android.util.Log.e("DocumentScanViewModel", "[BACK] No barcode detected in current frame")
                 }
@@ -522,6 +543,11 @@ class DocumentScanViewModel @Inject constructor(
         }
         
         return documentBounds
+    }
+    
+    override fun onCleared() {
+        super.onCleared()
+        soundManager.cleanup()
     }
 }
 

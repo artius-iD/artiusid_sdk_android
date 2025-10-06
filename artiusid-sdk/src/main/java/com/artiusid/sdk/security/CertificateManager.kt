@@ -18,7 +18,6 @@ import com.artiusid.sdk.data.model.LoadCertificateResponse
 import com.artiusid.sdk.security.asn1.DER
 import com.artiusid.sdk.security.constants.X509NameOID
 import com.artiusid.sdk.security.exceptions.CertError
-import com.artiusid.sdk.utils.EnvironmentManager
 import com.artiusid.sdk.utils.ServiceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -198,12 +197,10 @@ class CertificateManager private constructor(private val context: Context) {
     private suspend fun registerCSR(csrPEM: String, deviceId: String): LoadCertificateResponse {
         val request = LoadCertificateRequest(deviceId = deviceId, csr = csrPEM)
         
-        // Use the same environment configuration as the rest of the app
-        val environmentManager = EnvironmentManager(context)
-        val environment = environmentManager.getCurrentEnvironment()
-        val serviceUrl = environmentManager.buildEndpointURL(ServiceType.LOAD_CERTIFICATE, environment)
+        // Use UrlBuilder for consistent URL construction
+        val serviceUrl = com.artiusid.sdk.utils.UrlBuilder.getLoadCertificateUrl(context)
         
-        Log.d(TAG, "Registering with environment: $environment")
+        Log.d(TAG, "Registering certificate with URL: $serviceUrl")
         
         return try {
             // You'll need to adapt this to your specific API service implementation

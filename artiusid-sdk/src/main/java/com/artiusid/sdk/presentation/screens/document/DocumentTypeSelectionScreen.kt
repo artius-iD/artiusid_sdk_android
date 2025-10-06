@@ -57,20 +57,20 @@ fun DocumentTypeSelectionScreen(
                     modifier = Modifier.padding(vertical = 24.dp)
                 )
 
-                // ID Card Option
+                // Government ID Option
                 DocumentTypeOption(
-                    title = "ID Card",
-                    description = "Scan your state-issued ID card",
+                    title = "Government ID",
+                    description = "Scan your government-issued ID card",
                     icon = R.drawable.stateid_icon,
                     onClick = { onNavigateToDocumentScan(DocumentType.ID_CARD) }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Passport Option
+                // Government Passport Option
                 DocumentTypeOption(
-                    title = "Passport",
-                    description = "Scan your passport",
+                    title = "Government Passport",
+                    description = "Scan your government passport",
                     icon = R.drawable.passport_icon,
                     onClick = { onNavigateToDocumentScan(DocumentType.PASSPORT) }
                 )

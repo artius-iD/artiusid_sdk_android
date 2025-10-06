@@ -93,19 +93,19 @@
     <string name="document_back_scan_button">Escanear Reverso de Mi ID</string>
     <string name="document_back_instruction">ALINEE EL REVERSO DEL ID EN EL MARCO COMO SE MUESTRA</string>
     
-    <!-- Passport Scanning -->
-    <string name="passport_nav_title">Pasaporte</string>
-    <string name="passport_intro_title">Escanear Pasaporte</string>
-    <string name="passport_intro_description">Continúe su verificación escaneando su pasaporte. Asegúrese de que el código MRZ en la parte inferior esté claro y visible en la cámara.</string>
-    <string name="passport_scan_button">Escanear Mi Pasaporte</string>
-    <string name="passport_instruction">ALINEE EL PASAPORTE EN EL MARCO COMO SE MUESTRA</string>
+    <!-- Government Passport Scanning -->
+    <string name="passport_nav_title">Pasaporte Gubernamental</string>
+    <string name="passport_intro_title">Escanear Pasaporte Gubernamental</string>
+    <string name="passport_intro_description">Continúe su verificación escaneando su pasaporte gubernamental. Asegúrese de que el código MRZ en la parte inferior esté claro y visible en la cámara.</string>
+    <string name="passport_scan_button">Escanear Mi Pasaporte Gubernamental</string>
+    <string name="passport_instruction">ALINEE EL PASAPORTE GUBERNAMENTAL EN EL MARCO COMO SE MUESTRA</string>
     
-    <!-- Passport Scanning Status Messages -->
-    <string name="passport_status_not_started">SOSTENGA EL PASAPORTE HORIZONTALMENTE</string>
+    <!-- Government Passport Scanning Status Messages -->
+    <string name="passport_status_not_started">SOSTENGA EL PASAPORTE GUBERNAMENTAL HORIZONTALMENTE</string>
     <string name="passport_status_scanning">ESCANEANDO MRZ EN EL LADO IZQUIERDO…</string>
     <string name="passport_status_mrz_detected">MRZ DETECTADO - MANTÉNGASE FIRME</string>
     <string name="passport_status_validating">VALIDANDO DATOS MRZ…</string>
-    <string name="passport_status_completed">✓ ESCANEO DE PASAPORTE COMPLETO</string>
+    <string name="passport_status_completed">✓ ESCANEO DE PASAPORTE GUBERNAMENTAL COMPLETO</string>
     <string name="passport_status_failed">ESCANEO FALLÓ - INTENTE DE NUEVO</string>
     
     <!-- Passport Chip/NFC Scanning -->

@@ -117,16 +117,14 @@ class TLSSessionManager(private val context: Context) {
                     }
                     
                     val newRequest = originalRequest.newBuilder()
-                        // Use proper Android User-Agent format
-                        .header("User-Agent", "ArtiusID-Android")
-                        // Match iOS headers exactly
+                        // Match iOS headers exactly - iOS only sets Content-Type, no custom User-Agent
                         .header("Content-Type", "application/json")
                         .build()
                     
                     // Log the headers being sent for debugging
-                    Log.d(TAG, "📤 Sending headers:")
-                    Log.d(TAG, "📤   User-Agent: ArtiusID-Android")
+                    Log.d(TAG, "📤 Sending headers (matching iOS exactly):")
                     Log.d(TAG, "📤   Content-Type: application/json")
+                    Log.d(TAG, "📤   User-Agent: [system default - matching iOS behavior]")
                     Log.d(TAG, "🔒 HTTPS connection verified: ${newRequest.url}")
                     
                     chain.proceed(newRequest)
