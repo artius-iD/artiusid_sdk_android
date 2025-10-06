@@ -188,6 +188,11 @@ class PassportTextAnalyzer(
                 
                 withContext(Dispatchers.Main) {
                     onMRZDetected(mrzData, originalBitmap)
+                    
+                    // Play success approval chime for successful MRZ detection
+                    coroutineScope.launch {
+                        soundManager.playSuccessSound()
+                    }
                 }
             } else {
                 Log.d(TAG, "❌ No valid MRZ found in recognized text")
