@@ -48,46 +48,21 @@ class CameraSoundManager(private val context: Context) {
     
     /**
      * Play camera capture sound
-     * Tries multiple sound options for maximum audibility
+     * Uses audible notification tone
      */
     suspend fun playCaptureSound() {
         withContext(Dispatchers.IO) {
             try {
-                // Try multiple sound options for better audibility
-                var soundPlayed = false
-                
-                // Option 1: Try notification sound (more audible)
-                try {
-                    toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, CAPTURE_TONE_DURATION)
-                    soundPlayed = true
-                    Log.d(TAG, "📸🔊 Camera capture sound played (ACK tone)")
-                } catch (e: Exception) {
-                    Log.w(TAG, "ACK tone failed: ${e.message}")
-                }
-                
-                // Option 2: Fallback to beep if ACK failed
-                if (!soundPlayed) {
-                    try {
-                        toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, CAPTURE_TONE_DURATION)
-                        soundPlayed = true
-                        Log.d(TAG, "📸🔊 Camera capture sound played (BEEP tone)")
-                    } catch (e: Exception) {
-                        Log.w(TAG, "BEEP tone failed: ${e.message}")
-                    }
-                }
-                
-                // Option 3: Try DTMF tone as final fallback
-                if (!soundPlayed) {
-                    try {
-                        toneGenerator?.startTone(ToneGenerator.TONE_DTMF_1, CAPTURE_TONE_DURATION)
-                        Log.d(TAG, "📸🔊 Camera capture sound played (DTMF tone)")
-                    } catch (e: Exception) {
-                        Log.w(TAG, "All sound options failed: ${e.message}")
-                    }
-                }
-                
+                toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, CAPTURE_TONE_DURATION)
+                Log.d(TAG, "📸🔊 Camera capture sound played")
             } catch (e: Exception) {
-                Log.w(TAG, "Failed to play capture sound: ${e.message}")
+                try {
+                    // Fallback to DTMF tone
+                    toneGenerator?.startTone(ToneGenerator.TONE_DTMF_1, CAPTURE_TONE_DURATION)
+                    Log.d(TAG, "📸🔊 Camera capture sound played (fallback)")
+                } catch (e2: Exception) {
+                    Log.w(TAG, "Failed to play capture sound: ${e.message}")
+                }
             }
         }
     }

@@ -562,6 +562,26 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            // Test Sound Effects Button
+            Button(
+                onClick = { testSoundEffects() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50) // Green color for sound test
+                )
+            ) {
+                Text(
+                    text = "🔊 Test Camera Sounds",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFFFFFF)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             // Temporary button to clear certificate for testing sandbox environment
             Button(
                 onClick = { clearExistingCertificate() },
@@ -1058,6 +1078,33 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 lastResult += "\n$errorStatus"
             } else {
                 lastResult = errorStatus
+            }
+        }
+    }
+
+    private fun testSoundEffects() {
+        android.util.Log.d("BridgeMainActivity", "🔊 Testing camera sound effects...")
+        
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                val soundManager = com.artiusid.sdk.utils.CameraSoundManager(this@BridgeMainActivity)
+                
+                android.util.Log.d("BridgeMainActivity", "🔊 Playing capture sound...")
+                soundManager.playCaptureSound()
+                
+                // Wait a moment between sounds
+                kotlinx.coroutines.delay(1000)
+                
+                android.util.Log.d("BridgeMainActivity", "🔊 Playing success sound...")
+                soundManager.playSuccessSound()
+                
+                // Clean up
+                soundManager.cleanup()
+                
+                android.util.Log.d("BridgeMainActivity", "✅ Sound test completed")
+                
+            } catch (e: Exception) {
+                android.util.Log.e("BridgeMainActivity", "❌ Sound test failed: ${e.message}", e)
             }
         }
     }
