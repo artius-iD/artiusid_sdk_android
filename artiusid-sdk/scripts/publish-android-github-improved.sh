@@ -244,7 +244,7 @@ AAR_SIZE=$(du -h "$AAR_FILE" | cut -f1)
 print_status "Android SDK AAR built successfully - Size: $AAR_SIZE"
 
 # Set up GitHub repository configuration
-GITHUB_REPO="https://github.com/toddbryant1966/artiusid_sdk_android.git"
+GITHUB_REPO="https://github.com/artius-iD/artiusid_sdk_android.git"
 if ! git remote get-url github &> /dev/null; then
     print_info "Adding GitHub remote..."
     git remote add github "$GITHUB_REPO"
@@ -261,7 +261,7 @@ cd "$TEMP_DIR"
 
 # Clone or initialize GitHub repository
 print_info "Setting up GitHub repository..."
-if gh repo view toddbryant1966/artiusid_sdk_android &> /dev/null; then
+if gh repo view artius-iD/artiusid_sdk_android &> /dev/null; then
     print_info "Cloning existing repository..."
     git clone "$GITHUB_REPO" .
 else
@@ -493,7 +493,7 @@ RELEASE_NOTES="# ArtiusID Android SDK v$NEW_VERSION
 if gh release create "v$NEW_VERSION" \
     --title "ArtiusID Android SDK v$NEW_VERSION" \
     --notes "$RELEASE_NOTES" \
-    --repo toddbryant1966/artiusid_sdk_android; then
+    --repo artius-iD/artiusid_sdk_android; then
     print_status "Release created successfully"
 else
     print_error "Failed to create GitHub release."
@@ -502,7 +502,7 @@ fi
 
 # Upload AAR file
 print_info "Uploading AAR file..."
-if ! gh release upload "v$NEW_VERSION" "sdk/artiusid-sdk-$NEW_VERSION.aar" --repo toddbryant1966/artiusid_sdk_android; then
+if ! gh release upload "v$NEW_VERSION" "sdk/artiusid-sdk-$NEW_VERSION.aar" --repo artius-iD/artiusid_sdk_android; then
     print_error "Failed to upload AAR file"
     exit 1
 fi
@@ -517,7 +517,7 @@ print_status "Cleanup complete"
 echo ""
 echo "🎉 Android SDK v$NEW_VERSION published successfully!"
 echo "📦 Repository: $GITHUB_REPO"
-echo "🔗 Releases: https://github.com/toddbryant1966/artiusid_sdk_android/releases"
+echo "🔗 Releases: https://github.com/artius-iD/artiusid_sdk_android/releases"
 echo "📋 AAR File: artiusid-sdk-$NEW_VERSION.aar"
 echo ""
 echo "📋 Next steps:"
