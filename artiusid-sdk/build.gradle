@@ -10,11 +10,13 @@ plugins {
 
 android {
     namespace 'com.artiusid.sdk'
-    compileSdk 34
+    compileSdk Integer.parseInt(project.SDK_COMPILE_SDK_VERSION)
 
     defaultConfig {
-        minSdk 24
-        targetSdk 34
+        minSdk Integer.parseInt(project.SDK_MIN_SDK_VERSION)
+        targetSdk Integer.parseInt(project.SDK_TARGET_SDK_VERSION)
+        versionCode Integer.parseInt(project.SDK_VERSION_CODE)
+        versionName project.SDK_VERSION_NAME
         
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
