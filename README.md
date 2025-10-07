@@ -74,19 +74,27 @@ Copyright © 2024 artius.iD. All rights reserved.
 ### Gradle
 Add the AAR file to your project:
 
-1. Copy `artiusid-sdk-1.0.1.aar` to your app's `libs` directory
-2. Add to your app's `build.gradle`:
+1. Download `artiusid-sdk-1.0.2.aar` from the releases page
+2. Copy it to your app's `libs` directory
+3. Add to your app's `build.gradle`:
 
 ```gradle
 dependencies {
-    implementation files('libs/artiusid-sdk-1.0.1.aar')
+    implementation files('libs/artiusid-sdk-1.0.2.aar')
 }
 ```
 
 ## Version
-Current version: **1.0.1**
+Current version: **1.0.2**
 
 ## Documentation
+- [Integration Guide](INTEGRATION_GUIDE.md)
 - [Security Guide](docs/SDK_DISTRIBUTION_SECURITY.md)
 - [Image Override System](docs/Image_Override_System_Documentation.md)
+
+## Changelog
+### v1.0.2
+- Latest release with enhanced security and performance improvements
+- Fully obfuscated AAR for IP protection
+- Comprehensive documentation and integration guides
 
