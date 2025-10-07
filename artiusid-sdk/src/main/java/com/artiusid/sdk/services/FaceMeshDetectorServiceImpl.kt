@@ -94,7 +94,7 @@ class FaceMeshDetectorServiceImpl(private val context: Context) : FaceMeshDetect
     // iOS-like processing stage
     private var processingStage = ProcessingStage.INITIAL_INSTRUCTIONS
     private var stageStartTime = System.currentTimeMillis()
-    private val MIN_POSITIONING_TIME_MS = 5000L // Show positioning animations for at least 5 seconds
+    private val MIN_POSITIONING_TIME_MS = 2000L // Show positioning animations for at least 2 seconds
     
     // iOS-like calibration variables
     private var initialYaw: Float = 0.0f

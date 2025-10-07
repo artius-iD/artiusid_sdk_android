@@ -208,9 +208,17 @@ fun VerificationProcessingScreen(
                         )
                         
                         // Navigate to results after a short delay
+                        val context = LocalContext.current
                         LaunchedEffect(Unit) {
+                            // Play success sound
+                            val soundManager = com.artiusid.sdk.utils.CameraSoundManager(context)
+                            soundManager.playSuccessSound()
+                            
                             kotlinx.coroutines.delay(1000)
                             onNavigateToResults()
+                            
+                            // Cleanup sound manager
+                            soundManager.cleanup()
                         }
                     }
                     

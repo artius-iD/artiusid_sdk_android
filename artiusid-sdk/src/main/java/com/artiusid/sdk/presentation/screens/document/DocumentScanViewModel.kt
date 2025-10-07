@@ -125,12 +125,6 @@ class DocumentScanViewModel @Inject constructor(
                             _uiState.value = DocumentScanUiState.Success(documentResult)
                             android.util.Log.d("DocumentScanViewModel", "Setting isProcessingComplete to true")
                             _isProcessingComplete.value = true
-                            
-                            // Play success approval chime
-                            viewModelScope.launch {
-                                soundManager.playSuccessSound()
-                            }
-                            
                             android.util.Log.d("DocumentScanViewModel", "Front scan processing complete - should navigate to back scan")
                         } catch (e: Exception) {
                             android.util.Log.e("DocumentScanViewModel", "OCR extraction failed: ${e.message}", e)

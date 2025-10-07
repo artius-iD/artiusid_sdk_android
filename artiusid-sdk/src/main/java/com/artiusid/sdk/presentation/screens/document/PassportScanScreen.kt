@@ -64,11 +64,18 @@ fun PassportScanScreen(
     val passportData by viewModel.passportData.collectAsState()
     val recognizedText by viewModel.recognizedText.collectAsState()
     
-    // Handle success navigation with delay (like iOS)
+    // Handle success navigation with delay (like iOS) and play success sound
     LaunchedEffect(uiState.isComplete) {
         if (uiState.isComplete) {
+            // Play custom success sound when green screen appears
+            val soundManager = com.artiusid.sdk.utils.CameraSoundManager(context)
+            soundManager.playSuccessSound()
+            
             kotlinx.coroutines.delay(2000) // Show success for 2 seconds
             onPassportScanComplete()
+            
+            // Cleanup sound manager
+            soundManager.cleanup()
         }
     }
     

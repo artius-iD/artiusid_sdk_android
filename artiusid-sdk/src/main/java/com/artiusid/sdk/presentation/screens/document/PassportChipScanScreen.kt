@@ -696,6 +696,33 @@ fun PassportChipScanScreen(
         }
     }
 
+    // Auto-navigate to verification when max retries reached
+    LaunchedEffect(retryCount, nfcScanState) {
+        if (retryCount >= 3 && nfcScanState is NFCScanState.Error) {
+            Log.d("PassportChipScan", "🔄 Max retries (3) reached with error state - auto-navigating to verification")
+            kotlinx.coroutines.delay(2000) // Show error message for 2 seconds
+            
+            // Preserve OCR passport data when NFC fails
+            val mrzData = ImageStorage.getPassportMRZData()
+            if (mrzData != null) {
+                Log.d("PassportChipScan", "📝 Preserving OCR passport data for verification results...")
+                val utilPassportData = com.artiusid.sdk.utils.PassportData(
+                    firstName = mrzData.givenNames?.takeIf { it.isNotBlank() },
+                    lastName = mrzData.surname?.takeIf { it.isNotBlank() },
+                    documentNumber = mrzData.passportNumber?.takeIf { it.isNotBlank() },
+                    nationality = mrzData.nationality?.takeIf { it.isNotBlank() },
+                    dateOfBirth = mrzData.dateOfBirth?.takeIf { it.isNotBlank() },
+                    dateOfExpiry = mrzData.dateOfExpiry?.takeIf { it.isNotBlank() }
+                )
+                com.artiusid.sdk.utils.DocumentDataHolder.setPassportData(utilPassportData)
+                Log.d("PassportChipScan", "📝 Stored OCR passport data for verification: ${utilPassportData.firstName} ${utilPassportData.lastName}")
+            }
+            
+            Log.d("PassportChipScan", "📋 Auto-proceeding to verification without NFC data")
+            onChipScanComplete(null)
+        }
+    }
+
     // Handle actual NFC tag when detected with timeout - use retryCount to allow retries
     LaunchedEffect(lastNfcTag, retryCount) {
         lastNfcTag?.let { tag ->
@@ -764,30 +791,8 @@ fun PassportChipScanScreen(
                     } else {
                         Log.w("PassportChipScan", "⚠️ NFC reading returned null - authentication may have failed")
                         
-                        // Check if we've reached max retry attempts (3 failures)
-                        if (retryCount >= 2) { // 0, 1, 2 = 3 attempts total
-                            Log.d("PassportChipScan", "🔄 Max retry attempts reached (3). Auto-skipping chip scan...")
-                            
-                            // Ensure OCR passport data is preserved when NFC fails
-                            val mrzData = ImageStorage.getPassportMRZData()
-                            if (mrzData != null) {
-                                Log.d("PassportChipScan", "📝 Preserving OCR passport data for verification results...")
-                                val utilPassportData = com.artiusid.sdk.utils.PassportData(
-                                    firstName = mrzData.givenNames?.takeIf { it.isNotBlank() },
-                                    lastName = mrzData.surname?.takeIf { it.isNotBlank() },
-                                    documentNumber = mrzData.passportNumber?.takeIf { it.isNotBlank() },
-                                    nationality = mrzData.nationality?.takeIf { it.isNotBlank() },
-                                    dateOfBirth = mrzData.dateOfBirth?.takeIf { it.isNotBlank() },
-                                    dateOfExpiry = mrzData.dateOfExpiry?.takeIf { it.isNotBlank() }
-                                )
-                                com.artiusid.sdk.utils.DocumentDataHolder.setPassportData(utilPassportData)
-                                Log.d("PassportChipScan", "📝 Stored OCR passport data for verification: ${utilPassportData.firstName} ${utilPassportData.lastName}")
-                            }
-                            
-                            onChipScanComplete(null) // Skip chip scan and continue
-                        } else {
-                            nfcScanState = NFCScanState.Error("Failed to read passport chip. Keep passport steady on NFC area during entire scan process. Try again.")
-                        }
+                        // Set error state - let auto-navigation handle the completion
+                        nfcScanState = NFCScanState.Error("Failed to read passport chip. Keep passport steady on NFC area during entire scan process. Try again.")
                     }
                     
                 } catch (e: Exception) {
@@ -804,38 +809,16 @@ fun PassportChipScanScreen(
                     }
                     com.artiusid.StandaloneAppActivity.currentIsoDep = null
                     
-                    // Check if we've reached max retry attempts (3 failures)
-                    if (retryCount >= 2) { // 0, 1, 2 = 3 attempts total
-                        Log.d("PassportChipScan", "🔄 Max retry attempts reached (3). Auto-skipping chip scan...")
-                        
-                        // Ensure OCR passport data is preserved when NFC fails
-                        val mrzData = ImageStorage.getPassportMRZData()
-                        if (mrzData != null) {
-                            Log.d("PassportChipScan", "📝 Preserving OCR passport data for verification results...")
-                            val utilPassportData = com.artiusid.sdk.utils.PassportData(
-                                firstName = mrzData.givenNames?.takeIf { it.isNotBlank() },
-                                lastName = mrzData.surname?.takeIf { it.isNotBlank() },
-                                documentNumber = mrzData.passportNumber?.takeIf { it.isNotBlank() },
-                                nationality = mrzData.nationality?.takeIf { it.isNotBlank() },
-                                dateOfBirth = mrzData.dateOfBirth?.takeIf { it.isNotBlank() },
-                                dateOfExpiry = mrzData.dateOfExpiry?.takeIf { it.isNotBlank() }
-                            )
-                            com.artiusid.sdk.utils.DocumentDataHolder.setPassportData(utilPassportData)
-                            Log.d("PassportChipScan", "📝 Stored OCR passport data for verification: ${utilPassportData.firstName} ${utilPassportData.lastName}")
-                        }
-                        
-                        onChipScanComplete(null) // Skip chip scan and continue
-                    } else {
-                        val errorMessage = when {
-                            e.message?.contains("Tag was lost") == true -> 
-                                "Passport moved during scan! Keep passport steady on NFC area for entire process. Try again."
-                            e.message?.contains("BAC failed") == true -> 
-                                "Authentication failed. MRZ data may not match passport chip. Try scanning MRZ again."
-                            else -> 
-                                "NFC reading failed: ${e.localizedMessage ?: "Unknown error"}. Try again."
-                        }
-                        nfcScanState = NFCScanState.Error(errorMessage)
+                    // Set error state with appropriate message - let auto-navigation handle the completion
+                    val errorMessage = when {
+                        e.message?.contains("Tag was lost") == true -> 
+                            "Passport moved during scan! Keep passport steady on NFC area for entire process. Try again."
+                        e.message?.contains("BAC failed") == true -> 
+                            "Authentication failed. MRZ data may not match passport chip. Try scanning MRZ again."
+                        else -> 
+                            "NFC reading failed: ${e.localizedMessage ?: "Unknown error"}. Try again."
                     }
+                    nfcScanState = NFCScanState.Error(errorMessage)
                 }
             }
         }

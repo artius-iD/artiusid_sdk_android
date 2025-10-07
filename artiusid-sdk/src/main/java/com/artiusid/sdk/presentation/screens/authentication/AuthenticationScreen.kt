@@ -199,9 +199,17 @@ fun AuthenticationScreen(
                         )
                         
                         // Navigate to authenticated screen after delay (like iOS)
+                        val context = LocalContext.current
                         LaunchedEffect(Unit) {
+                            // Play success sound
+                            val soundManager = com.artiusid.sdk.utils.CameraSoundManager(context)
+                            soundManager.playSuccessSound()
+                            
                             delay(2000)
                             onNavigateToApproval() // This will navigate to AuthenticatedScreen
+                            
+                            // Cleanup sound manager
+                            soundManager.cleanup()
                         }
                     }
                     

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.artiusid.sdk.presentation.components.CustomButton
@@ -30,6 +31,14 @@ import com.artiusid.sdk.ui.theme.*
 fun EnrollmentSuccessScreen(
     onComplete: () -> Unit
 ) {
+    // Play success sound when screen is shown
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        val soundManager = com.artiusid.sdk.utils.CameraSoundManager(context)
+        soundManager.playSuccessSound()
+        soundManager.cleanup()
+    }
+    
     GradientBackground {
         Column(
             modifier = Modifier

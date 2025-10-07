@@ -14,6 +14,7 @@ import android.media.SoundPool
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.artiusid.sdk.R
 
 /**
  * Manages camera capture sound effects
@@ -48,35 +49,40 @@ class CameraSoundManager(private val context: Context) {
     
     /**
      * Play camera capture sound
-     * Uses audible notification tone
+     * Uses simple system tone for immediate feedback
      */
     suspend fun playCaptureSound() {
         withContext(Dispatchers.IO) {
             try {
-                toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, CAPTURE_TONE_DURATION)
+                // Use simple system tone for immediate capture feedback
+                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
                 Log.d(TAG, "📸🔊 Camera capture sound played")
             } catch (e: Exception) {
-                try {
-                    // Fallback to DTMF tone
-                    toneGenerator?.startTone(ToneGenerator.TONE_DTMF_1, CAPTURE_TONE_DURATION)
-                    Log.d(TAG, "📸🔊 Camera capture sound played (fallback)")
-                } catch (e2: Exception) {
-                    Log.w(TAG, "Failed to play capture sound: ${e.message}")
-                }
+                Log.w(TAG, "Failed to play capture sound: ${e.message}")
             }
         }
     }
     
     /**
      * Play success sound for successful capture
-     * Uses a more pleasant approval chime
+     * Uses custom MP3 sound file
      */
     suspend fun playSuccessSound() {
         withContext(Dispatchers.IO) {
             try {
-                // Use a pleasant success tone
-                toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, CAPTURE_TONE_DURATION)
-                Log.d(TAG, "✅🔊 Success approval chime played")
+                // Use custom MP3 sound file for success
+                val mediaPlayer = MediaPlayer.create(context, R.raw.clear_combo_5_394488)
+                mediaPlayer?.let { player ->
+                    player.setOnCompletionListener { mp ->
+                        mp.release()
+                    }
+                    player.start()
+                    Log.d(TAG, "✅🔊 Custom success approval chime played")
+                } ?: run {
+                    // Fallback to system tone if MP3 fails to load
+                    toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, CAPTURE_TONE_DURATION)
+                    Log.d(TAG, "✅🔊 Success approval chime played (fallback)")
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Failed to play success sound: ${e.message}")
             }

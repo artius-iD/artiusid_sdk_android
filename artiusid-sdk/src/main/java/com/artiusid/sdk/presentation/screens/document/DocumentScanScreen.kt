@@ -81,11 +81,16 @@ fun DocumentScanScreen(
         }
     }
     
-    // Also watch for UI state changes
+    // Also watch for UI state changes and play success sound on green screen
     LaunchedEffect(uiState) {
         android.util.Log.d("DocumentScanScreen", "UI state changed to: $uiState")
         if (uiState is DocumentScanUiState.Success || uiState is DocumentScanUiState.BarcodeDetected) {
             android.util.Log.d("DocumentScanScreen", "Success state detected, should trigger completion")
+            
+            // Play custom success sound when green screen appears
+            val soundManager = com.artiusid.sdk.utils.CameraSoundManager(context)
+            soundManager.playSuccessSound()
+            soundManager.cleanup()
         }
     }
 
