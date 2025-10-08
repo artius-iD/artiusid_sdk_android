@@ -464,10 +464,39 @@ print_status "Obfuscated sample app built successfully - Size: $SAMPLE_APK_SIZE"
 # Return to temp directory
 cd "$TEMP_DIR"
 
-# Create sample directory and copy the obfuscated APK
-print_info "✅ Adding: Obfuscated functional sample app (IP protected)"
+# Store APK path for later upload as release asset (too large for git)
+print_info "✅ Preparing: Obfuscated functional sample app for release upload (IP protected)"
+SAMPLE_APK_FOR_RELEASE="$OLDPWD/$SAMPLE_APK_FILE"
+
+# Create sample directory with info file instead of large APK
 mkdir -p sample-app
-cp "$OLDPWD/$SAMPLE_APK_FILE" sample-app/ArtiusID-Sample-App-Functional.apk
+cat > sample-app/README.md << 'SAMPLE_README_EOF'
+# Functional Sample App
+
+The obfuscated functional sample app is available as a release asset due to size constraints.
+
+## Download
+
+Download `ArtiusID-Sample-App-Functional.apk` from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases).
+
+## Installation
+
+```bash
+adb install ArtiusID-Sample-App-Functional.apk
+```
+
+## Features
+
+- Complete SDK integration demonstration
+- Obfuscated for IP protection
+- Functional identity verification flow
+- Bridge integration examples
+- Theme customization examples
+
+## Size
+
+Approximately 165MB (includes ML models and native libraries)
+SAMPLE_README_EOF
 
 # 5. Create integration template files (for reference only)
 print_info "✅ Creating: Integration template files"
@@ -725,7 +754,7 @@ print_info "Package contents:"
 echo "   ✅ sdk/artiusid-sdk-$NEW_VERSION.aar (obfuscated SDK)"
 echo "   ✅ sdk/consumer-rules.pro (ProGuard rules)"
 echo "   ✅ INTEGRATION_GUIDE.md (public API documentation)"
-echo "   ✅ sample-app/ArtiusID-Sample-App-Functional.apk (obfuscated functional demo - $SAMPLE_APK_SIZE)"
+echo "   ✅ sample-app/README.md (sample app download instructions)"
 echo "   ✅ integration-template/MainActivity.kt (integration code template)"
 echo "   ✅ integration-template/build.gradle (build configuration template)"
 echo "   ✅ LICENSE.txt (usage agreement)"
@@ -806,6 +835,15 @@ fi
 
 print_status "AAR uploaded successfully"
 
+# Upload sample APK file
+print_info "Uploading obfuscated sample app..."
+if ! gh release upload "v$NEW_VERSION" "$SAMPLE_APK_FOR_RELEASE" --repo artius-iD/artiusid_sdk_android --clobber; then
+    print_error "Failed to upload sample APK file"
+    exit 1
+fi
+
+print_status "Sample app uploaded successfully"
+
 # Cleanup
 cd "$OLDPWD"
 rm -rf "$TEMP_DIR"
@@ -820,7 +858,7 @@ echo ""
 echo "📦 Customer receives ONLY:"
 echo "   ✅ Obfuscated AAR file ($AAR_SIZE)"
 echo "   ✅ Public integration guide"
-echo "   ✅ Obfuscated functional sample app ($SAMPLE_APK_SIZE)"
+echo "   ✅ Obfuscated functional sample app ($SAMPLE_APK_SIZE) - as release asset"
 echo "   ✅ Integration code templates"
 echo "   ✅ Consumer ProGuard rules"
 echo "   ✅ License agreement"
