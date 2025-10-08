@@ -747,7 +747,7 @@ print_info "Creating and pushing tag..."
 git tag "v$NEW_VERSION"
 
 print_info "Pushing to GitHub..."
-git push origin main --tags 2>/dev/null || git push origin master --tags
+git push origin main --tags
 
 # Create GitHub Release
 print_info "Creating GitHub release..."
