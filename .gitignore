@@ -64,3 +64,12 @@ sample-app/build/
 # API keys and sensitive data
 api-keys.properties
 secrets.properties
+
+# Temporary distribution files
+customer-test-app/
+customer-sample-app/
+customer-sample-distribution/
+*.tar.gz
+create-customer-sample-distribution.sh
+sample-app/create-customer-distribution.sh
+artiusid-sdk/scripts/cleanup-sample-source.sh
