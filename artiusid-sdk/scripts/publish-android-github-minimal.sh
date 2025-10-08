@@ -443,14 +443,22 @@ cd "$OLDPWD"
 print_info "Building obfuscated sample app..."
 ./gradlew :sample-app:assembleCustomerDistribution
 
-# Check if the obfuscated APK was built
+# Check if the obfuscated APK was built (may be unsigned)
 SAMPLE_APK="sample-app/build/outputs/apk/customerDistribution/sample-app-customerDistribution.apk"
-if [ ! -f "$SAMPLE_APK" ]; then
-    print_error "Failed to build obfuscated sample app: $SAMPLE_APK"
+SAMPLE_APK_UNSIGNED="sample-app/build/outputs/apk/customerDistribution/sample-app-customerDistribution-unsigned.apk"
+
+if [ -f "$SAMPLE_APK" ]; then
+    # Use signed APK if available
+    SAMPLE_APK_FILE="$SAMPLE_APK"
+elif [ -f "$SAMPLE_APK_UNSIGNED" ]; then
+    # Use unsigned APK if signed not available
+    SAMPLE_APK_FILE="$SAMPLE_APK_UNSIGNED"
+else
+    print_error "Failed to build obfuscated sample app. Expected: $SAMPLE_APK or $SAMPLE_APK_UNSIGNED"
     exit 1
 fi
 
-SAMPLE_APK_SIZE=$(du -h "$SAMPLE_APK" | cut -f1)
+SAMPLE_APK_SIZE=$(du -h "$SAMPLE_APK_FILE" | cut -f1)
 print_status "Obfuscated sample app built successfully - Size: $SAMPLE_APK_SIZE"
 
 # Return to temp directory
@@ -459,7 +467,7 @@ cd "$TEMP_DIR"
 # Create sample directory and copy the obfuscated APK
 print_info "✅ Adding: Obfuscated functional sample app (IP protected)"
 mkdir -p sample-app
-cp "$OLDPWD/$SAMPLE_APK" sample-app/ArtiusID-Sample-App-Functional.apk
+cp "$OLDPWD/$SAMPLE_APK_FILE" sample-app/ArtiusID-Sample-App-Functional.apk
 
 # 5. Create integration template files (for reference only)
 print_info "✅ Creating: Integration template files"
