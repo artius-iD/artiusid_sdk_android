@@ -1,100 +1,48 @@
-# artius.iD Android SDK
+# ArtiusID Android SDK v1.0.3
 
-A comprehensive Android SDK for identity verification, face liveness detection, document scanning, and NFC passport reading.
+A secure Android SDK for identity verification, face liveness detection, document scanning, and NFC passport reading.
 
-## Features
+## 📦 Installation
 
-- 🔐 **Face Liveness Detection** - Advanced 3D face liveness with segment-based verification
-- 📄 **Document Scanning** - AI-powered document capture and OCR
-- 📱 **NFC Passport Reading** - Secure passport data extraction
-- 🎨 **Complete Customization** - Colors, fonts, strings, logos, and branding
-- 🌍 **Multi-language Support** - Built-in localization system
-- ⚡ **Easy Integration** - Simple API with comprehensive callbacks
+1. Download `artiusid-sdk-1.0.3.aar` from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases)
+2. Copy it to your app's `libs` directory
+3. Follow the [Integration Guide](INTEGRATION_GUIDE.md)
 
-## Quick Start
-
-### 1. Add Dependency
+## 🚀 Quick Start
 
 ```gradle
 dependencies {
-    implementation 'com.artiusid:artiusid-sdk:1.0.0'
+    implementation files('libs/artiusid-sdk-1.0.3.aar')
+    // See INTEGRATION_GUIDE.md for complete dependency list
 }
 ```
 
-### 2. Initialize SDK
+## 📚 Documentation
 
-```kotlin
-// Initialize with your configuration
-val config = ArtiusSDKConfig.Builder()
-    .setApiKey("your-api-key")
-    .setEnvironment(Environment.PRODUCTION)
-    .setBrandingConfig(brandingConfig)
-    .setLocalizationConfig(localizationConfig)
-    .build()
+- [Integration Guide](INTEGRATION_GUIDE.md) - Complete setup instructions
+- [Sample Integration](sample/) - Example implementation
+- [License Agreement](LICENSE.txt) - Usage terms
 
-ArtiusIDSDK.initialize(this, config)
-```
+## 🔒 Security Features
 
-### 3. Start Verification
+- Fully obfuscated AAR for IP protection
+- Hardware-backed encryption
+- Certificate pinning support
+- Anti-tampering protection
 
-```kotlin
-// Complete verification flow
-ArtiusIDSDK.startVerificationFlow(
-    activity = this,
-    config = verificationConfig,
-    callback = object : VerificationCallback {
-        override fun onSuccess(result: VerificationResult) {
-            // Handle successful verification
-        }
-        
-        override fun onError(error: SDKError) {
-            // Handle error
-        }
-        
-        override fun onCancelled() {
-            // Handle cancellation
-        }
-    }
-)
-```
-
-## Requirements
+## 📋 Requirements
 
 - **Minimum SDK**: Android 7.0 (API level 24)
 - **Target SDK**: Android 14 (API level 34)
 - **Kotlin**: 1.9.0+
-- **Gradle**: 8.0+
+- **Firebase Project**: Required
 
-## License
+## 📞 Support
 
-Copyright © 2024 artius.iD. All rights reserved.
+For technical support: support@artiusid.com
+For licensing questions: legal@artiusid.com
 
-## Installation
-
-### Gradle
-Add the AAR file to your project:
-
-1. Download `artiusid-sdk-1.0.2.aar` from the releases page
-2. Copy it to your app's `libs` directory
-3. Add to your app's `build.gradle`:
-
-```gradle
-dependencies {
-    implementation files('libs/artiusid-sdk-1.0.2.aar')
-}
-```
-
-## Version
-Current version: **1.0.2**
-
-## Documentation
-- [Integration Guide](INTEGRATION_GUIDE.md)
-- [Security Guide](docs/SDK_DISTRIBUTION_SECURITY.md)
-- [Image Override System](docs/Image_Override_System_Documentation.md)
-
-## Changelog
-### v1.0.2
-- Latest release with enhanced security and performance improvements
-- Fully obfuscated AAR for IP protection
-- Comprehensive documentation and integration guides
-
+---
+**Version**: 1.0.3  
+**Release Date**: 2025-10-08  
+**Package Size**:  25M

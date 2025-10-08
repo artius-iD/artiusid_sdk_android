@@ -1,0 +1,19 @@
+ArtiusID Android SDK License Agreement
+
+Copyright © 2024 artius.iD, Inc. All rights reserved.
+
+This software development kit (SDK) is provided under license and may only be used 
+in accordance with the terms of the license agreement between you and artius.iD, Inc.
+
+PERMITTED USES:
+- Integration into licensed applications
+- Development and testing purposes
+- Distribution as part of licensed applications
+
+RESTRICTIONS:
+- No reverse engineering or decompilation
+- No redistribution of SDK components
+- No modification of SDK functionality
+- Use only with authorized applications
+
+For full license terms and conditions, please contact: legal@artiusid.com

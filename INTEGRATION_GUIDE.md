@@ -4,58 +4,139 @@
 
 ### 1. Add AAR to Your Project
 
-Download the latest AAR file and add it to your project:
+1. Download `artiusid-sdk-1.0.3.aar` from the releases page
+2. Copy it to your app's `libs` directory
+3. Add to your app's `build.gradle`:
 
 ```gradle
+android {
+    compileSdk 34
+    
+    defaultConfig {
+        minSdk 24
+        targetSdk 34
+    }
+    
+    buildFeatures {
+        compose true
+    }
+    
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.5.3'
+    }
+}
+
 dependencies {
-    implementation files('libs/artiusid-sdk-1.0.2.aar')
+    // Add the SDK AAR
+    implementation files('libs/artiusid-sdk-1.0.3.aar')
     
     // Required dependencies
-    implementation 'androidx.compose.ui:ui:1.5.8'
-    implementation 'androidx.compose.material3:material3:1.1.2'
-    implementation 'androidx.camera:camera-camera2:1.3.1'
-    implementation 'androidx.camera:camera-lifecycle:1.3.1'
-    implementation 'com.google.mlkit:face-detection:16.1.5'
-    implementation 'com.google.dagger:hilt-android:2.48'
+    def hilt_version = "2.48"
+    implementation "com.google.dagger:hilt-android:${hilt_version}"
+    kapt "com.google.dagger:hilt-android-compiler:${hilt_version}"
+    implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
+    
+    // Compose
+    implementation platform('androidx.compose:compose-bom:2023.10.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.material3:material3'
+    
+    // Image loading (required for SDK animations)
+    implementation 'io.coil-kt:coil-compose:2.5.0'
+    implementation 'io.coil-kt:coil-gif:2.5.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    
+    // Firebase (required for FCM functionality)
+    implementation platform('com.google.firebase:firebase-bom:32.7.2')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-messaging:23.4.1'
+    
+    // Biometric authentication
+    implementation 'androidx.biometric:biometric:1.1.0'
 }
 ```
 
-### 2. Initialize SDK
+### 2. Add Required Plugins
+
+```gradle
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.dagger.hilt.android'
+    id 'com.google.devtools.ksp'
+    id 'com.google.gms.google-services'
+}
+```
+
+### 3. Application Class Setup
+
+```kotlin
+import dagger.hilt.android.HiltAndroidApp
+import android.app.Application
+
+@HiltAndroidApp
+class YourApplication : Application() {
+    // Your application setup
+}
+```
+
+### 4. Initialize SDK
 
 ```kotlin
 import com.artiusid.sdk.ArtiusIDSDK
 import com.artiusid.sdk.config.SDKConfiguration
 
-val config = SDKConfiguration.Builder()
-    .setEnvironment(SDKConfiguration.Environment.PRODUCTION)
-    .build()
-
-ArtiusIDSDK.initialize(context, config)
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Initialize SDK
+        val config = SDKConfiguration.Builder()
+            .setEnvironment(SDKConfiguration.Environment.PRODUCTION)
+            .build()
+            
+        ArtiusIDSDK.initialize(this, config)
+    }
+}
 ```
 
-### 3. Start Verification
+### 5. Start Verification
 
 ```kotlin
-ArtiusIDSDK.startVerification(
+import com.artiusid.sdk.callbacks.VerificationCallback
+import com.artiusid.sdk.models.VerificationResult
+import com.artiusid.sdk.models.SDKError
+
+ArtiusIDSDK.startVerificationFlow(
     activity = this,
+    config = verificationConfig,
     callback = object : VerificationCallback {
         override fun onSuccess(result: VerificationResult) {
-            // Handle success
+            // Handle successful verification
         }
         
         override fun onError(error: SDKError) {
             // Handle error
         }
+        
+        override fun onCancelled() {
+            // Handle cancellation
+        }
     }
 )
 ```
 
-## Security Requirements
+## Requirements
 
-- Minimum SDK: API 24 (Android 7.0)
-- Target SDK: API 34 (Android 14)
-- ProGuard: Enabled (recommended)
-- Network Security: HTTPS only
+- **Minimum SDK**: Android 7.0 (API level 24)
+- **Target SDK**: Android 14 (API level 34)
+- **Kotlin**: 1.9.0+
+- **Gradle**: 8.0+
+- **Firebase Project**: Required for authentication and messaging
+
+## ProGuard Configuration
+
+The SDK includes consumer ProGuard rules that are automatically applied to your app. No additional configuration needed.
 
 ## Support
 
