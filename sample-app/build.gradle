@@ -25,16 +25,34 @@ android {
             debuggable true
             // No obfuscation for development
         }
-        
+
         release {
             minifyEnabled true
             shrinkResources true
             debuggable false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-customer.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-customer.pro' // Changed to customer.pro
             
             // Additional obfuscation settings
             zipAlignEnabled true
             crunchPngs true
+        }
+        
+        // New build type for customer distribution
+        customerDistribution {
+            initWith release
+            minifyEnabled true
+            shrinkResources true
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-obfuscated.pro' // Changed to obfuscated.pro
+            
+            // Maximum obfuscation for IP protection
+            zipAlignEnabled true
+            crunchPngs true
+            
+            // Custom version naming for distribution
+            versionNameSuffix "-customer"
+            
+            matchingFallbacks = ['release']
         }
     }
     
