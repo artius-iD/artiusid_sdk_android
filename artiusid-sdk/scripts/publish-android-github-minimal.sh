@@ -435,92 +435,39 @@ INTEGRATION_EOF
 # Replace version placeholder
 sed -i.bak "s/VERSION/$NEW_VERSION/g" INTEGRATION_GUIDE.md && rm INTEGRATION_GUIDE.md.bak
 
-# 4. Create minimal sample integration
-print_info "✅ Creating: Minimal sample integration"
-cat > sample/MainActivity.kt << 'SAMPLE_EOF'
-package com.example.yourapp
+# 4. Build and include obfuscated sample app
+print_info "✅ Building: Obfuscated sample app for customer distribution"
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import dagger.hilt.android.AndroidEntryPoint
-import com.artiusid.sdk.ArtiusIDSDK
-import com.artiusid.sdk.config.SDKConfiguration
-import com.artiusid.sdk.callbacks.VerificationCallback
-import com.artiusid.sdk.models.VerificationResult
-import com.artiusid.sdk.models.SDKError
+# Build the obfuscated sample app first
+cd "$OLDPWD"
+print_info "Building obfuscated sample app..."
+./gradlew :sample-app:assembleCustomerDistribution
 
-@AndroidEntryPoint
-class MainActivity : ComponentActivity() {
-    
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        // Initialize SDK
-        val config = SDKConfiguration.Builder()
-            .setEnvironment(SDKConfiguration.Environment.PRODUCTION)
-            .build()
-            
-        ArtiusIDSDK.initialize(this, config)
-        
-        setContent {
-            MaterialTheme {
-                MainScreen()
-            }
-        }
-    }
-    
-    @Composable
-    fun MainScreen() {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Button(
-                onClick = { startVerification() }
-            ) {
-                Text("Start Identity Verification")
-            }
-        }
-    }
-    
-    private fun startVerification() {
-        ArtiusIDSDK.startVerificationFlow(
-            activity = this,
-            callback = object : VerificationCallback {
-                override fun onSuccess(result: VerificationResult) {
-                    // Handle successful verification
-                    println("Verification successful: ${result.verificationId}")
-                }
-                
-                override fun onError(error: SDKError) {
-                    // Handle error
-                    println("Verification error: ${error.message}")
-                }
-                
-                override fun onCancelled() {
-                    // Handle cancellation
-                    println("Verification cancelled")
-                }
-            }
-        )
-    }
-}
-SAMPLE_EOF
+# Check if the obfuscated APK was built
+SAMPLE_APK="sample-app/build/outputs/apk/customerDistribution/sample-app-customerDistribution.apk"
+if [ ! -f "$SAMPLE_APK" ]; then
+    print_error "Failed to build obfuscated sample app: $SAMPLE_APK"
+    exit 1
+fi
 
-# 5. Create minimal build.gradle reference
-print_info "✅ Creating: Build configuration reference"
-cat > sample/build.gradle << 'BUILD_EOF'
-// ArtiusID SDK - Minimal Integration Example
+SAMPLE_APK_SIZE=$(du -h "$SAMPLE_APK" | cut -f1)
+print_status "Obfuscated sample app built successfully - Size: $SAMPLE_APK_SIZE"
+
+# Return to temp directory
+cd "$TEMP_DIR"
+
+# Create sample directory and copy the obfuscated APK
+print_info "✅ Adding: Obfuscated functional sample app (IP protected)"
+mkdir -p sample-app
+cp "$OLDPWD/$SAMPLE_APK" sample-app/ArtiusID-Sample-App-Functional.apk
+
+# 5. Create integration template files (for reference only)
+print_info "✅ Creating: Integration template files"
+mkdir -p integration-template
+
+# Create minimal build.gradle reference
+cat > integration-template/build.gradle << 'BUILD_EOF'
+// ArtiusID SDK - Integration Template
 // Copy this configuration to your app's build.gradle
 
 plugins {
@@ -603,8 +550,89 @@ dependencies {
 }
 BUILD_EOF
 
-# Replace version placeholder
-sed -i.bak "s/VERSION/$NEW_VERSION/g" sample/build.gradle && rm sample/build.gradle.bak
+# Create minimal MainActivity template
+cat > integration-template/MainActivity.kt << 'TEMPLATE_EOF'
+package com.example.yourapp
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import dagger.hilt.android.AndroidEntryPoint
+import com.artiusid.sdk.ArtiusIDSDK
+import com.artiusid.sdk.config.SDKConfiguration
+import com.artiusid.sdk.callbacks.VerificationCallback
+import com.artiusid.sdk.models.VerificationResult
+import com.artiusid.sdk.models.SDKError
+
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Initialize SDK
+        val config = SDKConfiguration.Builder()
+            .setEnvironment(SDKConfiguration.Environment.PRODUCTION)
+            .build()
+            
+        ArtiusIDSDK.initialize(this, config)
+        
+        setContent {
+            MaterialTheme {
+                MainScreen()
+            }
+        }
+    }
+    
+    @Composable
+    fun MainScreen() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Button(
+                onClick = { startVerification() }
+            ) {
+                Text("Start Identity Verification")
+            }
+        }
+    }
+    
+    private fun startVerification() {
+        ArtiusIDSDK.startVerificationFlow(
+            activity = this,
+            callback = object : VerificationCallback {
+                override fun onSuccess(result: VerificationResult) {
+                    // Handle successful verification
+                    println("Verification successful: ${result.verificationId}")
+                }
+                
+                override fun onError(error: SDKError) {
+                    // Handle error
+                    println("Verification error: ${error.message}")
+                }
+                
+                override fun onCancelled() {
+                    // Handle cancellation
+                    println("Verification cancelled")
+                }
+            }
+        )
+    }
+}
+TEMPLATE_EOF
+
+# Replace version placeholder in build.gradle
+sed -i.bak "s/VERSION/$NEW_VERSION/g" integration-template/build.gradle && rm integration-template/build.gradle.bak
 
 # 6. Create LICENSE file
 print_info "✅ Creating: License agreement"
@@ -654,8 +682,9 @@ dependencies {
 
 ## 📚 Documentation
 
-- [Integration Guide](INTEGRATION_GUIDE.md) - Complete setup instructions
-- [Sample Integration](sample/) - Example implementation
+- [Integration Guide](INTEGRATION_GUIDE.md) - Quick start and basic setup
+- [Integration Template](integration-template/) - Code templates for integration
+- [Sample Application](sample-app/ArtiusID-Sample-App-Functional.apk) - Functional obfuscated demo app
 - [License Agreement](LICENSE.txt) - Usage terms
 
 ## 🔒 Security Features
@@ -683,24 +712,26 @@ For licensing questions: legal@artiusid.com
 **Package Size**: $AAR_SIZE
 README_EOF
 
-print_status "📦 Minimal distribution package created successfully!"
+print_status "📦 Secure customer distribution package created successfully!"
 print_info "Package contents:"
-echo "   ✅ sdk/artiusid-sdk-$NEW_VERSION.aar (obfuscated)"
+echo "   ✅ sdk/artiusid-sdk-$NEW_VERSION.aar (obfuscated SDK)"
 echo "   ✅ sdk/consumer-rules.pro (ProGuard rules)"
-echo "   ✅ INTEGRATION_GUIDE.md (public API only)"
-echo "   ✅ sample/MainActivity.kt (minimal example)"
-echo "   ✅ sample/build.gradle (configuration reference)"
+echo "   ✅ INTEGRATION_GUIDE.md (public API documentation)"
+echo "   ✅ sample-app/ArtiusID-Sample-App-Functional.apk (obfuscated functional demo - $SAMPLE_APK_SIZE)"
+echo "   ✅ integration-template/MainActivity.kt (integration code template)"
+echo "   ✅ integration-template/build.gradle (build configuration template)"
 echo "   ✅ LICENSE.txt (usage agreement)"
 echo "   ✅ README.md (customer documentation)"
 
 # Git operations
 print_info "Committing changes..."
 git add .
-git commit -m "Release Android SDK v$NEW_VERSION - Minimal Customer Distribution
+git commit -m "Release Android SDK v$NEW_VERSION - Secure Customer Distribution
 
 - Obfuscated AAR package only
 - Public API integration guide
-- Minimal sample integration
+- Obfuscated functional sample app (IP protected)
+- Integration code templates
 - Consumer ProGuard rules
 - License agreement"
 
@@ -721,7 +752,8 @@ This release contains **only the essential files** needed for customer integrati
 ### 📦 What's Included
 - ✅ **artiusid-sdk-$NEW_VERSION.aar** - Obfuscated SDK package
 - ✅ **Integration Guide** - Public API documentation
-- ✅ **Sample Integration** - Minimal working example  
+- ✅ **Functional Sample App** - Obfuscated demo application (IP protected)
+- ✅ **Integration Templates** - Code templates for easy integration
 - ✅ **Consumer ProGuard Rules** - Automatic security configuration
 - ✅ **License Agreement** - Usage terms
 
@@ -780,15 +812,17 @@ echo ""
 echo "📦 Customer receives ONLY:"
 echo "   ✅ Obfuscated AAR file ($AAR_SIZE)"
 echo "   ✅ Public integration guide"
-echo "   ✅ Minimal sample code"
+echo "   ✅ Obfuscated functional sample app ($SAMPLE_APK_SIZE)"
+echo "   ✅ Integration code templates"
 echo "   ✅ Consumer ProGuard rules"
 echo "   ✅ License agreement"
 echo ""
 echo "🔒 IP Protection:"
-echo "   ❌ No source code"
+echo "   ❌ No source code exposure"
 echo "   ❌ No internal documentation"
 echo "   ❌ No build configurations"
 echo "   ❌ No Firebase configs"
+echo "   ✅ Sample app fully obfuscated"
 echo ""
 echo "📋 Next steps:"
 echo "   1. Test AAR integration in sample project"

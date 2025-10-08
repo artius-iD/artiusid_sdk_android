@@ -26,7 +26,9 @@ object SDKSecurityManager {
     private val ALLOWED_SIGNATURE_HASHES = setOf(
         // Add your production app signature hashes here
         "YOUR_PRODUCTION_APP_SIGNATURE_HASH",
-        "DEVELOPMENT_SIGNATURE_HASH_FOR_TESTING"
+        "DEVELOPMENT_SIGNATURE_HASH_FOR_TESTING",
+        // Customer test app debug signature
+        "a0c9c156e0f289a83b0092502fd04a102bb38a4283016dfe64514dd201117b74"
     )
     
     /**
