@@ -1,10 +1,10 @@
-# ArtiusID Android SDK v1.0.5
+# ArtiusID Android SDK v1.2.0
 
 A secure Android SDK for identity verification, face liveness detection, document scanning, and NFC passport reading.
 
 ## 📦 Installation
 
-1. Download `artiusid-sdk-1.0.5.aar` from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases)
+1. Download `artiusid-sdk-1.2.0.aar` from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases)
 2. Copy it to your app's `libs` directory
 3. Follow the [Integration Guide](INTEGRATION_GUIDE.md)
 
@@ -12,7 +12,7 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 ```gradle
 dependencies {
-    implementation files('libs/artiusid-sdk-1.0.5.aar')
+    implementation files('libs/artiusid-sdk-1.2.0.aar')
     // See INTEGRATION_GUIDE.md for complete dependency list
 }
 ```
@@ -21,7 +21,7 @@ dependencies {
 
 - [Integration Guide](INTEGRATION_GUIDE.md) - Quick start and basic setup
 - [Integration Template](integration-template/) - Code templates for integration
-- [Sample Application](sample-app/ArtiusID-Sample-App-Functional.apk) - Functional obfuscated demo app
+- [Sample Application](sample-app/README.md) - Functional obfuscated demo app
 - [License Agreement](LICENSE.txt) - Usage terms
 
 ## 🔒 Security Features
@@ -44,6 +44,6 @@ For technical support: support@artiusid.com
 For licensing questions: legal@artiusid.com
 
 ---
-**Version**: 1.0.5  
-**Release Date**: 2025-10-08  
+**Version**: 1.2.0  
+**Release Date**: 2025-10-14  
 **Package Size**:  25M

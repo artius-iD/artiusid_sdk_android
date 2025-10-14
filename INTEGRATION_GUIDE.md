@@ -4,7 +4,7 @@
 
 ### 1. Add AAR to Your Project
 
-1. Download `artiusid-sdk-1.0.5.aar` from the releases page
+1. Download `artiusid-sdk-1.2.0.aar` from the releases page
 2. Copy it to your app's `libs` directory
 3. Add to your app's `build.gradle`:
 
@@ -28,12 +28,12 @@ android {
 
 dependencies {
     // Add the SDK AAR
-    implementation files('libs/artiusid-sdk-1.0.5.aar')
+    implementation files('libs/artiusid-sdk-1.2.0.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
     implementation "com.google.dagger:hilt-android:${hilt_version}"
-    kapt "com.google.dagger:hilt-android-compiler:${hilt_version}"
+    ksp "com.google.dagger:hilt-android-compiler:${hilt_version}"  // ✅ Use KSP, not kapt
     implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
     
     // Compose
@@ -71,12 +71,34 @@ plugins {
 ### 3. Application Class Setup
 
 ```kotlin
-import dagger.hilt.android.HiltAndroidApp
 import android.app.Application
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.GifDecoder
+import com.google.firebase.FirebaseApp
+import dagger.hilt.android.HiltAndroidApp
+import okhttp3.OkHttpClient
 
-@HiltAndroidApp
-class YourApplication : Application() {
-    // Your application setup
+@HiltAndroidApp  // ✅ Required for HILT
+class YourApplication : Application(), ImageLoaderFactory {
+    override fun onCreate() {
+        super.onCreate()
+        
+        // Initialize Firebase (required for SDK)
+        FirebaseApp.initializeApp(this)
+    }
+    
+    // Required for SDK animations and GIFs
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .components {
+                add(GifDecoder.Factory())
+            }
+            .okHttpClient {
+                OkHttpClient.Builder().build()
+            }
+            .build()
+    }
 }
 ```
 
@@ -85,17 +107,29 @@ class YourApplication : Application() {
 ```kotlin
 import com.artiusid.sdk.ArtiusIDSDK
 import com.artiusid.sdk.config.SDKConfiguration
+import com.artiusid.sdk.config.Environment
+import com.artiusid.sdk.models.SDKThemeConfiguration
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint  // ✅ Required for HILT
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize SDK
-        val config = SDKConfiguration.Builder()
-            .setEnvironment(SDKConfiguration.Environment.PRODUCTION)
-            .build()
+        // Initialize SDK with dynamic branding
+        val config = SDKConfiguration(
+            apiKey = "your-api-key",
+            environment = Environment.PRODUCTION,
+            enableLogging = BuildConfig.DEBUG
+        )
+        
+        val theme = SDKThemeConfiguration(
+            brandName = "YourBrand",  // ✅ Your custom branding
+            primaryColorHex = "#YOUR_PRIMARY_COLOR",
+            secondaryColorHex = "#YOUR_SECONDARY_COLOR"
+        )
             
-        ArtiusIDSDK.initialize(this, config)
+        ArtiusIDSDK.initialize(this, config, theme)
     }
 }
 ```
@@ -126,17 +160,64 @@ ArtiusIDSDK.startVerificationFlow(
 )
 ```
 
+## 🔧 HILT Setup Tools
+
+### Automated Setup (Recommended)
+```bash
+# Download and run the automated setup script
+./setup_hilt.sh
+```
+
+### Diagnostic Tool
+```bash
+# Check your HILT configuration
+./gradlew diagnoseHilt
+```
+
+### Manual Setup
+Follow the step-by-step guide in `HILT_INTEGRATION_GUIDE.md`
+
+## 🎨 Dynamic Branding
+
+Configure your brand name in the SDK theme:
+
+```kotlin
+val theme = SDKThemeConfiguration(
+    brandName = "YourBrand",  // Replaces "artius.iD" throughout the UI
+    primaryColorHex = "#YOUR_COLOR",
+    secondaryColorHex = "#YOUR_ACCENT_COLOR"
+)
+```
+
+The SDK will automatically:
+- Display your brand name in all UI components
+- Use your brand in Firebase notifications
+- Apply intelligent text splitting (e.g., "Your.Brand" → "Your" + "Brand")
+
 ## Requirements
 
 - **Minimum SDK**: Android 7.0 (API level 24)
 - **Target SDK**: Android 14 (API level 34)
 - **Kotlin**: 1.9.0+
+- **HILT**: 2.48 (exact version required)
 - **Gradle**: 8.0+
 - **Firebase Project**: Required for authentication and messaging
 
 ## ProGuard Configuration
 
 The SDK includes consumer ProGuard rules that are automatically applied to your app. No additional configuration needed.
+
+## Troubleshooting
+
+### HILT Issues
+1. Run `./gradlew diagnoseHilt` for automated diagnosis
+2. Check `HILT_INTEGRATION_GUIDE.md` for detailed setup
+3. Ensure exact HILT version 2.48 is used
+
+### Branding Issues
+- Verify `SDKThemeConfiguration.brandName` is set
+- Check that `@AndroidEntryPoint` is on your Activity
+- Ensure Firebase is properly initialized
 
 ## Support
 

@@ -4,12 +4,12 @@ The obfuscated functional sample app is available as a release asset due to size
 
 ## Download
 
-Download `ArtiusID-Sample-App-Functional.apk` from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases).
+Download `sample-app-customerDistribution-unsigned.apk` from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases).
 
 ## Installation
 
 ```bash
-adb install ArtiusID-Sample-App-Functional.apk
+adb install sample-app-customerDistribution-unsigned.apk
 ```
 
 ## Features
@@ -23,3 +23,7 @@ adb install ArtiusID-Sample-App-Functional.apk
 ## Size
 
 Approximately 165MB (includes ML models and native libraries)
+
+## Note
+
+The APK is unsigned for security. You may need to sign it with your development certificate for installation.
