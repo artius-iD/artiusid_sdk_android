@@ -40,12 +40,12 @@ android {
         // New build type for customer distribution
         customerDistribution {
             initWith release
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false  // Temporarily disabled due to memory issues
+            shrinkResources false  // Temporarily disabled due to memory issues
             debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-obfuscated.pro' // Changed to obfuscated.pro
             
-            // Maximum obfuscation for IP protection
+            // Maximum obfuscation for IP protection (when minification is re-enabled)
             zipAlignEnabled true
             crunchPngs true
             
