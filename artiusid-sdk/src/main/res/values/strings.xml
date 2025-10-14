@@ -7,8 +7,8 @@
   Organized by feature/screen sections for maintainability
 -->
 <resources>
-    <!-- App Name -->
-    <string name="app_name">artius.iD</string>
+    <!-- App Name - These are fallback values, should be overridden by theme configuration -->
+    <string name="app_name">ArtiusID</string>
     <string name="app_name_artius">Artius</string>
     <string name="app_name_id">ID</string>
     
@@ -261,7 +261,7 @@
     <string name="content_desc_face_overlay">Face Overlay</string>
     <string name="content_desc_document_overlay">Document Overlay</string>
     <string name="content_desc_passport_overlay">Passport Overlay</string>
-    <string name="content_desc_logo">ArtiusID Logo</string>
+    <string name="content_desc_logo">Brand Logo</string>
     <string name="content_desc_success_icon">Success Icon</string>
     <string name="content_desc_error_icon">Error Icon</string>
     <string name="content_desc_warning_icon">Warning Icon</string>

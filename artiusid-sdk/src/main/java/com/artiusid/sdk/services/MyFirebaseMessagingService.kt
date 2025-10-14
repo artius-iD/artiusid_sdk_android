@@ -13,6 +13,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.artiusid.sdk.ui.theme.EnhancedThemeManager
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -154,9 +155,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         } ?: Intent(this, StandaloneAppActivity::class.java)
         
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
+        // Get current brand name from theme configuration
+        val currentTheme = EnhancedThemeManager.getCurrentThemeConfig()
+        val brandName = currentTheme.brandName
+        
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(remoteMessage.notification?.title ?: "artius.iD")
+            .setContentTitle(remoteMessage.notification?.title ?: brandName)
             .setContentText(remoteMessage.notification?.body ?: "You have a new notification.")
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)

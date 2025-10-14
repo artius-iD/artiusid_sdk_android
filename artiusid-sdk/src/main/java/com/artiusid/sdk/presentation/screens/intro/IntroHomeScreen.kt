@@ -25,6 +25,7 @@ import com.artiusid.sdk.presentation.screens.document.DocumentType
 import com.artiusid.sdk.ui.theme.*
 import androidx.compose.ui.layout.ContentScale
 import com.artiusid.sdk.ui.components.ThemedImage
+import com.artiusid.sdk.ui.components.BrandNameDisplay
 
 @Composable
 fun IntroHomeScreen(
@@ -75,24 +76,15 @@ fun IntroHomeScreen(
                     .padding(top = getRelativeHeightDp(28.0f))
             )
             
-            // ArtiusID text with yellow highlight
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Artius",
-                    fontSize = getRelativeFontSize(32.0f).sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Text(
-                    text = "ID",
-                    fontSize = getRelativeFontSize(32.0f).sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Yellow900
-                )
-            }
+            // Dynamic brand name text with yellow highlight
+            BrandNameDisplay(
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontSize = getRelativeFontSize(32.0f).sp
+                ),
+                primaryColor = Color.White,
+                accentColor = Yellow900,
+                fontWeight = FontWeight.Bold
+            )
             
             // Intro Image - scaled to match iOS (maxHeight: geo.size.height / 4.5)
             ThemedImage(

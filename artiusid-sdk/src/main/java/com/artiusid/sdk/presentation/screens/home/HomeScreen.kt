@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.R
 import com.artiusid.sdk.ui.theme.*
 import com.artiusid.sdk.utils.VerificationStateManager
+import com.artiusid.sdk.ui.components.BrandNameDisplay
 
 @Composable
 fun HomeScreen(
@@ -86,23 +87,13 @@ fun HomeScreen(
                 textAlign = TextAlign.Center
             )
 
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.app_name_artius),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = stringResource(R.string.app_name_id),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
-                )
-            }
+            // Dynamic brand name display
+            BrandNameDisplay(
+                style = MaterialTheme.typography.headlineLarge,
+                primaryColor = MaterialTheme.colorScheme.onBackground,
+                accentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
+                fontWeight = FontWeight.Bold
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 

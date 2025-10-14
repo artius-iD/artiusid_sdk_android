@@ -249,7 +249,7 @@ val AppColors: AppColorScheme
  */
 private fun createDefaultArtiusIDTheme(): EnhancedSDKThemeConfiguration {
     return EnhancedSDKThemeConfiguration(
-        brandName = "artius.iD",
+        brandName = "ArtiusID", // Default brand name, should be overridden by host app
         
         typography = SDKTypography(
             fontFamily = "default",

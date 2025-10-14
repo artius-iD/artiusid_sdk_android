@@ -30,6 +30,7 @@ import com.artiusid.sdk.presentation.components.AppTopBar
 import com.artiusid.sdk.ui.theme.GradientBackground
 import com.artiusid.sdk.ui.components.ThemedImage
 import com.artiusid.sdk.ui.theme.Yellow900
+import com.artiusid.sdk.ui.theme.LocalSDKTheme
 import kotlinx.coroutines.delay
 
 @Composable
@@ -144,10 +145,11 @@ fun AuthenticationScreen(
                     
                     is AuthenticationUiState.BiometricRequired -> {
                         // Biometric prompt state - show waiting for biometric
+                        val themeConfig = LocalSDKTheme.current
                         ThemedImage(
                             defaultResourceId = R.drawable.img_artiusid_ios,
                             overrideKey = "brand_image",
-                            contentDescription = "artius.iD",
+                            contentDescription = themeConfig.brandName,
                             modifier = Modifier
                                 .size(120.dp)
                                 .padding(vertical = 20.dp)

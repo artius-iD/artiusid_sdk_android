@@ -172,7 +172,7 @@ class CertificateManager private constructor(private val context: Context) {
             X509NameOID.COUNTRY_NAME to "US",
             X509NameOID.STATE_OR_PROVINCE_NAME to "Arizona",
             X509NameOID.LOCALITY_NAME to "Phoenix",
-            X509NameOID.ORGANIZATION_NAME to "artius.iD",
+            X509NameOID.ORGANIZATION_NAME to "ArtiusID", // Default organization name
             X509NameOID.ORGANIZATIONAL_UNIT_NAME to "Development",
             X509NameOID.COMMON_NAME to deviceId
         )

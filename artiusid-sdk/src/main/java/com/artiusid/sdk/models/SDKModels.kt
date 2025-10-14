@@ -67,7 +67,7 @@ data class AuthenticationResult(
 @Parcelize
 data class SDKThemeConfiguration(
     // Brand Identity
-    val brandName: String = "artius.iD",
+    val brandName: String = "ArtiusID", // Default brand name, should be overridden by host app
     val brandLogoUrl: String? = null,
     
     // Primary Colors (as hex strings for easy passing)
