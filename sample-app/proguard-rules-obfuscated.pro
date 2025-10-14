@@ -26,10 +26,7 @@
 -keep public class * extends android.app.Application
 -keep public class * extends android.app.Service
 
-# Aggressive obfuscation
--obfuscationdictionary obfuscation-dictionary.txt
--classobfuscationdictionary obfuscation-dictionary.txt
--packageobfuscationdictionary obfuscation-dictionary.txt
+# Aggressive obfuscation (dictionary files not needed for basic obfuscation)
 
 # Remove debugging info
 -assumenosideeffects class android.util.Log {
