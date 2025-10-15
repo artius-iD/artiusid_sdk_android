@@ -222,3 +222,4 @@ iOS SDK (working correctly) sends **identical structure** - always 7 parameters 
 ⚠️ Backend stored procedure needs update  
 📦 All documentation complete and committed
 
+

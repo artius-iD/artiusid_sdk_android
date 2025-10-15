@@ -159,3 +159,4 @@ A fully functional obfuscated sample app (173MB) is included as a release asset 
 
 **Conclusion:** The customer's Hilt compilation error is fixed in SDK v1.2.3. They need to upgrade from their current version (likely v1.2.1 or v1.2.2) to v1.2.3.
 
+

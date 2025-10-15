@@ -144,3 +144,4 @@ For questions about the Android SDK implementation, reference:
 
 **Action Required:** Backend team to update `sp_VERIFICATION_CreateVerification` to properly accept and map all 7 parameters, including empty string for `backImageBase64` on passport documents.
 
+
