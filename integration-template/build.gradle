@@ -29,8 +29,8 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility JavaVersion.1.2.0_1_8
-        targetCompatibility JavaVersion.1.2.0_1_8
+        sourceCompatibility JavaVersion.1.2.1_1_8
+        targetCompatibility JavaVersion.1.2.1_1_8
     }
     
     kotlinOptions {
@@ -48,7 +48,7 @@ android {
 
 dependencies {
     // ArtiusID SDK
-    implementation files('libs/artiusid-sdk-1.2.0.aar')
+    implementation files('libs/artiusid-sdk-1.2.1.aar')
     
     // Required dependencies
     def hilt_version = "2.48"

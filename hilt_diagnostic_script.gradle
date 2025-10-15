@@ -1,0 +1,281 @@
+/**
+ * HILT Diagnostic Script for ArtiusID SDK Integration
+ * 
+ * Add this to your app-level build.gradle to diagnose HILT configuration issues
+ * Usage: ./gradlew diagnoseHilt
+ */
+
+task diagnoseHilt {
+    doLast {
+        println "\n🔍 HILT DIAGNOSTIC REPORT FOR ARTIUSID SDK"
+        println "=" * 60
+        
+        // Check if HILT plugin is applied
+        def hiltPluginApplied = project.plugins.hasPlugin('com.google.dagger.hilt.android')
+        println "✅ HILT Plugin Applied: ${hiltPluginApplied ? '✓' : '❌'}"
+        
+        // Check if KSP plugin is applied
+        def kspPluginApplied = project.plugins.hasPlugin('com.google.devtools.ksp')
+        println "✅ KSP Plugin Applied: ${kspPluginApplied ? '✓' : '❌'}"
+        
+        // Check HILT dependencies
+        def hiltDependencies = []
+        def kspDependencies = []
+        
+        configurations.implementation.allDependencies.each { dep ->
+            if (dep.group == 'com.google.dagger' && dep.name.contains('hilt')) {
+                hiltDependencies.add("${dep.group}:${dep.name}:${dep.version}")
+            }
+        }
+        
+        configurations.ksp.allDependencies.each { dep ->
+            if (dep.group == 'com.google.dagger' && dep.name.contains('hilt')) {
+                kspDependencies.add("${dep.group}:${dep.name}:${dep.version}")
+            }
+        }
+        
+        println "\n📦 HILT DEPENDENCIES:"
+        if (hiltDependencies.isEmpty()) {
+            println "❌ No HILT dependencies found!"
+        } else {
+            hiltDependencies.each { println "  ✓ ${it}" }
+        }
+        
+        println "\n🔧 KSP DEPENDENCIES:"
+        if (kspDependencies.isEmpty()) {
+            println "❌ No HILT KSP dependencies found!"
+        } else {
+            kspDependencies.each { println "  ✓ ${it}" }
+        }
+        
+        // Check for version consistency
+        def hiltVersions = []
+        (hiltDependencies + kspDependencies).each { dep ->
+            def version = dep.split(':')[2]
+            if (!hiltVersions.contains(version)) {
+                hiltVersions.add(version)
+            }
+        }
+        
+        println "\n🔄 VERSION CONSISTENCY:"
+        if (hiltVersions.size() > 1) {
+            println "❌ Multiple HILT versions detected: ${hiltVersions}"
+            println "   This can cause compilation issues!"
+        } else if (hiltVersions.size() == 1) {
+            def version = hiltVersions[0]
+            println "✓ Consistent HILT version: ${version}"
+            if (version != "2.48") {
+                println "⚠️  Recommended version for ArtiusID SDK: 2.48"
+            }
+        }
+        
+        // Check Android configuration
+        println "\n📱 ANDROID CONFIGURATION:"
+        println "  Compile SDK: ${android.compileSdkVersion}"
+        println "  Min SDK: ${android.defaultConfig.minSdkVersion.apiLevel}"
+        println "  Target SDK: ${android.defaultConfig.targetSdkVersion.apiLevel}"
+        
+        if (android.defaultConfig.minSdkVersion.apiLevel < 24) {
+            println "❌ Min SDK too low! ArtiusID SDK requires API 24+"
+        }
+        
+        // Check Compose configuration
+        println "\n🎨 COMPOSE CONFIGURATION:"
+        def composeEnabled = android.buildFeatures.compose
+        println "  Compose Enabled: ${composeEnabled ? '✓' : '❌'}"
+        
+        if (composeEnabled) {
+            println "  Compiler Extension: ${android.composeOptions.kotlinCompilerExtensionVersion}"
+        }
+        
+        // Check for common issues
+        println "\n🚨 COMMON ISSUES CHECK:"
+        
+        // Check for Firebase
+        def firebaseDeps = []
+        configurations.implementation.allDependencies.each { dep ->
+            if (dep.group == 'com.google.firebase') {
+                firebaseDeps.add("${dep.name}:${dep.version}")
+            }
+        }
+        
+        if (firebaseDeps.isEmpty()) {
+            println "⚠️  No Firebase dependencies found - FCM functionality may not work"
+        } else {
+            println "✓ Firebase dependencies found: ${firebaseDeps.size()}"
+        }
+        
+        // Check for Coil (required for SDK animations)
+        def coilDeps = []
+        configurations.implementation.allDependencies.each { dep ->
+            if (dep.group == 'io.coil-kt') {
+                coilDeps.add("${dep.name}:${dep.version}")
+            }
+        }
+        
+        if (coilDeps.isEmpty()) {
+            println "❌ Coil dependencies missing - SDK animations won't work!"
+        } else {
+            println "✓ Coil dependencies found: ${coilDeps.size()}"
+        }
+        
+        // Recommendations
+        println "\n💡 RECOMMENDATIONS:"
+        
+        if (!hiltPluginApplied) {
+            println "  1. Add 'com.google.dagger.hilt.android' plugin"
+        }
+        
+        if (!kspPluginApplied) {
+            println "  2. Add 'com.google.devtools.ksp' plugin"
+        }
+        
+        if (hiltDependencies.isEmpty()) {
+            println "  3. Add HILT implementation dependency"
+        }
+        
+        if (kspDependencies.isEmpty()) {
+            println "  4. Add HILT KSP compiler dependency"
+        }
+        
+        if (hiltVersions.size() > 1) {
+            println "  5. Align all HILT dependencies to version 2.48"
+        }
+        
+        if (coilDeps.isEmpty()) {
+            println "  6. Add Coil dependencies for SDK animations"
+        }
+        
+        println "\n📋 NEXT STEPS:"
+        println "  1. Review the HILT_INTEGRATION_GUIDE.md"
+        println "  2. Ensure @HiltAndroidApp is on your Application class"
+        println "  3. Add @AndroidEntryPoint to activities using the SDK"
+        println "  4. Clean and rebuild your project"
+        
+        println "\n" + "=" * 60
+        println "🏁 DIAGNOSTIC COMPLETE"
+    }
+}
+
+/**
+ * Task to generate a complete HILT configuration template
+ */
+task generateHiltTemplate {
+    doLast {
+        def templateDir = new File(project.projectDir, "hilt-template")
+        templateDir.mkdirs()
+        
+        // Generate Application class template
+        def appTemplate = """package com.yourcompany.yourapp
+
+import android.app.Application
+import android.util.Log
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.GifDecoder
+import coil.util.DebugLogger
+import com.google.firebase.FirebaseApp
+import dagger.hilt.android.HiltAndroidApp
+import okhttp3.OkHttpClient
+
+@HiltAndroidApp
+class YourApplication : Application(), ImageLoaderFactory {
+    
+    override fun onCreate() {
+        super.onCreate()
+        
+        Log.d("YourApplication", "🚀 Starting application initialization...")
+        
+        try {
+            FirebaseApp.initializeApp(this)
+            Log.d("YourApplication", "🔥 Firebase initialized successfully")
+        } catch (e: Exception) {
+            Log.e("YourApplication", "❌ Firebase initialization failed", e)
+        }
+        
+        Log.d("YourApplication", "✅ Application onCreate completed")
+    }
+    
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .components {
+                add(GifDecoder.Factory())
+            }
+            .okHttpClient {
+                OkHttpClient.Builder()
+                    .build()
+            }
+            .logger(DebugLogger())
+            .build()
+    }
+}"""
+        
+        new File(templateDir, "YourApplication.kt").text = appTemplate
+        
+        // Generate MainActivity template
+        def mainActivityTemplate = """package com.yourcompany.yourapp
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
+import com.artiusid.sdk.ArtiusIDSDK
+import com.artiusid.sdk.config.SDKConfiguration
+import com.artiusid.sdk.config.Environment
+import com.artiusid.sdk.models.SDKThemeConfiguration
+import dagger.hilt.android.AndroidEntryPoint
+
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        initializeSDK()
+        
+        setContent {
+            YourAppTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // Your app content
+                }
+            }
+        }
+    }
+    
+    private fun initializeSDK() {
+        try {
+            val configuration = SDKConfiguration(
+                apiKey = "your-api-key",
+                baseUrl = "https://api.artiusid.com",
+                environment = Environment.PRODUCTION,
+                enableLogging = BuildConfig.DEBUG,
+                hostAppPackageName = packageName
+            )
+            
+            val theme = SDKThemeConfiguration(
+                brandName = "YourBrand",
+                primaryColorHex = "#YOUR_PRIMARY_COLOR",
+                secondaryColorHex = "#YOUR_SECONDARY_COLOR"
+            )
+            
+            ArtiusIDSDK.initialize(this, configuration, theme)
+            
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "SDK initialization failed", e)
+        }
+    }
+}"""
+        
+        new File(templateDir, "MainActivity.kt").text = mainActivityTemplate
+        
+        println "📁 HILT templates generated in: ${templateDir.absolutePath}"
+        println "   - YourApplication.kt"
+        println "   - MainActivity.kt"
+    }
+}
