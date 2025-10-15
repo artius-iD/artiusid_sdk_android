@@ -4,7 +4,7 @@
 
 ### 1. Add AAR to Your Project
 
-1. Download `artiusid-sdk-1.2.2.aar` from the releases page
+1. Download `artiusid-sdk-1.2.3.aar` from the releases page
 2. Copy it to your app's `libs` directory
 3. Add to your app's `build.gradle`:
 
@@ -28,7 +28,7 @@ android {
 
 dependencies {
     // Add the SDK AAR
-    implementation files('libs/artiusid-sdk-1.2.2.aar')
+    implementation files('libs/artiusid-sdk-1.2.3.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
