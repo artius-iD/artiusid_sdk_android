@@ -212,13 +212,17 @@ if [ "$NEW_VERSION" != "$CURRENT_VERSION" ]; then
     print_status "Version updated and committed"
 fi
 
-# Clean previous builds
+# Clean previous builds (FORCE COMPLETE REBUILD)
 print_info "Cleaning previous builds..."
-./gradlew :artiusid-sdk:clean
+print_info "🗑️  Removing ALL build artifacts and caches..."
+rm -rf artiusid-sdk/build artiusid-sdk/.gradle
+rm -rf build .gradle
+print_status "Build directories removed"
 
-# Build the Android SDK (RELEASE VERSION ONLY)
-print_info "Building Android SDK (Release)..."
-./gradlew :artiusid-sdk:assembleRelease
+# Build the Android SDK (RELEASE VERSION ONLY - NO CACHE)
+print_info "Building Android SDK (Release) - FRESH BUILD..."
+./gradlew --no-build-cache --rerun-tasks :artiusid-sdk:clean
+./gradlew --no-build-cache --rerun-tasks :artiusid-sdk:assembleRelease
 
 # Verify AAR was built successfully
 AAR_FILE="artiusid-sdk/build/outputs/aar/artiusid-sdk-release.aar"
