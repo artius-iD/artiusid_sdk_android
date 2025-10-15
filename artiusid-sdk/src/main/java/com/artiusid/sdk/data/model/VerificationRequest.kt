@@ -27,11 +27,12 @@ data class VerificationRequest(
     /**
      * Convert to LinkedHashMap to preserve field order during JSON serialization
      * Matches exact iOS APIManager.swift body structure from lines 56-64
+     * For passport documents (documentType=2), backImageBase64 will be empty string
      */
     fun toOrderedMap(): LinkedHashMap<String, Any> {
         return linkedMapOf(
             "frontImageBase64" to frontImageBase64,
-            "backImageBase64" to backImageBase64,
+            "backImageBase64" to backImageBase64, // Always include, even if empty for passports
             "faceImageBase64" to faceImageBase64,
             "documentType" to documentType.toString(), // Convert to String like iOS toEncodableBody
             "deviceId" to deviceId,

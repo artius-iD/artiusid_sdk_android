@@ -271,7 +271,17 @@ suspend fun readPassportBasic(tag: Tag, mrzKey: String): PassportNFCData? = kotl
         Log.d("PassportChipScan", "🔗 Creating JMRTD CardService from IsoDep...")
         
         // Check if IsoDep is already connected (from StandaloneAppActivity)
-        var connectionSuccess = isoDep.isConnected
+        var connectionSuccess = try {
+            isoDep.isConnected
+        } catch (e: SecurityException) {
+            // Tag is out of date
+            Log.w("PassportChipScan", "⚠️ IsoDep tag is stale: ${e.message}")
+            false
+        } catch (e: Exception) {
+            Log.w("PassportChipScan", "⚠️ Error checking IsoDep connection: ${e.message}")
+            false
+        }
+        
         if (connectionSuccess) {
             Log.d("PassportChipScan", "✅ IsoDep already connected from StandaloneAppActivity - skipping connection")
         } else {
@@ -285,7 +295,14 @@ suspend fun readPassportBasic(tag: Tag, mrzKey: String): PassportNFCData? = kotl
                     isoDep.timeout = 3000 // 3 second timeout for better stability
                     isoDep.connect()
                     
-                    if (isoDep.isConnected) {
+                    val isNowConnected = try {
+                        isoDep.isConnected
+                    } catch (e: SecurityException) {
+                        Log.w("PassportChipScan", "⚠️ Tag became stale during connection: ${e.message}")
+                        false
+                    }
+                    
+                    if (isNowConnected) {
                         Log.d("PassportChipScan", "✅ NFC connection successful on attempt $attempt")
                         connectionSuccess = true
                         break
@@ -525,6 +542,7 @@ fun PassportChipScanScreen(
     var nfcScanState by remember { mutableStateOf<NFCScanState>(NFCScanState.Initial) }
     var lastNfcTag by remember { mutableStateOf<Tag?>(null) }
     var retryCount by remember { mutableStateOf(0) }
+    var isProcessingNfc by remember { mutableStateOf(false) } // Prevent multiple retry loops
     val maxRetries = 3
     
     // Check NFC availability
@@ -548,8 +566,25 @@ fun PassportChipScanScreen(
             // Poll for NFC connection every 500ms
             while (nfcScanState is NFCScanState.WaitingForNFC) {
                 val currentIsoDep = com.artiusid.sdk.standalone.StandaloneAppActivity.currentIsoDep
-                if (currentIsoDep != null && currentIsoDep.isConnected) {
+                
+                // Safely check if IsoDep is connected, handling stale tag references
+                val isConnected = try {
+                    currentIsoDep?.isConnected == true
+                } catch (e: SecurityException) {
+                    // Tag is out of date - clear it and continue polling
+                    Log.w("PassportChipScan", "⚠️ Stale NFC tag detected (${e.message}), clearing...")
+                    StandaloneAppActivity.setIsoDep(null)
+                    StandaloneAppActivity.currentNfcTag = null
+                    false
+                } catch (e: Exception) {
+                    Log.w("PassportChipScan", "⚠️ Error checking IsoDep connection: ${e.message}")
+                    false
+                }
+                
+                if (isConnected && currentIsoDep != null && !isProcessingNfc) {
                     Log.d("PassportChipScan", "🎉 NFC IsoDep connection detected from StandaloneAppActivity!")
+                    isProcessingNfc = true // Mark that we're starting the NFC processing
+                    
                     // Start the NFC reading process
                     nfcScanState = NFCScanState.Connecting
                     // Start the NFC reading process in a coroutine with retry logic
@@ -576,7 +611,6 @@ fun PassportChipScanScreen(
                                     retryCount = attempt
                                     if (attempt < maxRetries) {
                                         Log.d("PassportChipScan", "🔄 Retrying NFC reading... ($attempt/$maxRetries)")
-                                        nfcScanState = NFCScanState.WaitingForNFC
                                         kotlinx.coroutines.delay(1500) // Wait before retry
                                     }
                                 }
@@ -585,7 +619,6 @@ fun PassportChipScanScreen(
                                 retryCount = attempt
                                 if (attempt < maxRetries) {
                                     Log.d("PassportChipScan", "🔄 Retrying after error... ($attempt/$maxRetries)")
-                                    nfcScanState = NFCScanState.WaitingForNFC
                                     kotlinx.coroutines.delay(1500) // Wait before retry
                                 }
                             }
