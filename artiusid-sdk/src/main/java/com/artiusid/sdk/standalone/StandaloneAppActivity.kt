@@ -68,6 +68,9 @@ class StandaloneAppActivity : ComponentActivity() {
     
     companion object {
         @JvmStatic
+        var currentNfcTag: Tag? = null
+        
+        @JvmStatic
         var currentIsoDep: android.nfc.tech.IsoDep? = null
             private set
             

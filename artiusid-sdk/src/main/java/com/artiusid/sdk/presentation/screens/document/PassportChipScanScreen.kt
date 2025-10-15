@@ -618,8 +618,8 @@ fun PassportChipScanScreen(
         nfcScanState = NFCScanState.WaitingForNFC
         
         // CRITICAL: Clear ALL stale NFC resources to prevent lockups
-        com.artiusid.StandaloneAppActivity.currentNfcTag = null
-        com.artiusid.StandaloneAppActivity.currentIsoDep?.let { isoDep ->
+        StandaloneAppActivity.currentNfcTag = null
+        StandaloneAppActivity.currentIsoDep?.let { isoDep ->
             try {
                 Log.d("PassportChipScan", "🧹 Closing stale IsoDep connection from StandaloneAppActivity...")
                 isoDep.close()
@@ -627,7 +627,7 @@ fun PassportChipScanScreen(
                 Log.w("PassportChipScan", "⚠️ Error closing stale IsoDep: ${e.message}")
             }
         }
-        com.artiusid.StandaloneAppActivity.currentIsoDep = null
+        StandaloneAppActivity.setIsoDep(null)
         lastNfcTag = null
         
         Log.d("PassportChipScan", "✅ NFC state cleared for retry")
@@ -676,13 +676,13 @@ fun PassportChipScanScreen(
             
             while (nfcScanState is NFCScanState.WaitingForNFC) {
             // Check if StandaloneAppActivity has captured an NFC tag
-            val mainActivityTag = com.artiusid.StandaloneAppActivity.currentNfcTag
+            val mainActivityTag = StandaloneAppActivity.currentNfcTag
             if (mainActivityTag != null) {
                 Log.d("PassportChipScan", "📡 Found NFC tag from StandaloneAppActivity - processing...")
                 Log.d("PassportChipScan", "📋 Tag ID: ${mainActivityTag.id.joinToString("") { "%02x".format(it) }}")
                 
                 // Clear the tag from StandaloneAppActivity
-                com.artiusid.StandaloneAppActivity.currentNfcTag = null
+                StandaloneAppActivity.currentNfcTag = null
                 
                 // Process the tag
                 processNfcTag(mainActivityTag)
@@ -799,7 +799,7 @@ fun PassportChipScanScreen(
                     Log.e("PassportChipScan", "❌ NFC chip reading error: ${e.message}", e)
                     
                     // CRITICAL: Clear stale IsoDep connection on error to prevent lockups
-                    com.artiusid.StandaloneAppActivity.currentIsoDep?.let { isoDep ->
+                    StandaloneAppActivity.currentIsoDep?.let { isoDep ->
                         try {
                             Log.d("PassportChipScan", "🧹 Closing stale IsoDep connection after error...")
                             isoDep.close()
@@ -807,7 +807,7 @@ fun PassportChipScanScreen(
                             Log.w("PassportChipScan", "⚠️ Error closing IsoDep after failure: ${cleanupException.message}")
                         }
                     }
-                    com.artiusid.StandaloneAppActivity.currentIsoDep = null
+                    StandaloneAppActivity.setIsoDep(null)
                     
                     // Set error state with appropriate message - let auto-navigation handle the completion
                     val errorMessage = when {
