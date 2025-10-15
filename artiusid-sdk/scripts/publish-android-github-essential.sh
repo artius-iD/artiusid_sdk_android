@@ -714,7 +714,16 @@ TEMPLATE_EOF
 # Replace version placeholder in build.gradle
 sed -i.bak "s/VERSION/$NEW_VERSION/g" integration-template/build.gradle && rm integration-template/build.gradle.bak
 
-# 4. Create sample app download instructions (APK uploaded as release asset)
+# 4. Copy HILT documentation and setup tools
+print_info "✅ Adding: HILT integration documentation and tools"
+cp "$OLDPWD/HILT_INTEGRATION_GUIDE.md" .
+cp "$OLDPWD/README_HILT_SETUP.md" .
+cp "$OLDPWD/hilt_diagnostic_script.gradle" .
+cp "$OLDPWD/setup_hilt.sh" .
+# Make setup script executable
+chmod +x setup_hilt.sh
+
+# 5. Create sample app download instructions (APK uploaded as release asset)
 print_info "✅ Creating: Sample app download instructions"
 cat > sample-app/README.md << 'SAMPLE_README_EOF'
 # Functional Sample App
@@ -748,7 +757,7 @@ Approximately 165MB (includes ML models and native libraries)
 The APK is unsigned for security. You may need to sign it with your development certificate for installation.
 SAMPLE_README_EOF
 
-# 5. Create LICENSE file
+# 6. Create LICENSE file
 print_info "✅ Creating: License agreement"
 cat > LICENSE.txt << 'LICENSE_EOF'
 ArtiusID Android SDK License Agreement
@@ -772,7 +781,7 @@ RESTRICTIONS:
 For full license terms and conditions, please contact: legal@artiusid.com
 LICENSE_EOF
 
-# 6. Create customer README
+# 7. Create customer README
 print_info "✅ Creating: Customer README"
 cat > README.md << README_EOF
 # ArtiusID Android SDK v$NEW_VERSION
@@ -797,9 +806,16 @@ dependencies {
 ## 📚 Documentation
 
 - [Integration Guide](INTEGRATION_GUIDE.md) - Quick start and basic setup
+- [HILT Integration Guide](HILT_INTEGRATION_GUIDE.md) - Detailed HILT setup
+- [HILT Quick Setup](README_HILT_SETUP.md) - Quick HILT configuration reference
 - [Integration Template](integration-template/) - Code templates for integration
 - [Sample Application](sample-app/README.md) - Functional obfuscated demo app
 - [License Agreement](LICENSE.txt) - Usage terms
+
+## 🔧 HILT Setup Tools
+
+- `setup_hilt.sh` - Automated HILT configuration script
+- `hilt_diagnostic_script.gradle` - Diagnostic tool (use with `./gradlew diagnoseHilt`)
 
 ## 🔒 Security Features
 
@@ -831,6 +847,10 @@ print_info "Package contents (ESSENTIAL FILES ONLY):"
 echo "   ✅ sdk/artiusid-sdk-$NEW_VERSION.aar (obfuscated SDK)"
 echo "   ✅ sdk/consumer-rules.pro (ProGuard rules)"
 echo "   ✅ INTEGRATION_GUIDE.md (public API documentation)"
+echo "   ✅ HILT_INTEGRATION_GUIDE.md (detailed HILT setup guide)"
+echo "   ✅ README_HILT_SETUP.md (quick HILT reference)"
+echo "   ✅ hilt_diagnostic_script.gradle (HILT troubleshooting tool)"
+echo "   ✅ setup_hilt.sh (automated HILT setup script)"
 echo "   ✅ sample-app/README.md (sample app download instructions)"
 echo "   ✅ integration-template/MainActivity.kt (integration code template)"
 echo "   ✅ integration-template/build.gradle (build configuration template)"
@@ -957,6 +977,8 @@ echo ""
 echo "📦 Customer receives ONLY ESSENTIAL FILES:"
 echo "   ✅ Obfuscated AAR file ($AAR_SIZE)"
 echo "   ✅ Public integration guide"
+echo "   ✅ HILT integration documentation (complete setup guide)"
+echo "   ✅ HILT setup tools (automated configuration scripts)"
 echo "   ✅ Obfuscated functional sample app ($SAMPLE_APK_SIZE) - as release asset"
 echo "   ✅ Integration code templates"
 echo "   ✅ Consumer ProGuard rules"

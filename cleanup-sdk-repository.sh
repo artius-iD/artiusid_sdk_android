@@ -40,6 +40,7 @@ fi
 print_info "Starting cleanup of redundant and unused files..."
 
 # 1. Remove internal documentation files (root level)
+# NOTE: HILT_INTEGRATION_GUIDE.md, README_HILT_SETUP.md, hilt_diagnostic_script.gradle, and setup_hilt.sh are PRESERVED for customers
 print_info "🗑️  Removing internal documentation files..."
 declare -a DOC_FILES=(
     "DEPLOYMENT_COMPARISON.md"
@@ -186,9 +187,15 @@ echo "   ✅ settings.gradle - Project structure"
 echo "   ✅ gradle.properties - Build properties"
 echo "   ✅ gradle/ - Gradle wrapper"
 echo ""
-echo "📁 Scripts (Essential Only):"
+echo "📁 Scripts & Tools (Essential Only):"
 echo "   ✅ artiusid-sdk/scripts/version-manager.sh"
 echo "   ✅ artiusid-sdk/scripts/publish-android-github-essential.sh"
+echo "   ✅ setup_hilt.sh - Automated HILT configuration"
+echo "   ✅ hilt_diagnostic_script.gradle - HILT troubleshooting"
+echo ""
+echo "📁 Customer Documentation:"
+echo "   ✅ HILT_INTEGRATION_GUIDE.md - Complete HILT setup guide"
+echo "   ✅ README_HILT_SETUP.md - Quick HILT reference"
 echo ""
 
 # Count remaining files
