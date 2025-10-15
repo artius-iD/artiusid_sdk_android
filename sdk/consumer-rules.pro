@@ -76,6 +76,33 @@
     public * provide*(...);
 }
 
+# Keep ALL Dagger @Provides methods - CRITICAL for AppModule
+-keepclassmembers class * {
+    @dagger.Provides public *;
+    @dagger.Provides static *;
+}
+
+# Keep all provide*() methods in ALL Factory classes (AppModule, ViewModels, etc.)
+-keepclassmembers class **_Factory {
+    public * provide*(...);
+    public static * provide*(...);
+}
+
+# Keep all provide*() methods in AppModule factories specifically
+-keepclassmembers class **AppModule_Provide** {
+    public * provide*(...);
+    public static * provide*(...);
+}
+
+# Keep Dagger Provider interface implementations
+-keep,allowobfuscation class * implements javax.inject.Provider {
+    public * get();
+}
+-keepclassmembers class * implements javax.inject.Provider {
+    public * provide*(...);
+    public static * provide*(...);
+}
+
 # Keep Hilt entry points
 -keep interface * extends dagger.hilt.internal.ComponentEntryPoint { *; }
 
