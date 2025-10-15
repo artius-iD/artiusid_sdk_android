@@ -58,6 +58,24 @@
 -keep class **_Impl { *; }
 -keep class **Hilt_** { *; }
 
+# Keep ALL Hilt modules and their generated code (CRITICAL for ViewModel factories)
+-keep class **_HiltModules { *; }
+-keep class **_HiltModules$** { *; }
+-keep class **_HiltModules_** { *; }
+-keep class **_HiltModules_*$** { *; }
+-keep class **_ProvideFactory { *; }
+-keep class **_KeyModule { *; }
+-keep class **_KeyModule_** { *; }
+-keep class **_KeyModule$** { *; }
+
+# Keep ViewModel factory methods
+-keepclassmembers class **_HiltModules_KeyModule_ProvideFactory {
+    public *;
+}
+-keepclassmembers class **_HiltModules_** {
+    public * provide*(...);
+}
+
 # Keep Hilt entry points
 -keep interface * extends dagger.hilt.internal.ComponentEntryPoint { *; }
 
