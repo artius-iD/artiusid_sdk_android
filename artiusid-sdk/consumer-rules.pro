@@ -43,10 +43,38 @@
 -keep class androidx.camera.** { *; }
 -keep class com.google.mlkit.** { *; }
 
-# ✅ Keep Hilt components for SDK integration
+# ✅ Keep Hilt components for SDK integration - CRITICAL
+-keep class dagger.** { *; }
+-keep class javax.inject.** { *; }
+-keep class dagger.hilt.** { *; }
+
+# Keep all Hilt generated components (MUST NOT BE OBFUSCATED)
+-keep class * extends dagger.hilt.internal.GeneratedComponent { *; }
+-keep class * extends dagger.hilt.internal.GeneratedComponentManager { *; }
+-keep class **_HiltComponents { *; }
+-keep class **_HiltComponents$* { *; }
+-keep class **_MembersInjector { *; }
+-keep class **_Factory { *; }
+-keep class **_Impl { *; }
+-keep class **Hilt_** { *; }
+
+# Keep Hilt entry points
+-keep interface * extends dagger.hilt.internal.ComponentEntryPoint { *; }
+
+# Keep classes with Hilt annotations
+-keep @dagger.hilt.android.AndroidEntryPoint class * { *; }
+-keep @dagger.hilt.android.HiltAndroidApp class * { *; }
 -keep class * {
     @dagger.hilt.android.lifecycle.HiltViewModel <init>(...);
 }
+
+# Keep Dagger modules
+-keep @dagger.Module class * { *; }
+-keep @dagger.hilt.InstallIn class * { *; }
+
+# Prevent obfuscation of Hilt generated code
+-keepnames class * extends dagger.hilt.android.internal.managers.ViewComponentManager$ViewWithFragmentComponentManager
+-keepnames class * extends dagger.hilt.android.internal.lifecycle.HiltViewModelFactory$ViewModelFactoriesEntryPoint
 
 # ✅ Preserve SDK theme and configuration classes
 -keep class com.artiusid.sdk.models.SDKThemeConfiguration { *; }
