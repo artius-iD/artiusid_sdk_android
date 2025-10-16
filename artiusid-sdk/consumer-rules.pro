@@ -20,6 +20,12 @@
     public *;
 }
 
+# ✅ Keep ColorManager and EnhancedThemeManager (CRITICAL for enhanced theming)
+-keep class com.artiusid.sdk.ui.theme.ColorManager { *; }
+-keepclassmembers class com.artiusid.sdk.ui.theme.ColorManager { *; }
+-keep class com.artiusid.sdk.ui.theme.EnhancedThemeManager { *; }
+-keepclassmembers class com.artiusid.sdk.ui.theme.EnhancedThemeManager { *; }
+
 -keep public interface com.artiusid.sdk.callbacks.** {
     public *;
 }
