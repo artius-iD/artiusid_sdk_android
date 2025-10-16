@@ -26,7 +26,9 @@ fun ThemedIcon(
     tint: Color? = null,
     overrideKey: String? = null
 ) {
-    val iconTint = tint ?: ThemedIconColors.getPrimaryIconColor()
+    // v1.2.11 FIX: Use accent icon color as default (more appropriate for general icons)
+    // This prevents icons from being invisible when primaryIconColorHex matches background
+    val iconTint = tint ?: ThemedIconColors.getAccentIconColor()
     
     if (overrideKey != null) {
         // Use themed image with override support
