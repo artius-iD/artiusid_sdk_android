@@ -162,6 +162,9 @@ object ArtiusIDSDK {
             // Update the theme manager with the new theme
             com.artiusid.sdk.ui.theme.EnhancedThemeManager.updateCurrentThemeConfig(enhancedTheme)
             
+            // Update ColorManager with enhanced theme (CRITICAL for icon colors - v1.2.9 fix)
+            com.artiusid.sdk.ui.theme.ColorManager.setEnhancedTheme(enhancedTheme)
+            
             // Initialize localization with overrides from host app
             com.artiusid.sdk.utils.LocalizationManager.initialize(configuration.localizationOverrides)
             
