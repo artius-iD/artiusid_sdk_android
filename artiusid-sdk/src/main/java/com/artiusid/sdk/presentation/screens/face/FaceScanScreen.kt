@@ -154,7 +154,9 @@ fun FaceScanScreen(
             // Face overlay image (iOS: Image("face_overlay") with 0.5 opacity, 360x360)
             if (faceResult?.processingStage == ProcessingStage.INITIAL_INSTRUCTIONS) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Transparent),  // Ensure transparent background
                     contentAlignment = Alignment.Center
                 ) {
                     ThemedImage(
