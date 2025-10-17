@@ -89,12 +89,35 @@ object ArtiusIDSDK {
             // Set up environment in SharedPreferences for UrlBuilder
             val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
             val environmentName = when (configuration.environment) {
+                com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                 com.artiusid.sdk.config.Environment.STAGING -> "Staging"
                 com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
             }
             prefs.edit().putString("environment", environmentName).apply()
             android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
+            
+            // Automatically configure UrlBuilder based on SDKConfiguration environment
+            val urlConfig = when (configuration.environment) {
+                com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
+                com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
+                com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
+                com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
+            }
+            com.artiusid.sdk.utils.UrlBuilder.setConfiguration(urlConfig)
+            android.util.Log.i(TAG, "🌐 Backend URLs configured: ${urlConfig.getDescription()}")
+            android.util.Log.i(TAG, "   Verification: https://${when(configuration.environment) {
+                com.artiusid.sdk.config.Environment.SANDBOX -> "sandbox"
+                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "dev"
+                com.artiusid.sdk.config.Environment.STAGING -> "stage"
+                com.artiusid.sdk.config.Environment.PRODUCTION -> "prod"
+            }}.mobile.${urlConfig.domain}/verifi/api/verification")
+            android.util.Log.i(TAG, "   Certificate: https://${when(configuration.environment) {
+                com.artiusid.sdk.config.Environment.SANDBOX -> "sandbox"
+                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "dev"
+                com.artiusid.sdk.config.Environment.STAGING -> "stage"
+                com.artiusid.sdk.config.Environment.PRODUCTION -> "prod"
+            }}.registration.${urlConfig.domain}/LoadCertificateFunction")
 
             // Initialize shared context manager for mTLS and Firebase
             sharedContextManager = SharedContextManager(context, sdkConfiguration!!)
@@ -173,11 +196,34 @@ object ArtiusIDSDK {
             
             // Set environment name for logging
             val environmentName = when (configuration.environment) {
+                com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                 com.artiusid.sdk.config.Environment.STAGING -> "Staging"
                 com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
             }
             android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
+            
+            // Automatically configure UrlBuilder based on SDKConfiguration environment
+            val urlConfig = when (configuration.environment) {
+                com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
+                com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
+                com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
+                com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
+            }
+            com.artiusid.sdk.utils.UrlBuilder.setConfiguration(urlConfig)
+            android.util.Log.i(TAG, "🌐 Backend URLs configured: ${urlConfig.getDescription()}")
+            android.util.Log.i(TAG, "   Verification: https://${when(configuration.environment) {
+                com.artiusid.sdk.config.Environment.SANDBOX -> "sandbox"
+                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "dev"
+                com.artiusid.sdk.config.Environment.STAGING -> "stage"
+                com.artiusid.sdk.config.Environment.PRODUCTION -> "prod"
+            }}.mobile.${urlConfig.domain}/verifi/api/verification")
+            android.util.Log.i(TAG, "   Certificate: https://${when(configuration.environment) {
+                com.artiusid.sdk.config.Environment.SANDBOX -> "sandbox"
+                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "dev"
+                com.artiusid.sdk.config.Environment.STAGING -> "stage"
+                com.artiusid.sdk.config.Environment.PRODUCTION -> "prod"
+            }}.registration.${urlConfig.domain}/LoadCertificateFunction")
 
             // Initialize shared context manager for mTLS and Firebase
             sharedContextManager = SharedContextManager(context, sdkConfiguration!!)

@@ -34,7 +34,8 @@ data class SDKConfiguration(
 ) : Parcelable
 
 enum class Environment {
-    DEVELOPMENT,
-    STAGING, 
-    PRODUCTION
+    SANDBOX,      // Sandbox environment (sandbox.mobile.artiusid.dev)
+    DEVELOPMENT,  // Development environment (dev.mobile.artiusid.dev)
+    STAGING,      // Staging environment (stage.mobile.artiusid.dev)
+    PRODUCTION    // Production environment (prod.mobile.artiusid.com)
 }
