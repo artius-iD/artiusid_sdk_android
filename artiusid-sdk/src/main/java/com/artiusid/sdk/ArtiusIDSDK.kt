@@ -20,6 +20,7 @@ import com.artiusid.sdk.models.SDKErrorCode
 import com.artiusid.sdk.services.APIManager
 import com.artiusid.sdk.util.DeviceUtils
 import com.artiusid.sdk.utils.SharedContextManager
+import com.artiusid.sdk.utils.CertificateManager
 import com.artiusid.sdk.localization.LocalizationManager
 import com.artiusid.sdk.utils.ImageOverrideInitializer
 import com.artiusid.sdk.security.SDKSecurityManager
@@ -271,6 +272,88 @@ object ArtiusIDSDK {
             android.util.Log.e(TAG, "❌ Failed to initialize ArtiusID SDK Bridge with Enhanced Theming", e)
             throw e
         }
+    }
+    
+    /**
+     * Ensure certificate is registered (synchronous blocking call)
+     * 
+     * This method explicitly registers the mTLS certificate with the backend.
+     * Call this before starting verification to ensure certificate is ready.
+     * 
+     * @param context Application or Activity context
+     * @return true if certificate is registered, false if registration failed
+     * 
+     * Usage:
+     * ```kotlin
+     * lifecycleScope.launch {
+     *     val ready = ArtiusIDSDK.ensureCertificateRegistered(this@MainActivity)
+     *     if (ready) {
+     *         ArtiusIDSDK.startVerificationFlow(...)
+     *     }
+     * }
+     * ```
+     */
+    suspend fun ensureCertificateRegistered(context: Context): Boolean {
+        return try {
+            android.util.Log.i(TAG, "🔐 Ensuring certificate is registered...")
+            
+            if (sdkConfiguration == null) {
+                android.util.Log.e(TAG, "❌ SDK not initialized - call initialize() or initializeWithEnhancedTheme() first")
+                return false
+            }
+            
+            // Check if certificate already exists using CertificateManager
+            val certManager = CertificateManager(context)
+            val existingCert = certManager.loadCertificatePem()
+            
+            if (existingCert != null) {
+                android.util.Log.i(TAG, "✅ Certificate already registered")
+                return true
+            }
+            
+            android.util.Log.w(TAG, "⚠️ Certificate not found, triggering registration...")
+            
+            // Get device ID
+            val deviceId = DeviceUtils.getDeviceId(context)
+            android.util.Log.d(TAG, "📱 Device ID: $deviceId")
+            
+            // Get certificate URL from UrlBuilder
+            val certificateUrl = com.artiusid.sdk.utils.UrlBuilder.getLoadCertificateUrl(context)
+            android.util.Log.d(TAG, "🌐 Certificate URL: $certificateUrl")
+            
+            // Trigger certificate registration
+            val apiManager = APIManager(context)
+            apiManager.loadCertificateFromFullUrl(deviceId, certificateUrl)
+            
+            // Wait a moment for certificate to be stored
+            kotlinx.coroutines.delay(2000)
+            
+            // Verify certificate was stored using CertificateManager
+            val storedCert = certManager.loadCertificatePem()
+            if (storedCert != null) {
+                android.util.Log.i(TAG, "✅ Certificate registered and stored successfully")
+                android.util.Log.d(TAG, "📝 Certificate PEM length: ${storedCert.length}")
+                return true
+            } else {
+                android.util.Log.e(TAG, "❌ Certificate registration completed but PEM not found in storage")
+                return false
+            }
+            
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "❌ Certificate registration failed", e)
+            return false
+        }
+    }
+    
+    /**
+     * Check if certificate is registered (non-blocking)
+     * 
+     * @param context Application or Activity context
+     * @return true if certificate exists in storage
+     */
+    fun isCertificateRegistered(context: Context): Boolean {
+        val certPrefs = context.getSharedPreferences("certificate_prefs", Context.MODE_PRIVATE)
+        return certPrefs.contains("CERTIFICATE_PEM")
     }
     
     /**

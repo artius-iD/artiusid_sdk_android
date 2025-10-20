@@ -16,21 +16,24 @@
 -repackageclasses 'a'
 -flattenpackagehierarchy 'a'
 
-# ✅ Remove all logging in release builds
+# ✅ Remove ONLY verbose and debug logging in release builds
+# KEEP ERROR, WARNING, and INFO logs for debugging customer issues
 -assumenosideeffects class android.util.Log {
     public static boolean isLoggable(java.lang.String, int);
     public static int v(...);
-    public static int i(...);
-    public static int w(...);
     public static int d(...);
-    public static int e(...);
 }
 
-# ✅ Remove debug logging from SDK
+# ✅ Remove debug logging from SDK (keep error/warning/info)
 -assumenosideeffects class com.artiusid.sdk.** {
     public static void log*(...);
     public static void debug*(...);
     public static void print*(...);
+}
+
+# ✅ NEVER strip error logs from ArtiusIDSDK (critical for customer support)
+-keepclassmembers class com.artiusid.sdk.ArtiusIDSDK {
+    private static final java.lang.String TAG;
 }
 
 # ================================
@@ -40,6 +43,23 @@
 # ✅ Keep main SDK entry points (public API)
 -keep public class com.artiusid.sdk.ArtiusIDSDK {
     public *;
+}
+
+# ✅ Keep certificate registration API methods and their dependencies (v1.2.13+)
+-keepclassmembers class com.artiusid.sdk.ArtiusIDSDK {
+    public *** ensureCertificateRegistered(...);
+    public *** isCertificateRegistered(...);
+    private static *** sdkConfiguration;
+}
+
+# ✅ Keep APIManager for certificate registration
+-keep class com.artiusid.sdk.services.APIManager {
+    public <init>(...);
+    public *** loadCertificateFromFullUrl(...);
+    public *** loadCertificate(...);
+}
+-keepclassmembers class com.artiusid.sdk.services.APIManager {
+    private static final java.lang.String TAG;
 }
 
 # ✅ Keep configuration classes (public API)
@@ -67,14 +87,30 @@
 # OBFUSCATE INTERNAL IMPLEMENTATION
 # ================================
 
+# ✅ Keep UrlBuilder and DeviceUtils for certificate registration (v1.2.13+)
+-keep class com.artiusid.sdk.utils.UrlBuilder {
+    public static *** getLoadCertificateUrl(...);
+    public static *** setConfiguration(...);
+}
+-keep class com.artiusid.sdk.util.DeviceUtils {
+    public static *** getDeviceId(...);
+}
+-keep class com.artiusid.sdk.utils.DeviceUtils {
+    public static *** getDeviceId(...);
+}
+
 # ✅ Heavily obfuscate internal utils (CRITICAL SECURITY)
+# But allow certificate-related classes to function
 -keep,allowobfuscation class com.artiusid.sdk.utils.** {
     *;
 }
 
-# ✅ Heavily obfuscate certificate management (CRITICAL SECURITY)
--keep,allowobfuscation class com.artiusid.sdk.utils.CertificateManager {
-    *;
+# ✅ Keep CertificateManager methods needed for registration
+-keep class com.artiusid.sdk.utils.CertificateManager {
+    public <init>(...);
+    public *** loadCertificatePem(...);
+    public *** storeCertificatePem(...);
+    public *** generateCSR(...);
 }
 
 # ✅ Heavily obfuscate verification state (CRITICAL SECURITY)
