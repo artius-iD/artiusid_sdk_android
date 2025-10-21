@@ -26,6 +26,9 @@ import com.artiusid.sdk.ui.theme.AppColors
 import com.artiusid.sdk.ui.theme.ColorManager
 import androidx.compose.foundation.background
 import kotlinx.coroutines.delay
+import androidx.compose.ui.platform.LocalContext
+import android.util.Log
+import com.artiusid.sdk.ArtiusIDSDK
 
 /**
  * Matches iOS ApprovalResponseView.swift exactly
@@ -36,30 +39,36 @@ fun ApprovalResponseScreen(
     response: String, // "yes" or "no"
     onNavigateToHome: () -> Unit
 ) {
+    val context = LocalContext.current
     val isApproved = response.lowercase() == "yes"
-    var displayResultMessage by remember { mutableStateOf("") }
+    var displayResultMessage by remember { mutableStateOf("Sending response...") }
     
-    // Reset notification state when navigating back (like iOS onAppear)
+    // Send approval response to backend (like iOS onAppear task block)
     LaunchedEffect(Unit) {
-        // Simulate sending approval response (like iOS task block)
-        delay(1000) // Show loading state briefly
-        
         try {
-            // Simulate API call like iOS ApprovalResponse.shared.sendApprovalResponse
+            // Map response to API format: "yes" -> "Approved", "no" -> "Deny"
             val approvalValue = if (isApproved) "Approved" else "Deny"
             
-            // For now, simulate success response
-            displayResultMessage = if (isApproved) {
-                "Your approval has been processed successfully."
+            Log.d("ApprovalResponseScreen", "📤 Sending approval response: $approvalValue")
+            
+            // Call SDK API to send approval response with mTLS (like iOS ApprovalResponse.shared.sendApprovalResponse)
+            val result = ArtiusIDSDK.sendApprovalResponse(context, approvalValue)
+            
+            if (result != null) {
+                Log.d("ApprovalResponseScreen", "✅ Approval response sent successfully: $result")
+                displayResultMessage = if (isApproved) {
+                    "Your approval has been processed successfully."
+                } else {
+                    "Your denial has been processed successfully."
+                }
             } else {
-                "Your denial has been processed successfully."
+                Log.e("ApprovalResponseScreen", "❌ Failed to send approval response")
+                displayResultMessage = "Failed to process approval response. Please try again."
             }
             
-            // In a real implementation, you would call:
-            // val response = ApprovalResponseManager.sendApprovalResponse(approvalValue)
-            
         } catch (e: Exception) {
-            displayResultMessage = "Failed to process approval response."
+            Log.e("ApprovalResponseScreen", "❌ Error sending approval response", e)
+            displayResultMessage = "Failed to process approval response. Please try again."
         }
     }
     
