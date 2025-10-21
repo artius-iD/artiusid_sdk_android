@@ -1224,27 +1224,10 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             android.util.Log.d("BridgeMainActivity", "🎨 Selected Theme: ${selectedTheme.displayName}")
             android.util.Log.d("BridgeMainActivity", "🖼️ Selected Image Override: ${selectedImageOverride.displayName}")
             
-            // Update SDK configuration with current theme and image overrides
-            // (SDK is already initialized, but we may need to update theme/images)
-            val localizationOverrides = SampleAppLocalization.getStringOverrides(this)
-            val sdkConfig = SDKConfiguration(
-                apiKey = "demo_api_key_12345",
-                baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
-                environment = Environment.STAGING,
-                enableLogging = true,
-                hostAppPackageName = packageName,
-                sharedCertificateContext = true,
-                sharedFirebaseContext = true,
-                localizationOverrides = localizationOverrides,
-                imageOverrides = selectedImageOverride.overrides
-            )
-            
-            // Re-initialize with updated theme and image overrides
-            ArtiusIDSDK.initializeWithEnhancedTheme(
-                context = this,
-                configuration = sdkConfig,
-                enhancedTheme = selectedTheme.themeConfig
-            )
+            // SDK is already initialized in onCreate() with current theme and image overrides
+            // Re-initialization here causes Hilt to create a NEW ViewModel instance,
+            // which resets the guard flag and causes duplicate verification requests
+            // FIX: Just start verification - SDK is already properly configured
             
             // Start verification via bridge to standalone app
             ArtiusIDSDK.startVerification(this, this)
@@ -1259,27 +1242,13 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         try {
             isVerificationLoading = true
             
-            // Initialize SDK Bridge with selected theme, shared context, and localization overrides
-            val localizationOverrides = SampleAppLocalization.getStringOverrides(this)
-            android.util.Log.d("BridgeMainActivity", "🌐 Localization overrides: ${localizationOverrides.size} strings")
+            android.util.Log.d("BridgeMainActivity", "🔐 Starting authentication flow...")
+            android.util.Log.d("BridgeMainActivity", "🎨 Selected Theme: ${selectedTheme.displayName}")
             
-            val sdkConfig = SDKConfiguration(
-                apiKey = "demo_api_key_12345",
-                baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
-                environment = Environment.STAGING,
-                enableLogging = true,
-                hostAppPackageName = packageName,
-                sharedCertificateContext = true,
-                sharedFirebaseContext = true,
-                localizationOverrides = localizationOverrides,
-                imageOverrides = selectedImageOverride.overrides
-            )
-            
-            ArtiusIDSDK.initializeWithEnhancedTheme(
-                context = this,
-                configuration = sdkConfig,
-                enhancedTheme = selectedTheme.themeConfig
-            )
+            // SDK is already initialized in onCreate() with current theme and image overrides
+            // Re-initialization here causes Hilt to create a NEW ViewModel instance,
+            // which resets the guard flag and causes duplicate authentication requests
+            // FIX: Just start authentication - SDK is already properly configured
             
             // Start authentication via bridge to standalone app
             ArtiusIDSDK.startAuthentication(this, this)

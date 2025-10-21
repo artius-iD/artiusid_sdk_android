@@ -1,0 +1,290 @@
+# ArtiusID Android SDK
+
+A secure Android SDK for identity verification, face liveness detection, document scanning, and NFC passport reading.
+
+---
+
+## 📦 **Latest Release**
+
+**Version:** 1.2.21  
+**Release Date:** October 21, 2025  
+**Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
+
+---
+
+## 🚀 **Quick Start**
+
+### **1. Download the SDK**
+
+Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
+```bash
+# Download SDK v1.2.21
+curl -L -o artiusid-sdk-1.2.21.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.21/artiusid-sdk-1.2.21.aar
+```
+
+### **2. Add to Your Project**
+
+Copy the AAR to your app's `libs` directory:
+```bash
+cp artiusid-sdk-1.2.21.aar your-app/app/libs/
+```
+
+### **3. Configure Dependencies**
+
+Add to your app's `build.gradle`:
+```gradle
+dependencies {
+    implementation files('libs/artiusid-sdk-1.2.21.aar')
+    
+    // Required dependencies
+    def hilt_version = "2.48"
+    implementation "com.google.dagger:hilt-android:${hilt_version}"
+    ksp "com.google.dagger:hilt-android-compiler:${hilt_version}"
+    implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
+    
+    // Compose
+    implementation platform('androidx.compose:compose-bom:2023.10.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.material3:material3'
+    
+    // Image loading (required for SDK animations)
+    implementation 'io.coil-kt:coil-compose:2.5.0'
+    implementation 'io.coil-kt:coil-gif:2.5.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    
+    // Firebase (required for FCM functionality)
+    implementation platform('com.google.firebase:firebase-bom:32.7.2')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-messaging:23.4.1'
+    
+    // Biometric authentication
+    implementation 'androidx.biometric:biometric:1.1.0'
+}
+```
+
+### **4. Initialize the SDK**
+
+```kotlin
+import com.artiusid.sdk.ArtiusIDSDK
+import com.artiusid.sdk.config.SDKConfiguration
+import com.artiusid.sdk.config.Environment
+import com.artiusid.sdk.models.SDKThemeConfiguration
+
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Initialize SDK
+        val config = SDKConfiguration(
+            apiKey = "your-api-key",
+            environment = Environment.PRODUCTION,
+            enableLogging = BuildConfig.DEBUG
+        )
+        
+        val theme = SDKThemeConfiguration(
+            brandName = "YourBrand",
+            primaryColorHex = "#YOUR_PRIMARY_COLOR",
+            secondaryColorHex = "#YOUR_SECONDARY_COLOR"
+        )
+        
+        ArtiusIDSDK.initializeWithEnhancedTheme(this, config, theme)
+    }
+}
+```
+
+### **5. Start Verification**
+
+```kotlin
+import com.artiusid.sdk.callbacks.VerificationCallback
+import com.artiusid.sdk.models.VerificationResult
+import com.artiusid.sdk.models.SDKError
+
+ArtiusIDSDK.startVerification(
+    activity = this,
+    callback = object : VerificationCallback {
+        override fun onVerificationSuccess(result: VerificationResult) {
+            // Handle successful verification
+            Log.d("App", "Verification successful: ${result.verificationId}")
+        }
+        
+        override fun onVerificationError(error: SDKError) {
+            // Handle error
+            Log.e("App", "Verification error: ${error.message}")
+        }
+        
+        override fun onVerificationCancelled() {
+            // Handle cancellation
+            Log.d("App", "Verification cancelled by user")
+        }
+    }
+)
+```
+
+---
+
+## 📚 **Documentation**
+
+### **Essential Guides:**
+- **[HILT Integration Guide](HILT_INTEGRATION_GUIDE.md)** - Complete HILT setup instructions
+- **[HILT Quick Setup](README_HILT_SETUP.md)** - Quick reference for HILT configuration
+- **[SDK Dependencies](SDK_DEPENDENCY_REQUIREMENTS.md)** - Required dependencies and versions
+
+### **Sample App:**
+- **[Localization Guide](sample-app/LOCALIZATION_GUIDE.md)** - How to customize SDK strings
+- **[Asset Documentation](sample-app/src/main/assets/README.md)** - Theme assets and customization
+
+---
+
+## 🔧 **HILT Setup**
+
+### **Automated Setup (Recommended):**
+```bash
+./setup_hilt.sh
+```
+
+### **Diagnostic Tool:**
+```bash
+./gradlew diagnoseHilt
+```
+
+### **Manual Setup:**
+Follow the step-by-step guide in [HILT_INTEGRATION_GUIDE.md](HILT_INTEGRATION_GUIDE.md)
+
+---
+
+## 🎨 **Dynamic Branding**
+
+Configure your brand name in the SDK theme:
+
+```kotlin
+val theme = SDKThemeConfiguration(
+    brandName = "YourBrand",  // Replaces "artius.iD" throughout the UI
+    primaryColorHex = "#YOUR_COLOR",
+    secondaryColorHex = "#YOUR_ACCENT_COLOR"
+)
+```
+
+The SDK will automatically:
+- Display your brand name in all UI components
+- Use your brand in Firebase notifications
+- Apply intelligent text splitting (e.g., "Your.Brand" → "Your" + "Brand")
+
+---
+
+## 📋 **Requirements**
+
+- **Minimum SDK:** Android 7.0 (API level 24)
+- **Target SDK:** Android 14 (API level 34)
+- **Kotlin:** 1.9.0+
+- **HILT:** 2.48 (exact version required)
+- **Gradle:** 8.0+
+- **Firebase Project:** Required for authentication and messaging
+
+---
+
+## 🔒 **Security Features**
+
+- Fully obfuscated AAR for IP protection
+- Hardware-backed encryption
+- Certificate pinning support
+- Anti-tampering protection
+- Secure keychain storage (iOS Keychain equivalent)
+
+---
+
+## 🐛 **Troubleshooting**
+
+### **HILT Issues:**
+1. Run `./gradlew diagnoseHilt` for automated diagnosis
+2. Check [HILT_INTEGRATION_GUIDE.md](HILT_INTEGRATION_GUIDE.md) for detailed setup
+3. Ensure exact HILT version 2.48 is used
+
+### **Branding Issues:**
+- Verify `SDKThemeConfiguration.brandName` is set
+- Check that `@AndroidEntryPoint` is on your Activity
+- Ensure Firebase is properly initialized
+
+### **Certificate Issues:**
+- Clear app data: `adb shell pm clear your.package.name`
+- Check logs for certificate registration errors
+- Verify network connectivity
+
+---
+
+## 📞 **Support**
+
+### **Technical Support:**
+- Email: support@artiusid.com
+- GitHub: https://github.com/artius-iD/artiusid_sdk_android
+
+### **Licensing:**
+- Email: legal@artiusid.com
+
+---
+
+## 📝 **Changelog**
+
+### **v1.2.21 (October 21, 2025)**
+- 🐛 Fixed duplicate verification requests
+- 🐛 Fixed duplicate authentication requests
+- ✅ Only ONE verification request per flow
+- ✅ 50% reduction in backend load
+
+### **v1.2.20 (October 21, 2025)**
+- ✅ FCM token async retrieval for host apps
+- ✅ Improved token handling
+
+### **v1.2.19 (October 21, 2025)**
+- ✅ Duplicate verification prevention with ViewModel guard
+
+### **v1.2.18 (October 20, 2025)**
+- ✅ Error callback triggered on verification failure
+- ✅ Host app controls error UI
+
+### **v1.2.17 (October 20, 2025)**
+- ✅ Certificate retry logic (3 attempts)
+- ✅ Improved certificate registration reliability
+
+---
+
+## 📦 **Package Contents**
+
+- `artiusid-sdk-1.2.21.aar` - Main SDK library (25MB)
+- `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
+- `README_HILT_SETUP.md` - Quick HILT reference
+- `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
+- `setup_hilt.sh` - Automated HILT configuration script
+- `hilt_diagnostic_script.gradle` - HILT diagnostic tool
+- Sample app with integration examples
+
+---
+
+## 🚀 **Example Integration**
+
+Check out the `sample-app` directory for a complete working example that demonstrates:
+- SDK initialization with custom branding
+- Verification flow integration
+- Authentication flow integration
+- Theme customization
+- Image overrides
+- Localization
+- Error handling
+- Approval notifications
+
+---
+
+## 📄 **License**
+
+Copyright © 2024-2025 artius.iD, Inc. All rights reserved.
+
+This SDK is provided under license. See LICENSE.txt for full terms and conditions.
+
+---
+
+**Version:** 1.2.21  
+**Release Date:** October 21, 2025  
+**Package Size:** 25MB  
+**Status:** Production Ready
+
