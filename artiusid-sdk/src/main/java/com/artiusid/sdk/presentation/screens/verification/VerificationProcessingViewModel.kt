@@ -84,6 +84,10 @@ class VerificationProcessingViewModel @Inject constructor(
 
     private var retryCount = 0
     private val maxRetries = 3
+    
+    // Guard flag to prevent duplicate verification calls
+    private var hasStartedVerification = false
+    private val verificationLock = Any()
 
     fun startVerification(
         frontImageBitmap: Bitmap?,
@@ -92,6 +96,17 @@ class VerificationProcessingViewModel @Inject constructor(
         passportImageBitmap: Bitmap? = null, // Add passport image option
         context: Context
     ) {
+        // Prevent duplicate verification calls
+        synchronized(verificationLock) {
+            if (hasStartedVerification) {
+                Log.w(TAG, "⚠️ startVerification() called but verification already in progress - SKIPPING duplicate call")
+                Log.w(TAG, "⚠️ This prevents duplicate backend requests and duplicate member IDs")
+                return
+            }
+            hasStartedVerification = true
+            Log.d(TAG, "✅ Verification guard flag set - this is the first and only call")
+        }
+        
         viewModelScope.launch {
             Log.d(TAG, "=== ENTERED startVerification() ===")
             Log.d(TAG, "=== VERIFICATION FLOW STARTED ===")
@@ -207,18 +222,34 @@ class VerificationProcessingViewModel @Inject constructor(
                     
                     val cachedToken = if (sharedTokenManager != null) {
                         Log.d(TAG, "Using shared FCM token from sample app context")
-                        sharedTokenManager.getFCMToken()
+                        // First try cached token
+                        var token = sharedTokenManager.getFCMToken()
+                        
+                        // If no cached token, retrieve asynchronously
+                        if (token.isNullOrEmpty()) {
+                            Log.d(TAG, "🔄 No cached FCM token, retrieving asynchronously...")
+                            token = sharedTokenManager.getFCMTokenAsync()
+                        }
+                        token
                     } else {
                         Log.d(TAG, "No shared context, trying local FirebaseTokenManager")
-                        val tokenManager = FirebaseTokenManager.getInstance()
-                        tokenManager?.getFCMToken()
+                        val tokenManager = FirebaseTokenManager.getInstance(context)
+                        // First try cached token
+                        var token = tokenManager?.getFCMToken()
+                        
+                        // If no cached token, retrieve asynchronously
+                        if (token.isNullOrEmpty()) {
+                            Log.d(TAG, "🔄 No cached FCM token, retrieving asynchronously...")
+                            token = tokenManager?.getFCMTokenAsync()
+                        }
+                        token
                     }
                     
                     if (!cachedToken.isNullOrEmpty()) {
                         Log.d(TAG, "✅ FCM token retrieved successfully: ${cachedToken.take(20)}...")
                         cachedToken
                     } else {
-                        Log.w(TAG, "❌ No FCM token available, continuing without token")
+                        Log.w(TAG, "❌ No FCM token available after async retrieval, continuing without token")
                         ""
                     }
                 } catch (e: Exception) {
