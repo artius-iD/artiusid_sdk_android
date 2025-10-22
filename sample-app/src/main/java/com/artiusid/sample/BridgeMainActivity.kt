@@ -1259,15 +1259,30 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         }
     }
     
+    // Guard flag to prevent rapid button clicks causing duplicate requests
+    private var lastApprovalRequestTime = 0L
+    private val approvalRequestDebounceMs = 2000L // 2 second debounce
+    
     private fun sendApprovalRequest() {
         try {
+            // Debounce: Prevent multiple clicks within 2 seconds
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastApprovalRequestTime < approvalRequestDebounceMs) {
+                android.util.Log.w("BridgeMainActivity", "⚠️ Approval request debounced - too soon after last request (${currentTime - lastApprovalRequestTime}ms)")
+                return
+            }
+            lastApprovalRequestTime = currentTime
+            
             isApprovalLoading = true
-            android.util.Log.d("BridgeMainActivity", "📋 Starting approval request test...")
+            android.util.Log.d("BridgeMainActivity", "📋 ========================================")
+            android.util.Log.d("BridgeMainActivity", "📋 APPROVAL REQUEST BUTTON CLICKED")
+            android.util.Log.d("BridgeMainActivity", "📋 Timestamp: $currentTime")
+            android.util.Log.d("BridgeMainActivity", "📋 ========================================")
             
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     // Use the new public SDK method for approval requests
-                    android.util.Log.d("BridgeMainActivity", "📋 Sending approval request via SDK...")
+                    android.util.Log.d("BridgeMainActivity", "📋 Calling ArtiusIDSDK.sendApprovalRequest()...")
                     val (success, message, requestId) = ArtiusIDSDK.sendApprovalRequest(this@BridgeMainActivity)
                     
                     // Update UI on main thread

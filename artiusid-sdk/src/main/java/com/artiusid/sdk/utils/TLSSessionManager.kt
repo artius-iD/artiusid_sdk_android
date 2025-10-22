@@ -111,9 +111,20 @@ class TLSSessionManager(private val context: Context) {
                 .addInterceptor { chain ->
                     val originalRequest = chain.request()
                     
+                    // Generate unique request ID for tracking
+                    val requestId = java.util.UUID.randomUUID().toString().substring(0, 8)
+                    val requestTime = System.currentTimeMillis()
+                    
+                    Log.d(TAG, "🌐 [HTTP $requestId] ========================================")
+                    Log.d(TAG, "🌐 [HTTP $requestId] HTTP REQUEST STARTED")
+                    Log.d(TAG, "🌐 [HTTP $requestId] Method: ${originalRequest.method}")
+                    Log.d(TAG, "🌐 [HTTP $requestId] URL: ${originalRequest.url}")
+                    Log.d(TAG, "🌐 [HTTP $requestId] Time: $requestTime")
+                    Log.d(TAG, "🌐 [HTTP $requestId] ========================================")
+                    
                     // SECURITY: Enforce HTTPS-only connections
                     if (!originalRequest.url.isHttps) {
-                        Log.e(TAG, "🚨 SECURITY VIOLATION: Attempted HTTP connection to ${originalRequest.url}")
+                        Log.e(TAG, "🌐 [HTTP $requestId] 🚨 SECURITY VIOLATION: Attempted HTTP connection to ${originalRequest.url}")
                         throw SecurityException("HTTP connections are not allowed. Only HTTPS is permitted for mTLS.")
                     }
                     
@@ -123,12 +134,21 @@ class TLSSessionManager(private val context: Context) {
                         .build()
                     
                     // Log the headers being sent for debugging
-                    Log.d(TAG, "📤 Sending headers (matching iOS exactly):")
-                    Log.d(TAG, "📤   Content-Type: application/json")
-                    Log.d(TAG, "📤   User-Agent: [system default - matching iOS behavior]")
-                    Log.d(TAG, "🔒 HTTPS connection verified: ${newRequest.url}")
+                    Log.d(TAG, "🌐 [HTTP $requestId] 📤 Headers: Content-Type=application/json")
+                    Log.d(TAG, "🌐 [HTTP $requestId] 🔒 HTTPS connection verified")
                     
-                    chain.proceed(newRequest)
+                    // Execute the request and track response
+                    val response = chain.proceed(newRequest)
+                    val responseTime = System.currentTimeMillis()
+                    val duration = responseTime - requestTime
+                    
+                    Log.d(TAG, "🌐 [HTTP $requestId] ========================================")
+                    Log.d(TAG, "🌐 [HTTP $requestId] HTTP RESPONSE RECEIVED")
+                    Log.d(TAG, "🌐 [HTTP $requestId] Status: ${response.code}")
+                    Log.d(TAG, "🌐 [HTTP $requestId] Duration: ${duration}ms")
+                    Log.d(TAG, "🌐 [HTTP $requestId] ========================================")
+                    
+                    response
                 }
                 .build()
         } catch (e: Exception) {

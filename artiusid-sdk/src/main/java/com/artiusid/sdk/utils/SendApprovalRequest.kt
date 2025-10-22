@@ -33,7 +33,15 @@ class SendApprovalRequest(
      * Returns (success, requestId)
      */
     suspend fun send(): Pair<Boolean, Int?> {
+        // Generate unique call ID for tracking
+        val callId = java.util.UUID.randomUUID().toString().substring(0, 8)
+        val startTime = System.currentTimeMillis()
+        
         return try {
+            Log.d(TAG, "📞 [Call $callId] ========================================")
+            Log.d(TAG, "📞 [Call $callId] send() STARTED at $startTime")
+            Log.d(TAG, "📞 [Call $callId] ========================================")
+            
             // Get device ID in native Android format
             val deviceId = android.provider.Settings.Secure.getString(
                 context.contentResolver,
@@ -45,7 +53,7 @@ class SendApprovalRequest(
             val accountNumber = verificationStateManager.getAccountNumber()
 
             if (accountNumber.isNullOrEmpty()) {
-                Log.e(TAG, "No account number found - user must complete verification first")
+                Log.e(TAG, "📞 [Call $callId] ❌ No account number found - user must complete verification first")
                 return Pair(false, null)
             }
 
@@ -59,46 +67,53 @@ class SendApprovalRequest(
                     timeout = 30 // ✅ CRITICAL: iOS includes this field!
                 )
             
-            Log.d(TAG, "🔧 Using native Android device ID: $deviceId")
-            Log.d(TAG, "Sending approval request for deviceId: $deviceId (native Android format)")
-            Log.d(TAG, "Account Number (Member ID): $accountNumber")
-            Log.d(TAG, "Using approval request ApiService exactly like iOS")
-            Log.d(TAG, "✅ Server should now find device mapping with UUID format")
+            Log.d(TAG, "📞 [Call $callId] 🔧 Using native Android device ID: $deviceId")
+            Log.d(TAG, "📞 [Call $callId] Account Number (Member ID): $accountNumber")
             
             // Log the full request for debugging
-                Log.d(TAG, "📤 Request being sent (body only, exactly like iOS):")
-                Log.d(TAG, "📤   ClientId: ${request.clientId}")
-                Log.d(TAG, "📤   ClientGroupId: ${request.clientGroupId}")
-                Log.d(TAG, "📤   DeviceId: ${request.deviceId}")
-                Log.d(TAG, "📤   ApprovalTitle: ${request.approvalTitle}")
-                Log.d(TAG, "📤   ApprovalDescription: ${request.approvalDescription}")
-                Log.d(TAG, "📤   Timeout: ${request.timeout} (iOS field)")
+                Log.d(TAG, "📞 [Call $callId] 📤 Request payload:")
+                Log.d(TAG, "📞 [Call $callId] 📤   ClientId: ${request.clientId}")
+                Log.d(TAG, "📞 [Call $callId] 📤   ClientGroupId: ${request.clientGroupId}")
+                Log.d(TAG, "📞 [Call $callId] 📤   DeviceId: ${request.deviceId}")
+                Log.d(TAG, "📞 [Call $callId] 📤   ApprovalTitle: ${request.approvalTitle}")
+                Log.d(TAG, "📞 [Call $callId] 📤   ApprovalDescription: ${request.approvalDescription}")
+                Log.d(TAG, "📞 [Call $callId] 📤   Timeout: ${request.timeout}")
             
+                Log.d(TAG, "📞 [Call $callId] 🌐 Calling apiService.sendApprovalRequestIOS() via Retrofit...")
+                val apiCallStartTime = System.currentTimeMillis()
+                
                 // Call API endpoint exactly like standalone Android app
                 val response = apiService.sendApprovalRequestIOS(request)
+                
+                val apiCallDuration = System.currentTimeMillis() - apiCallStartTime
+                Log.d(TAG, "📞 [Call $callId] ✅ API call completed in ${apiCallDuration}ms")
 
                 // Log the full response for debugging
-                Log.d(TAG, "📋 Server response received (iOS format):")
-                Log.d(TAG, "📋 Response object: $response")
-                Log.d(TAG, "📋 RequestId: ${response.requestId}")
-                Log.d(TAG, "📋 Success: ${response.success}")
+                Log.d(TAG, "📞 [Call $callId] 📋 Server response received:")
+                Log.d(TAG, "📞 [Call $callId] 📋   Response object: $response")
+                Log.d(TAG, "📞 [Call $callId] 📋   RequestId: ${response.requestId}")
+                Log.d(TAG, "📞 [Call $callId] 📋   Success: ${response.success}")
 
                 // Check response exactly like iOS (direct fields, not nested)
                 if (response.success) {
                     val requestId = response.requestId
-                    Log.d(TAG, "✅ Approval request sent successfully (iOS format)")
-                    Log.d(TAG, "✅ Received requestId: $requestId")
-                    Log.d(TAG, "✅ Success: ${response.success}")
+                    val totalDuration = System.currentTimeMillis() - startTime
+                    Log.d(TAG, "📞 [Call $callId] ✅ Approval request sent successfully")
+                    Log.d(TAG, "📞 [Call $callId] ✅ Received requestId: $requestId")
+                    Log.d(TAG, "📞 [Call $callId] ✅ Total duration: ${totalDuration}ms")
+                    Log.d(TAG, "📞 [Call $callId] ========================================")
                     Pair(true, requestId)
                 } else {
-                    Log.e(TAG, "❌ Approval response success=false - server rejected request")
-                    Log.w(TAG, "Real server integration: No Firebase notification will be sent")
-                    Log.w(TAG, "Check server configuration and device registration")
+                    Log.e(TAG, "📞 [Call $callId] ❌ Approval response success=false - server rejected request")
+                    Log.w(TAG, "📞 [Call $callId] ⚠️ No Firebase notification will be sent")
+                    Log.d(TAG, "📞 [Call $callId] ========================================")
                     Pair(false, null)
                 }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Approval request failed: ${e.localizedMessage}", e)
+            val totalDuration = System.currentTimeMillis() - startTime
+            Log.e(TAG, "📞 [Call $callId] ❌ Approval request failed after ${totalDuration}ms: ${e.localizedMessage}", e)
+            Log.d(TAG, "📞 [Call $callId] ========================================")
             Pair(false, null)
         }
     }
