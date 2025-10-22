@@ -14,6 +14,9 @@ import com.google.gson.annotations.SerializedName
  * 
  * CRITICAL: iOS sends ALL fields as strings via toEncodableBody()
  * Android must match this exactly for backend compatibility
+ * 
+ * NOTE: iOS does NOT set the timeout field when sending approval responses
+ * (timeout is only used for approval requests, not responses)
  */
 data class ApprovalRequest(
     @SerializedName("clientId")
@@ -29,14 +32,13 @@ data class ApprovalRequest(
     val requestId: String = "0",
     
     @SerializedName("responseValue")
-    val responseValue: String = "",
-    
-    @SerializedName("timeout")
-    val timeout: String = "30"
+    val responseValue: String = ""
 ) {
     /**
      * Convert to encodable body format like iOS toEncodableBody()
      * iOS returns [String: String] - all fields are strings
+     * 
+     * NOTE: timeout field removed - iOS doesn't send it for approval responses
      */
     fun toEncodableBody(): Map<String, String> {
         return mapOf(
@@ -44,8 +46,7 @@ data class ApprovalRequest(
             "clientGroupId" to clientGroupId,
             "deviceId" to deviceId,
             "requestId" to requestId,
-            "responseValue" to responseValue,
-            "timeout" to timeout
+            "responseValue" to responseValue
         )
     }
 }

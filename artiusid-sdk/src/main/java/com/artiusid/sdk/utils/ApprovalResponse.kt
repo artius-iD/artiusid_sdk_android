@@ -52,13 +52,13 @@ class ApprovalResponse(
             
             // Create request exactly like iOS - ALL FIELDS AS STRINGS
             // iOS toEncodableBody() converts all fields to strings
+            // NOTE: iOS does NOT include timeout field for approval responses
             val request = ApprovalRequest(
                 clientId = "1", // AppConstants.clientId as string
                 clientGroupId = "1", // AppConstants.clientGroupId as string
                 deviceId = deviceId,
                 requestId = requestId.toString(), // Convert Int to String like iOS
-                responseValue = approvalValue,
-                timeout = "30"
+                responseValue = approvalValue
             )
             
             Log.d(TAG, "📤 Request payload (all strings like iOS):")
@@ -67,7 +67,7 @@ class ApprovalResponse(
             Log.d(TAG, "📤   deviceId: ${request.deviceId} (String)")
             Log.d(TAG, "📤   requestId: ${request.requestId} (String)")
             Log.d(TAG, "📤   responseValue: ${request.responseValue} (String)")
-            Log.d(TAG, "📤   timeout: ${request.timeout} (String)")
+            Log.d(TAG, "📤   NOTE: timeout field NOT included (iOS doesn't send it for responses)")
             
             // Build endpoint URL (using ApprovalResponseFunction like iOS ServiceTypes.ApprovalResponse)
             val baseUrl = UrlBuilder.getApprovalResponseBaseUrl(context)
