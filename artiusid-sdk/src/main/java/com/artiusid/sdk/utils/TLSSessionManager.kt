@@ -104,6 +104,7 @@ class TLSSessionManager(private val context: Context) {
 
             return OkHttpClient.Builder()
                 .sslSocketFactory(loggingSSLSocketFactory, trustManager[0] as X509TrustManager)
+                .retryOnConnectionFailure(false)  // Disable automatic retries to prevent duplicate requests
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)

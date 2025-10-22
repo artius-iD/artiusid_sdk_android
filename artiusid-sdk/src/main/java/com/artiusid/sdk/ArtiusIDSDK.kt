@@ -58,6 +58,10 @@ object ArtiusIDSDK {
     // Shared context management for mTLS and Firebase
     private var sharedContextManager: SharedContextManager? = null
     
+    // Guard flag to prevent duplicate approval requests
+    private var isApprovalRequestInProgress = false
+    private val approvalRequestLock = Any()
+    
     /**
      * Initialize the SDK with configuration and theming
      * 
@@ -572,12 +576,29 @@ object ArtiusIDSDK {
      * @return Triple<Boolean, String, Int?> - (success, message, requestId)
      */
     suspend fun sendApprovalRequest(context: Context): Triple<Boolean, String, Int?> {
+        // Generate unique call ID for tracking
+        val callId = java.util.UUID.randomUUID().toString().substring(0, 8)
+        android.util.Log.d(TAG, "📞 [Call $callId] sendApprovalRequest() STARTED")
+        
         return try {
+            // Guard flag to prevent duplicate requests
+            synchronized(approvalRequestLock) {
+                if (isApprovalRequestInProgress) {
+                    android.util.Log.w(TAG, "📞 [Call $callId] ⚠️ Approval request already in progress, ignoring duplicate call")
+                    android.util.Log.w(TAG, "📞 [Call $callId] This prevents duplicate backend requests and duplicate notifications")
+                    return Triple(false, "Request already in progress", null)
+                }
+                isApprovalRequestInProgress = true
+                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Guard flag set - this is the first and only call")
+            }
+            
             if (!_isInitialized) {
+                android.util.Log.e(TAG, "📞 [Call $callId] ❌ SDK not initialized")
+                isApprovalRequestInProgress = false
                 Triple(false, "SDK not initialized", null)
             } else {
                 // Create approval API service using shared mTLS context (like iOS requiresTLS: true)
-                android.util.Log.d(TAG, "🔐 Using mTLS for approval testing (matching iOS requiresTLS: true)")
+                android.util.Log.d(TAG, "📞 [Call $callId] 🔐 Using mTLS for approval testing (matching iOS requiresTLS: true)")
                 val okHttpClient = sharedContextManager?.getSharedOkHttpClient() 
                     ?: throw IllegalStateException("Shared context not available")
                 
@@ -586,17 +607,25 @@ object ArtiusIDSDK {
                 
                 // Log the API base URL being used
                 val baseUrl = com.artiusid.sdk.utils.UrlBuilder.getApprovalRequestBaseUrl(context)
-                android.util.Log.d(TAG, "🌐 Approval API Base URL: $baseUrl")
-                android.util.Log.d(TAG, "🌐 Full endpoint: ${baseUrl}ApprovalRequestTestingFunction")
+                android.util.Log.d(TAG, "📞 [Call $callId] 🌐 Approval API Base URL: $baseUrl")
+                android.util.Log.d(TAG, "📞 [Call $callId] 🌐 Full endpoint: ${baseUrl}ApprovalRequestTestingFunction")
                 
                 // Create SettingsRepository with proper API service
                 val settingsRepository = com.artiusid.sdk.data.repository.SettingsRepository(context, approvalApiService)
                 
                 // Send approval request
-                settingsRepository.sendApprovalRequest()
+                val result = settingsRepository.sendApprovalRequest()
+                
+                // Reset guard flag after completion
+                isApprovalRequestInProgress = false
+                android.util.Log.d(TAG, "📞 [Call $callId] ✅ sendApprovalRequest() COMPLETED successfully")
+                
+                result
             }
         } catch (e: Exception) {
-            android.util.Log.e(TAG, "❌ Error sending approval request", e)
+            // Reset guard flag on error
+            isApprovalRequestInProgress = false
+            android.util.Log.e(TAG, "📞 [Call $callId] ❌ sendApprovalRequest() FAILED: ${e.message}", e)
             Triple(false, "Error: ${e.message}", null)
         }
     }
