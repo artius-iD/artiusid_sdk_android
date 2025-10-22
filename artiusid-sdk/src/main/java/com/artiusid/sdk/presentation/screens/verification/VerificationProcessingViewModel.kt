@@ -22,6 +22,7 @@ import com.artiusid.sdk.utils.ImageUtils
 import com.artiusid.sdk.utils.ImageStorage
 import com.artiusid.sdk.data.repository.LogManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,6 +66,41 @@ sealed class VerificationProcessingUiState {
     ) : VerificationProcessingUiState()
 }
 
+/**
+ * Singleton object to track verification state across ViewModel instances
+ * This prevents duplicate verifications even if the ViewModel is recreated
+ */
+object VerificationGuard {
+    @Volatile
+    private var isVerificationInProgress = false
+    private val lock = Any()
+    
+    fun tryStartVerification(): Boolean {
+        synchronized(lock) {
+            if (isVerificationInProgress) {
+                android.util.Log.w("VerificationGuard", "⚠️ ========================================")
+                android.util.Log.w("VerificationGuard", "⚠️ SINGLETON: Verification already in progress")
+                android.util.Log.w("VerificationGuard", "⚠️ BLOCKING duplicate verification")
+                android.util.Log.w("VerificationGuard", "⚠️ ========================================")
+                return false
+            }
+            isVerificationInProgress = true
+            android.util.Log.d("VerificationGuard", "✅ ========================================")
+            android.util.Log.d("VerificationGuard", "✅ SINGLETON: Verification started")
+            android.util.Log.d("VerificationGuard", "✅ Guard flag set - no duplicates allowed")
+            android.util.Log.d("VerificationGuard", "✅ ========================================")
+            return true
+        }
+    }
+    
+    fun resetVerification() {
+        synchronized(lock) {
+            isVerificationInProgress = false
+            android.util.Log.d("VerificationGuard", "🔄 SINGLETON: Verification guard reset")
+        }
+    }
+}
+
 @HiltViewModel
 class VerificationProcessingViewModel @Inject constructor(
     private val apiService: com.artiusid.sdk.data.api.ApiService
@@ -82,12 +118,17 @@ class VerificationProcessingViewModel @Inject constructor(
     private val _verificationResultData = MutableStateFlow<VerificationResultData?>(null)
     val verificationResultData: StateFlow<VerificationResultData?> = _verificationResultData.asStateFlow()
 
-    private var retryCount = 0
-    private val maxRetries = 3
-    
     // Guard flag to prevent duplicate verification calls
     private var hasStartedVerification = false
     private val verificationLock = Any()
+    
+    // Guard flag to prevent processing duplicate responses from backend/Retrofit
+    @Volatile
+    private var hasProcessedResponse = false
+    private val responseLock = Any()
+    
+    // Track the active verification job to prevent concurrent executions
+    private var activeVerificationJob: Job? = null
 
     fun startVerification(
         frontImageBitmap: Bitmap?,
@@ -96,18 +137,49 @@ class VerificationProcessingViewModel @Inject constructor(
         passportImageBitmap: Bitmap? = null, // Add passport image option
         context: Context
     ) {
-        // Prevent duplicate verification calls
-        synchronized(verificationLock) {
-            if (hasStartedVerification) {
-                Log.w(TAG, "⚠️ startVerification() called but verification already in progress - SKIPPING duplicate call")
-                Log.w(TAG, "⚠️ This prevents duplicate backend requests and duplicate member IDs")
-                return
-            }
-            hasStartedVerification = true
-            Log.d(TAG, "✅ Verification guard flag set - this is the first and only call")
+        Log.d(TAG, "🟢 ========================================")
+        Log.d(TAG, "🟢 ViewModel: startVerification() CALLED")
+        Log.d(TAG, "🟢 hasStartedVerification = $hasStartedVerification")
+        Log.d(TAG, "🟢 activeVerificationJob?.isActive = ${activeVerificationJob?.isActive}")
+        Log.d(TAG, "🟢 ========================================")
+        
+        // CRITICAL: Check singleton guard FIRST to prevent duplicate verifications
+        // even if multiple ViewModel instances are created
+        if (!VerificationGuard.tryStartVerification()) {
+            Log.w(TAG, "⚠️ Singleton guard blocked duplicate verification")
+            return
         }
         
-        viewModelScope.launch {
+        // Prevent duplicate verification calls at ViewModel level
+        synchronized(verificationLock) {
+            if (hasStartedVerification) {
+                Log.w(TAG, "⚠️ ========================================")
+                Log.w(TAG, "⚠️ ViewModel: DUPLICATE CALL DETECTED")
+                Log.w(TAG, "⚠️ Verification already in progress")
+                Log.w(TAG, "⚠️ BLOCKING duplicate call")
+                Log.w(TAG, "⚠️ ========================================")
+                VerificationGuard.resetVerification()  // Reset singleton if ViewModel blocks it
+                return
+            }
+            
+            // Check if there's already an active verification job
+            if (activeVerificationJob?.isActive == true) {
+                Log.w(TAG, "⚠️ ========================================")
+                Log.w(TAG, "⚠️ ViewModel: Active job already running")
+                Log.w(TAG, "⚠️ BLOCKING duplicate call")
+                Log.w(TAG, "⚠️ ========================================")
+                VerificationGuard.resetVerification()  // Reset singleton if ViewModel blocks it
+                return
+            }
+            
+            hasStartedVerification = true
+            Log.d(TAG, "✅ ========================================")
+            Log.d(TAG, "✅ ViewModel: Guard flag SET")
+            Log.d(TAG, "✅ Starting verification coroutine")
+            Log.d(TAG, "✅ ========================================")
+        }
+        
+        activeVerificationJob = viewModelScope.launch {
             Log.d(TAG, "=== ENTERED startVerification() ===")
             Log.d(TAG, "=== VERIFICATION FLOW STARTED ===")
             try {
@@ -298,12 +370,54 @@ class VerificationProcessingViewModel @Inject constructor(
                 val requestJson = gson.toJson(orderedMap)
                 Log.d(TAG, "[DEBUG] Actual JSON being sent (LinkedHashMap): $requestJson")
                 
+                Log.d(TAG, "[API_CALL] About to call apiService.verify() - hasProcessedResponse=$hasProcessedResponse")
+                
                 val response = apiService.verify(
                     clientId = 1, // AppConstants.clientId
                     clientGroupId = 1, // AppConstants.clientGroupId 
                     request = request.toOrderedMap()
                 )
-                Log.d(TAG, "[RETROFIT] Verification response: $response")
+                
+                Log.d(TAG, "[RETROFIT] Verification response received - hasProcessedResponse=$hasProcessedResponse")
+                Log.d(TAG, "[RETROFIT] Response data: $response")
+                
+                // CRITICAL: Guard against processing duplicate responses from Retrofit/backend
+                // Use atomic check-and-set to prevent race conditions
+                Log.d(TAG, "[GUARD_CHECK] About to check guard flag - current value: $hasProcessedResponse")
+                
+                // First check without lock for fast path
+                if (hasProcessedResponse) {
+                    Log.w(TAG, "⚠️ ========================================")
+                    Log.w(TAG, "⚠️ DUPLICATE RESPONSE DETECTED (fast check)")
+                    Log.w(TAG, "⚠️ Exiting immediately - no processing")
+                    Log.w(TAG, "⚠️ ========================================")
+                    return@launch
+                }
+                
+                // Double-checked locking pattern for thread safety
+                val shouldProcess = synchronized(responseLock) {
+                    Log.d(TAG, "[GUARD_CHECK] Inside synchronized block - hasProcessedResponse=$hasProcessedResponse")
+                    if (hasProcessedResponse) {
+                        Log.w(TAG, "⚠️ ========================================")
+                        Log.w(TAG, "⚠️ DUPLICATE RESPONSE DETECTED (synchronized check)")
+                        Log.w(TAG, "⚠️ Another thread already processing")
+                        Log.w(TAG, "⚠️ ========================================")
+                        false  // Don't process
+                    } else {
+                        hasProcessedResponse = true
+                        Log.d(TAG, "✅ ========================================")
+                        Log.d(TAG, "✅ FIRST RESPONSE - PROCESSING")
+                        Log.d(TAG, "✅ Guard flag NOW SET to true")
+                        Log.d(TAG, "✅ No other responses will be processed")
+                        Log.d(TAG, "✅ ========================================")
+                        true  // Process this response
+                    }
+                }
+                
+                if (!shouldProcess) {
+                    Log.w(TAG, "[GUARD_BLOCK] Exiting coroutine - duplicate response blocked in synchronized check")
+                    return@launch
+                }
                 
                 // Process the response
                 _currentStep.value = "Processing verification results..."
@@ -314,16 +428,17 @@ class VerificationProcessingViewModel @Inject constructor(
                 val verificationResult = processVerificationResponse(response)
                 
                                  when (verificationResult) {
-                     VerificationResults.SUCCESS -> {
-                         Log.d(TAG, "Verification completed successfully")
-                         LogManager.addLog("Verification completed successfully")
-                         
-                        // Parse and store verification result data like iOS
-                        val resultData = VerificationResultData.fromPayload(response.verificationData?.payload)
-                        _verificationResultData.value = resultData
-                        VerificationDataHolder.setVerificationData(resultData)
-                        Log.d(TAG, "Parsed verification result data: $resultData")
-                        Log.d(TAG, "Stored verification data in VerificationDataHolder for SDK callback")
+                    VerificationResults.SUCCESS -> {
+                        
+                        Log.d(TAG, "Verification completed successfully")
+                        LogManager.addLog("Verification completed successfully")
+                        
+                       // Parse and store verification result data like iOS
+                       val resultData = VerificationResultData.fromPayload(response.verificationData?.payload)
+                       _verificationResultData.value = resultData
+                       VerificationDataHolder.setVerificationData(resultData)
+                       Log.d(TAG, "Parsed verification result data: $resultData")
+                       Log.d(TAG, "Stored verification data in VerificationDataHolder for SDK callback")
                          
                          // Store verification success in secure storage like iOS keychain
                          if (!resultData.accountNumber.isNullOrEmpty()) {
@@ -358,6 +473,7 @@ class VerificationProcessingViewModel @Inject constructor(
                 }
                 
                 Log.d(TAG, "=== VERIFICATION FLOW ENDED: SUCCESS ===")
+                VerificationGuard.resetVerification()  // Reset singleton guard on success
 
             } catch (e: Exception) {
                 Log.e(TAG, "Error in verification process", e)
@@ -441,6 +557,7 @@ class VerificationProcessingViewModel @Inject constructor(
                 LogManager.addLog(errorMsg)
                 _uiState.value = VerificationProcessingUiState.Error(errorMsg)
                 Log.d(TAG, "=== VERIFICATION FLOW ENDED: ERROR (exception) ===")
+                VerificationGuard.resetVerification()  // Reset singleton guard on error
             }
         }
     }

@@ -48,10 +48,38 @@ fun VerificationProcessingScreen(
     val verificationResultData by viewModel.verificationResultData.collectAsState()
     val currentStep by viewModel.currentStep.collectAsState()
     var localError by remember { mutableStateOf<String?>(null) }
+    
+    // Guard flag to prevent LaunchedEffect from triggering multiple times during recomposition
+    var hasTriggeredVerification by remember { mutableStateOf(false) }
+    
+    // Reset guard flag when screen is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            Log.d("VerifProcessVM", "🔵 UI: Screen disposed - resetting guard flag")
+            hasTriggeredVerification = false
+        }
+    }
 
     // Start verification when the screen is first displayed
     LaunchedEffect(Unit) {
-        Log.d("VerificationProcessingScreen", "=== UI: LaunchedEffect triggered, starting verification ===")
+        Log.d("VerifProcessVM", "🔵 ========================================")
+        Log.d("VerifProcessVM", "🔵 UI: LaunchedEffect TRIGGERED")
+        Log.d("VerifProcessVM", "🔵 hasTriggeredVerification = $hasTriggeredVerification")
+        Log.d("VerifProcessVM", "🔵 ========================================")
+        
+        // Check guard flag at UI level to prevent duplicate calls during recomposition
+        if (hasTriggeredVerification) {
+            Log.w("VerifProcessVM", "⚠️ ========================================")
+            Log.w("VerifProcessVM", "⚠️ UI: LaunchedEffect DUPLICATE DETECTED")
+            Log.w("VerifProcessVM", "⚠️ Recomposition triggered LaunchedEffect again")
+            Log.w("VerifProcessVM", "⚠️ BLOCKING duplicate startVerification() call")
+            Log.w("VerifProcessVM", "⚠️ ========================================")
+            return@LaunchedEffect
+        }
+        hasTriggeredVerification = true
+        Log.d("VerifProcessVM", "✅ ========================================")
+        Log.d("VerifProcessVM", "✅ UI: Guard flag SET - proceeding with verification")
+        Log.d("VerifProcessVM", "✅ ========================================")
         val capturedImages = ImageStorage.getCapturedImages()
         val missing = mutableListOf<String>()
         

@@ -832,7 +832,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             val sdkConfig = SDKConfiguration(
                 apiKey = "demo_api_key_12345",
                 baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
-                environment = Environment.STAGING,
+                environment = Environment.SANDBOX, // Changed from STAGING to SANDBOX
                 enableLogging = true,
                 hostAppPackageName = packageName,
                 sharedCertificateContext = true,
