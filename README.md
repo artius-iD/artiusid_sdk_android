@@ -52,5 +52,5 @@ For licensing questions: legal@artiusid.com
 
 ---
 **Version**: 1.2.23  
-**Release Date**: 2025-10-21  
+**Release Date**: 2025-10-22  
 **Package Size**:  25M
