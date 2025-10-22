@@ -73,18 +73,35 @@ sealed class VerificationProcessingUiState {
 object VerificationGuard {
     @Volatile
     private var isVerificationInProgress = false
+    @Volatile
+    private var lastVerificationStartTime = 0L
     private val lock = Any()
+    private const val VERIFICATION_TIMEOUT_MS = 120_000L // 2 minutes timeout
     
     fun tryStartVerification(): Boolean {
         synchronized(lock) {
+            val currentTime = System.currentTimeMillis()
+            
+            // Check if verification is stuck (timeout safety)
+            if (isVerificationInProgress && (currentTime - lastVerificationStartTime) > VERIFICATION_TIMEOUT_MS) {
+                android.util.Log.w("VerificationGuard", "⏱️ ========================================")
+                android.util.Log.w("VerificationGuard", "⏱️ SINGLETON: Verification timed out after ${VERIFICATION_TIMEOUT_MS/1000}s")
+                android.util.Log.w("VerificationGuard", "⏱️ Auto-resetting guard to prevent permanent stuck state")
+                android.util.Log.w("VerificationGuard", "⏱️ ========================================")
+                isVerificationInProgress = false
+            }
+            
             if (isVerificationInProgress) {
+                val elapsedSeconds = (currentTime - lastVerificationStartTime) / 1000
                 android.util.Log.w("VerificationGuard", "⚠️ ========================================")
-                android.util.Log.w("VerificationGuard", "⚠️ SINGLETON: Verification already in progress")
+                android.util.Log.w("VerificationGuard", "⚠️ SINGLETON: Verification already in progress (${elapsedSeconds}s)")
                 android.util.Log.w("VerificationGuard", "⚠️ BLOCKING duplicate verification")
                 android.util.Log.w("VerificationGuard", "⚠️ ========================================")
                 return false
             }
+            
             isVerificationInProgress = true
+            lastVerificationStartTime = currentTime
             android.util.Log.d("VerificationGuard", "✅ ========================================")
             android.util.Log.d("VerificationGuard", "✅ SINGLETON: Verification started")
             android.util.Log.d("VerificationGuard", "✅ Guard flag set - no duplicates allowed")
@@ -96,6 +113,7 @@ object VerificationGuard {
     fun resetVerification() {
         synchronized(lock) {
             isVerificationInProgress = false
+            lastVerificationStartTime = 0L
             android.util.Log.d("VerificationGuard", "🔄 SINGLETON: Verification guard reset")
         }
     }

@@ -57,6 +57,8 @@ fun VerificationProcessingScreen(
         onDispose {
             Log.d("VerifProcessVM", "🔵 UI: Screen disposed - resetting guard flag")
             hasTriggeredVerification = false
+            VerificationGuard.resetVerification()  // ✅ CRITICAL FIX: Reset singleton guard
+            Log.d("VerifProcessVM", "🔵 UI: Singleton VerificationGuard reset on screen disposal")
         }
     }
 
