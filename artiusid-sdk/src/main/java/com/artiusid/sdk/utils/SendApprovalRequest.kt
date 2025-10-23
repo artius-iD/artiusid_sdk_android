@@ -92,12 +92,13 @@ class SendApprovalRequest(
                 // Log the full response for debugging
                 Log.d(TAG, "📞 [Call $callId] 📋 Server response received:")
                 Log.d(TAG, "📞 [Call $callId] 📋   Response object: $response")
-                Log.d(TAG, "📞 [Call $callId] 📋   RequestId: ${response.requestId}")
-                Log.d(TAG, "📞 [Call $callId] 📋   Success: ${response.success}")
+                Log.d(TAG, "📞 [Call $callId] 📋   ApprovalData: ${response.approvalData}")
+                Log.d(TAG, "📞 [Call $callId] 📋   RequestId: ${response.approvalData.requestId}")
+                Log.d(TAG, "📞 [Call $callId] 📋   Success: ${response.approvalData.success}")
 
-                // Check response exactly like iOS (direct fields, not nested)
-                if (response.success) {
-                    val requestId = response.requestId
+                // Check response exactly like iOS (nested structure)
+                if (response.approvalData.success) {
+                    val requestId = response.approvalData.requestId
                     val totalDuration = System.currentTimeMillis() - startTime
                     Log.d(TAG, "📞 [Call $callId] ✅ Approval request sent successfully")
                     Log.d(TAG, "📞 [Call $callId] ✅ Received requestId: $requestId")

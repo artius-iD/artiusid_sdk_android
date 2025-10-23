@@ -9,23 +9,13 @@ package com.artiusid.sdk.data.model
 import com.google.gson.annotations.SerializedName
 
 /**
- * Matches iOS ApprovalRequestTestingResponse.swift EXACTLY
- * CRITICAL: iOS expects DIRECT fields from API Gateway unwrapped response
+ * Matches iOS ApprovalRequestTestingResponse structure
+ * This wraps the ApprovalRequestData in the same way iOS does
+ * 
+ * iOS Implementation:
+ * The response contains an "approvalData" field that contains ApprovalRequestData
  */
 data class ApprovalRequestTestingResponse(
-    @SerializedName("requestId")
-    val requestId: Int,
-    
-    @SerializedName("success")
-    val success: Boolean
-) {
-    // Helper property to maintain compatibility with existing code
-    val approvalData: ApprovalTestingData?
-        get() = if (success) ApprovalTestingData(200, "Success", requestId) else null
-}
-
-data class ApprovalTestingData(
-    val statusCode: Int,
-    val message: String,
-    val requestId: Int
-) 
+    @SerializedName("approvalData")
+    val approvalData: ApprovalRequestData
+)
