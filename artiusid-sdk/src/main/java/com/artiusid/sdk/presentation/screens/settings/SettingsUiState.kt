@@ -25,8 +25,8 @@ data class SettingsUiState(
     val approvalResultMessage: String = "",
 
     val deviceId: String = "",
-    val clientId: String = "1",
-    val clientGroupId: String = "1",
+    val clientId: String = com.artiusid.sdk.config.ClientConfiguration.getClientId().toString(),
+    val clientGroupId: String = com.artiusid.sdk.config.ClientConfiguration.getClientGroupId().toString(),
     val accountNumber: String = "",
 
     val logLevel: String = "Debug",

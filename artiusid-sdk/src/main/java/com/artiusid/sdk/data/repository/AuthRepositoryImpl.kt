@@ -11,6 +11,7 @@ import android.os.Build
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import com.artiusid.sdk.config.ClientConfiguration
 import com.artiusid.sdk.data.api.ApiService
 import com.artiusid.sdk.data.model.AuthenticationRequest
 import com.artiusid.sdk.domain.repository.AuthRepository
@@ -68,8 +69,8 @@ class AuthRepositoryImpl @Inject constructor(
             )
             
             val response = apiService.authenticate(
-                clientId = 1, // Match iOS AppConstants.clientId
-                clientGroupId = 1, // Match iOS AppConstants.clientGroupId
+                clientId = ClientConfiguration.getClientId(), // Configurable client ID
+                clientGroupId = ClientConfiguration.getClientGroupId(), // Configurable client group ID
                 accountNumber = accountNumber,
                 request = request
             )

@@ -88,6 +88,9 @@ object ArtiusIDSDK {
             )
             themeConfiguration = theme
             
+            // ✅ Initialize client configuration (matches iOS AppConstants)
+            com.artiusid.sdk.config.ClientConfiguration.initialize(sdkConfiguration!!)
+            
             // Initialize localization with overrides from host app
             com.artiusid.sdk.utils.LocalizationManager.initialize(configuration.localizationOverrides)
 
@@ -186,6 +189,9 @@ object ArtiusIDSDK {
             // Store configurations
             sdkConfiguration = configuration
             enhancedThemeConfiguration = enhancedTheme
+            
+            // ✅ Initialize client configuration (matches iOS AppConstants)
+            com.artiusid.sdk.config.ClientConfiguration.initialize(sdkConfiguration!!)
             
             // Update the theme manager with the new theme
             com.artiusid.sdk.ui.theme.EnhancedThemeManager.updateCurrentThemeConfig(enhancedTheme)

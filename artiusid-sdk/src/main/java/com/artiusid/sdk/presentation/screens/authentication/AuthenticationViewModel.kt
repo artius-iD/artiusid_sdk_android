@@ -11,6 +11,7 @@ import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.artiusid.sdk.config.ClientConfiguration
 import com.artiusid.sdk.data.model.AuthenticationRequest
 import com.artiusid.sdk.utils.FirebaseTokenManager
 import com.artiusid.sdk.utils.VerificationStateManager
@@ -114,8 +115,8 @@ class AuthenticationViewModel @Inject constructor(
                 
                 // Call authentication API with query parameters (matching iOS exactly)
                 val response = apiService.authenticate(
-                    clientId = 1, // AppConstants.clientId
-                    clientGroupId = 1, // AppConstants.clientGroupId
+                    clientId = ClientConfiguration.getClientId(), // Configurable client ID
+                    clientGroupId = ClientConfiguration.getClientGroupId(), // Configurable client group ID
                     accountNumber = accountNumber,
                     request = authRequest
                 )

@@ -18,6 +18,11 @@ data class SDKConfiguration(
     val apiKey: String,
     val baseUrl: String = "https://api.artiusid.com",
     val environment: Environment = Environment.PRODUCTION,
+    
+    // Client identification (matches iOS AppConstants)
+    val clientId: Int = 1,
+    val clientGroupId: Int = 1,
+    
     val enableLogging: Boolean = false,
     val enableAnalytics: Boolean = true,
     val enableBiometrics: Boolean = true,

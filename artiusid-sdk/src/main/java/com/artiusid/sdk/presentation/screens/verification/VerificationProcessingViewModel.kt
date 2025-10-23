@@ -13,6 +13,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.artiusid.sdk.config.ClientConfiguration
 import com.artiusid.sdk.data.model.VerificationRequest
 import com.artiusid.sdk.data.model.VerificationResponse
 import com.artiusid.sdk.data.model.VerificationResults
@@ -391,8 +392,8 @@ class VerificationProcessingViewModel @Inject constructor(
                 Log.d(TAG, "[API_CALL] About to call apiService.verify() - hasProcessedResponse=$hasProcessedResponse")
                 
                 val response = apiService.verify(
-                    clientId = 1, // AppConstants.clientId
-                    clientGroupId = 1, // AppConstants.clientGroupId 
+                    clientId = ClientConfiguration.getClientId(), // Configurable client ID
+                    clientGroupId = ClientConfiguration.getClientGroupId(), // Configurable client group ID
                     request = request.toOrderedMap()
                 )
                 

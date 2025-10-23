@@ -833,6 +833,11 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 apiKey = "demo_api_key_12345",
                 baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
                 environment = Environment.SANDBOX, // Changed from STAGING to SANDBOX
+                
+                // ✅ Sample App uses clientId=1 (default/demo client)
+                clientId = 1,
+                clientGroupId = 1,
+                
                 enableLogging = true,
                 hostAppPackageName = packageName,
                 sharedCertificateContext = true,

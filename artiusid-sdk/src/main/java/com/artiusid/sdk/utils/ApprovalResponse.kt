@@ -8,6 +8,7 @@ package com.artiusid.sdk.utils
 
 import android.content.Context
 import android.util.Log
+import com.artiusid.sdk.config.ClientConfiguration
 import com.artiusid.sdk.data.api.ApiService
 import com.artiusid.sdk.data.model.AppNotificationState
 import com.artiusid.sdk.data.model.ApprovalRequest
@@ -54,8 +55,8 @@ class ApprovalResponse(
             // iOS toEncodableBody() converts all fields to strings
             // NOTE: iOS does NOT include timeout field for approval responses
             val request = ApprovalRequest(
-                clientId = "1", // AppConstants.clientId as string
-                clientGroupId = "1", // AppConstants.clientGroupId as string
+                clientId = ClientConfiguration.getClientId().toString(), // Configurable client ID as string
+                clientGroupId = ClientConfiguration.getClientGroupId().toString(), // Configurable client group ID as string
                 deviceId = deviceId,
                 requestId = requestId.toString(), // Convert Int to String like iOS
                 responseValue = approvalValue

@@ -8,6 +8,7 @@ package com.artiusid.sdk.utils
 
 import android.content.Context
 import android.util.Log
+import com.artiusid.sdk.config.ClientConfiguration
 import com.artiusid.sdk.data.api.ApiService
 import com.artiusid.sdk.data.model.ApprovalRequestTestingRequest
 import com.artiusid.sdk.utils.VerificationStateManager
@@ -59,8 +60,8 @@ class SendApprovalRequest(
 
                 // Create request exactly like iOS ApprovalRequestTestingRequest.swift
                 val request = ApprovalRequestTestingRequest(
-                    clientId = 1, // AppConstants.clientId
-                    clientGroupId = 1, // AppConstants.clientGroupId
+                    clientId = ClientConfiguration.getClientId(), // Configurable client ID
+                    clientGroupId = ClientConfiguration.getClientGroupId(), // Configurable client group ID
                     deviceId = deviceId,
                     approvalTitle = "Approval Request",
                     approvalDescription = "This is a test approval request.",
