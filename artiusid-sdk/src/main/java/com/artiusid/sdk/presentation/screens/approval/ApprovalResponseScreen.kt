@@ -42,6 +42,7 @@ fun ApprovalResponseScreen(
     val context = LocalContext.current
     val isApproved = response.lowercase() == "yes"
     var displayResultMessage by remember { mutableStateOf("Sending response...") }
+    var isResponseReceived by remember { mutableStateOf(false) }
     
     // Send approval response to backend (like iOS onAppear task block)
     LaunchedEffect(Unit) {
@@ -61,14 +62,17 @@ fun ApprovalResponseScreen(
                 } else {
                     "Your denial has been processed successfully."
                 }
+                isResponseReceived = true
             } else {
                 Log.e("ApprovalResponseScreen", "❌ Failed to send approval response")
                 displayResultMessage = "Failed to process approval response. Please try again."
+                isResponseReceived = true
             }
             
         } catch (e: Exception) {
             Log.e("ApprovalResponseScreen", "❌ Error sending approval response", e)
             displayResultMessage = "Failed to process approval response. Please try again."
+            isResponseReceived = true
         }
     }
     
@@ -136,19 +140,27 @@ fun ApprovalResponseScreen(
             
             Spacer(modifier = Modifier.height(80.dp))
             
-            // Done Button (like iOS GoNextButtonView with "Done")
-            Button(
-                onClick = onNavigateToHome,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(59.dp),
-                colors = com.artiusid.sdk.ui.theme.AppButtonDefaults.primaryButtonColors(),
-                shape = RoundedCornerShape(12.58.dp)
-            ) {
-                Text(
-                    text = "Done",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+            // Done Button (like iOS GoNextButtonView with "Done") - Only show after response received
+            if (isResponseReceived) {
+                Button(
+                    onClick = onNavigateToHome,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(59.dp),
+                    colors = com.artiusid.sdk.ui.theme.AppButtonDefaults.primaryButtonColors(),
+                    shape = RoundedCornerShape(12.58.dp)
+                ) {
+                    Text(
+                        text = "Done",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            } else {
+                // Show loading indicator while waiting for response
+                CircularProgressIndicator(
+                    modifier = Modifier.size(48.dp),
+                    color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
                 )
             }
         }

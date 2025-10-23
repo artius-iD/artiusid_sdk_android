@@ -86,6 +86,7 @@ object VerificationGuard {
     private var lastVerificationStartTime = 0L
     private val lock = Any()
     private const val VERIFICATION_TIMEOUT_MS = 120_000L // 2 minutes timeout
+    private const val STUCK_STATE_TIMEOUT_MS = 30_000L // 30 seconds for stuck state recovery
     
     init {
         // CRITICAL FIX: Always ensure clean state on initialization
@@ -148,14 +149,26 @@ object VerificationGuard {
                 }
                 val elapsedSeconds = elapsedMs / 1000
                 
-                android.util.Log.w("VerificationGuard", "⚠️ ========================================")
-                android.util.Log.w("VerificationGuard", "⚠️ SINGLETON: Verification already in progress (${elapsedSeconds}s)")
-                android.util.Log.w("VerificationGuard", "⚠️ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
-                android.util.Log.w("VerificationGuard", "⚠️ Elapsed: ${elapsedMs}ms since start")
-                android.util.Log.w("VerificationGuard", "⚠️ BLOCKING duplicate verification")
-                android.util.Log.w("VerificationGuard", "⚠️ Call originated from stack trace above")
-                android.util.Log.w("VerificationGuard", "⚠️ ========================================")
-                return false
+                // CRITICAL FIX: If first call appears stuck (no progress for 30+ seconds), allow recovery
+                if (elapsedMs > STUCK_STATE_TIMEOUT_MS) {
+                    android.util.Log.e("VerificationGuard", "🚨 ========================================")
+                    android.util.Log.e("VerificationGuard", "🚨 SINGLETON: First verification call appears STUCK")
+                    android.util.Log.e("VerificationGuard", "🚨 No progress for ${elapsedSeconds}s - allowing recovery")
+                    android.util.Log.e("VerificationGuard", "🚨 Resetting guard to allow new verification attempt")
+                    android.util.Log.e("VerificationGuard", "🚨 ========================================")
+                    isVerificationInProgress = false
+                    lastVerificationStartTime = 0L
+                    // Allow this call to proceed
+                } else {
+                    android.util.Log.w("VerificationGuard", "⚠️ ========================================")
+                    android.util.Log.w("VerificationGuard", "⚠️ SINGLETON: Verification already in progress (${elapsedSeconds}s)")
+                    android.util.Log.w("VerificationGuard", "⚠️ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
+                    android.util.Log.w("VerificationGuard", "⚠️ Elapsed: ${elapsedMs}ms since start")
+                    android.util.Log.w("VerificationGuard", "⚠️ BLOCKING duplicate verification (will allow recovery after 30s)")
+                    android.util.Log.w("VerificationGuard", "⚠️ Call originated from stack trace above")
+                    android.util.Log.w("VerificationGuard", "⚠️ ========================================")
+                    return false
+                }
             }
             
             // Start verification
@@ -282,8 +295,9 @@ class VerificationProcessingViewModel @Inject constructor(
                 Log.w(TAG, "⚠️ ViewModel: DUPLICATE CALL DETECTED")
                 Log.w(TAG, "⚠️ Verification already in progress")
                 Log.w(TAG, "⚠️ BLOCKING duplicate call")
+                Log.w(TAG, "⚠️ NOTE: NOT resetting singleton guard - first call should complete")
                 Log.w(TAG, "⚠️ ========================================")
-                VerificationGuard.resetVerification()  // Reset singleton if ViewModel blocks it
+                // CRITICAL FIX: Do NOT reset singleton guard here - let first call complete
                 return
             }
             
