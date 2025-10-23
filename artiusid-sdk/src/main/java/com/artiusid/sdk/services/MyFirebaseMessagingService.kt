@@ -33,12 +33,27 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "🔥 MyFirebaseMessagingService created and ready to receive messages")
+        
+        // Check if SDK should handle Firebase notifications (NEW in v1.2.43)
+        val shouldHandle = com.artiusid.sdk.utils.FirebaseConfigurationManager.shouldHandleNotifications()
+        Log.d(TAG, "🔥 MyFirebaseMessagingService created")
         Log.d(TAG, "🔥 Service package: ${packageName}")
+        Log.d(TAG, "🔥 Should handle notifications: $shouldHandle")
+        
+        if (!shouldHandle) {
+            Log.i(TAG, "🔥 Firebase notification handling disabled - service will not process messages")
+        }
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+        
+        // Check if SDK should handle Firebase notifications (NEW in v1.2.43)
+        if (!com.artiusid.sdk.utils.FirebaseConfigurationManager.shouldHandleNotifications()) {
+            Log.i(TAG, "🔥 Firebase notification handling disabled - ignoring token update")
+            return
+        }
+        
         Log.d(TAG, "🔥 NEW FCM registration token received: $token")
         Log.d(TAG, "🔥 Token length: ${token.length} characters")
 
@@ -51,6 +66,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
+        
+        // Check if SDK should handle Firebase notifications (NEW in v1.2.43)
+        if (!com.artiusid.sdk.utils.FirebaseConfigurationManager.shouldHandleNotifications()) {
+            Log.i(TAG, "🔔 Firebase notification handling disabled - ignoring message")
+            return
+        }
+        
         Log.d(TAG, "🔔 FCM message received!")
         Log.d(TAG, "🔔 Message ID: ${remoteMessage.messageId}")
         Log.d(TAG, "🔔 From: ${remoteMessage.from}")

@@ -20,19 +20,19 @@ import com.google.gson.annotations.SerializedName
  */
 data class ApprovalRequest(
     @SerializedName("clientId")
-    val clientId: String = "1",
+    val clientId: String,
     
     @SerializedName("clientGroupId")
-    val clientGroupId: String = "1",
+    val clientGroupId: String,
     
     @SerializedName("deviceId")
-    val deviceId: String = "",
+    val deviceId: String,
     
     @SerializedName("requestId")
-    val requestId: String = "0",
+    val requestId: String,
     
     @SerializedName("responseValue")
-    val responseValue: String = ""
+    val responseValue: String
 ) {
     /**
      * Convert to encodable body format like iOS toEncodableBody()

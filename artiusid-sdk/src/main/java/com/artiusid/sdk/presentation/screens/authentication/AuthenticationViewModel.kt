@@ -82,19 +82,20 @@ class AuthenticationViewModel @Inject constructor(
                 _currentStep.value = "Getting Firebase token..."
                 delay(500)
                 
-                // Get FCM token like iOS does (continue even if unavailable)
-                val firebaseTokenManager = FirebaseTokenManager.getInstance()
+                // Get FCM token using FirebaseConfigurationManager (NEW in v1.2.43)
+                // Supports client-provided tokens and optional Firebase handling
                 var fcmToken: String? = null
                 
                 try {
-                    fcmToken = firebaseTokenManager?.getFCMToken()
+                    Log.d(TAG, "🔥 Getting FCM token via FirebaseConfigurationManager...")
+                    fcmToken = com.artiusid.sdk.utils.FirebaseConfigurationManager.getFcmTokenSync(context)
                     if (!fcmToken.isNullOrEmpty()) {
-                        Log.d(TAG, "Using FCM token for authentication")
+                        Log.d(TAG, "✅ Using FCM token for authentication")
                     } else {
-                        Log.w(TAG, "No FCM token available, continuing without it (like iOS)")
+                        Log.w(TAG, "⚠️ No FCM token available, continuing without it (like iOS)")
                     }
                 } catch (e: Exception) {
-                    Log.w(TAG, "Failed to get FCM token, continuing without it: ${e.message}")
+                    Log.w(TAG, "❌ Failed to get FCM token, continuing without it: ${e.message}")
                     fcmToken = null
                 }
                 
@@ -108,7 +109,7 @@ class AuthenticationViewModel @Inject constructor(
                     deviceModel = deviceModel
                 )
                 
-                Log.d(TAG, "Authentication request: clientId=1, accountNumber=$accountNumber")
+                Log.d(TAG, "Authentication request: clientId=${ClientConfiguration.getClientId()}, accountNumber=$accountNumber")
                 
                 _progress.value = 0.9f
                 _currentStep.value = "Processing authentication..."

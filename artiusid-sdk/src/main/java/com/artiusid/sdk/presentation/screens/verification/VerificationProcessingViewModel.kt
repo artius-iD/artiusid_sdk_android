@@ -176,6 +176,7 @@ object VerificationGuard {
             lastVerificationStartTime = currentTime
             android.util.Log.d("VerificationGuard", "✅ ========================================")
             android.util.Log.d("VerificationGuard", "✅ SINGLETON: Verification started at $currentTime")
+            android.util.Log.d("VerificationGuard", "✅ ClientId=${ClientConfiguration.getClientId()}, ClientGroupId=${ClientConfiguration.getClientGroupId()}")
             android.util.Log.d("VerificationGuard", "✅ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
             android.util.Log.d("VerificationGuard", "✅ Guard flag set - no duplicates allowed")
             android.util.Log.d("VerificationGuard", "✅ Call originated from stack trace above")
@@ -283,6 +284,7 @@ class VerificationProcessingViewModel @Inject constructor(
         if (!VerificationGuard.tryStartVerification()) {
             Log.w(TAG, "⚠️ ========================================")
             Log.w(TAG, "⚠️ Singleton guard blocked duplicate verification")
+            Log.w(TAG, "⚠️ ClientId=${ClientConfiguration.getClientId()}, ClientGroupId=${ClientConfiguration.getClientGroupId()}")
             Log.w(TAG, "⚠️ This call was from the stack trace above")
             Log.w(TAG, "⚠️ ========================================")
             return
@@ -424,43 +426,17 @@ class VerificationProcessingViewModel @Inject constructor(
                 // Get device information in native Android format
                 val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
                 val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}; Android: ${Build.VERSION.RELEASE}"
-                // Retrieve FCM token securely (match iOS Keychain)
-                // Get FCM token using shared context (sample app's token)
+                // Retrieve FCM token using FirebaseConfigurationManager (NEW in v1.2.43)
+                // Supports client-provided tokens and optional Firebase handling
                 val fcmToken = try {
-                    // Try to get FCM token from shared context manager first (sample app's token)
-                    val sharedContextManager = com.artiusid.sdk.ArtiusIDSDK.getSharedContextManager()
-                    val sharedTokenManager = sharedContextManager?.getSharedFirebaseTokenManager()
+                    Log.d(TAG, "🔥 Getting FCM token via FirebaseConfigurationManager...")
+                    val token = com.artiusid.sdk.utils.FirebaseConfigurationManager.getFcmToken(context)
                     
-                    val cachedToken = if (sharedTokenManager != null) {
-                        Log.d(TAG, "Using shared FCM token from sample app context")
-                        // First try cached token
-                        var token = sharedTokenManager.getFCMToken()
-                        
-                        // If no cached token, retrieve asynchronously
-                        if (token.isNullOrEmpty()) {
-                            Log.d(TAG, "🔄 No cached FCM token, retrieving asynchronously...")
-                            token = sharedTokenManager.getFCMTokenAsync()
-                        }
+                    if (token.isNotEmpty()) {
+                        Log.d(TAG, "✅ FCM token retrieved successfully: ${token.take(20)}...")
                         token
                     } else {
-                        Log.d(TAG, "No shared context, trying local FirebaseTokenManager")
-                        val tokenManager = FirebaseTokenManager.getInstance(context)
-                        // First try cached token
-                        var token = tokenManager?.getFCMToken()
-                        
-                        // If no cached token, retrieve asynchronously
-                        if (token.isNullOrEmpty()) {
-                            Log.d(TAG, "🔄 No cached FCM token, retrieving asynchronously...")
-                            token = tokenManager?.getFCMTokenAsync()
-                        }
-                        token
-                    }
-                    
-                    if (!cachedToken.isNullOrEmpty()) {
-                        Log.d(TAG, "✅ FCM token retrieved successfully: ${cachedToken.take(20)}...")
-                        cachedToken
-                    } else {
-                        Log.w(TAG, "❌ No FCM token available after async retrieval, continuing without token")
+                        Log.w(TAG, "⚠️ No FCM token available (client or SDK), continuing without token")
                         ""
                     }
                 } catch (e: Exception) {
@@ -497,7 +473,7 @@ class VerificationProcessingViewModel @Inject constructor(
                 Log.d(TAG, "  deviceId: ${request.deviceId}")
                 Log.d(TAG, "  deviceModel: ${request.deviceModel}")
                 Log.d(TAG, "  fcmToken: '${request.fcmToken}'")
-                Log.d(TAG, "  clientId=1 & clientGroupId=1 will be added as URL query parameters (matching iOS)")
+                Log.d(TAG, "  clientId=${ClientConfiguration.getClientId()} & clientGroupId=${ClientConfiguration.getClientGroupId()} will be added as URL query parameters (matching iOS)")
 
                 // Use Retrofit ApiService for verification submission (back to original working approach)
                 Log.d(TAG, "[RETROFIT] Sending VerificationRequest object directly")

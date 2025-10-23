@@ -6,24 +6,24 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 ## 📦 **Latest Release**
 
-**Version:** 1.2.41 ✅ STABLE RELEASE  
+**Version:** 1.2.43 ✅ STABLE RELEASE  
 **Release Date:** October 23, 2025  
 **Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
 
 ---
 
-## ✅ **STABLE RELEASE - v1.2.41**
+## ✅ **STABLE RELEASE - v1.2.43**
 
-**PRODUCTION READY** - This version resolves all critical verification issues and includes iOS API compatibility improvements.
+**PRODUCTION READY** - This version includes optional Firebase handling and all previous critical fixes.
 
-**What's Fixed:**
-- ✅ **Duplicate verification call timing issue** - Fixed millisecond-level duplicate calls
-- ✅ **iOS-compliant approval API models** - Perfect compatibility with iOS backend responses
-- ✅ **VerificationGuard stability** - Comprehensive stuck state prevention and recovery
-- ✅ **Enhanced debugging** - Stack trace logging for duplicate call investigation
-- ✅ **Robust error handling** - Automatic recovery from all known edge cases
+**What's New:**
+- 🔥 **Optional Firebase Handling** - Client apps can handle their own Firebase notifications
+- ✅ **FCM Token Pass-through** - Provide your own FCM tokens to the SDK
+- ✅ **Runtime Token Updates** - Update FCM tokens dynamically
+- ✅ **Backward Compatible** - Existing Firebase integrations continue to work unchanged
+- ✅ **All Previous Fixes** - Includes all v1.2.41 verification and API compatibility improvements
 
-**Upgrade Priority:** **RECOMMENDED** - Stable production release with all critical fixes.
+**Upgrade Priority:** **RECOMMENDED** - Enhanced flexibility for Firebase integration.
 
 ---
 
@@ -33,16 +33,16 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.41 (STABLE RELEASE)
-curl -L -o artiusid-sdk-1.2.41.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.41/artiusid-sdk-1.2.41.aar
+# Download SDK v1.2.43 (STABLE RELEASE)
+curl -L -o artiusid-sdk-1.2.43.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.43/artiusid-sdk-1.2.43.aar
 ```
 
 ### **2. Add to Your Project**
 
 Copy the AAR to your app's `libs` directory:
 ```bash
-cp artiusid-sdk-1.2.41.aar your-app/app/libs/
+cp artiusid-sdk-1.2.43.aar your-app/app/libs/
 ```
 
 ### **3. Configure Dependencies**
@@ -207,6 +207,84 @@ val config = SDKConfiguration(
 
 ---
 
+## 🔥 **Optional Firebase Handling (NEW in v1.2.43)**
+
+Configure Firebase notification handling to work with your existing Firebase implementation:
+
+### **Option 1: Let SDK Handle Firebase (Default)**
+
+```kotlin
+val config = SDKConfiguration(
+    apiKey = "your-api-key",
+    environment = Environment.PRODUCTION,
+    
+    // SDK handles Firebase notifications (default behavior)
+    handleFirebaseNotifications = true,  // Default: true
+    customFcmToken = null               // Default: null
+)
+
+ArtiusIDSDK.initialize(this, config, theme)
+```
+
+### **Option 2: Client Handles Firebase**
+
+```kotlin
+val config = SDKConfiguration(
+    apiKey = "your-api-key",
+    environment = Environment.PRODUCTION,
+    
+    // Disable SDK's Firebase handling
+    handleFirebaseNotifications = false,
+    
+    // Provide your app's FCM token
+    customFcmToken = "your-fcm-token-here"
+)
+
+ArtiusIDSDK.initialize(this, config, theme)
+
+// Update token when it changes
+class YourFirebaseMessagingService : FirebaseMessagingService() {
+    override fun onNewToken(token: String) {
+        super.onNewToken(token)
+        
+        // Handle your app's notifications
+        handleYourAppNotifications(token)
+        
+        // Provide token to ArtiusID SDK
+        ArtiusIDSDK.updateFcmToken(token)
+    }
+    
+    override fun onMessageReceived(remoteMessage: RemoteMessage) {
+        super.onMessageReceived(remoteMessage)
+        
+        // Handle your app's messages
+        if (isYourAppMessage(remoteMessage)) {
+            handleYourAppMessage(remoteMessage)
+        }
+        // ArtiusID messages are handled by your backend routing
+    }
+}
+```
+
+### **Option 3: Runtime Token Updates**
+
+```kotlin
+// Update FCM token at any time
+ArtiusIDSDK.updateFcmToken("new-fcm-token")
+
+// Get Firebase configuration debug info
+val debugInfo = ArtiusIDSDK.getFirebaseDebugInfo()
+Log.d("Firebase", debugInfo)
+```
+
+**Benefits:**
+- ✅ **Flexible integration** - Works with existing Firebase implementations
+- ✅ **No conflicts** - SDK won't interfere with your notification handling
+- ✅ **Runtime updates** - Change FCM tokens dynamically
+- ✅ **Backward compatible** - Existing integrations continue to work unchanged
+
+---
+
 ## 🎨 **Dynamic Branding**
 
 Configure your brand name in the SDK theme:
@@ -278,6 +356,16 @@ The SDK will automatically:
 ---
 
 ## 📝 **Changelog**
+
+### **v1.2.43 (October 23, 2025) - 🔥 FIREBASE FLEXIBILITY**
+- 🔥 **NEW:** Optional Firebase notification handling - client apps can handle their own Firebase
+- ✅ **NEW:** `handleFirebaseNotifications` configuration option (default: true)
+- ✅ **NEW:** `customFcmToken` configuration option for client-provided FCM tokens
+- ✅ **NEW:** `ArtiusIDSDK.updateFcmToken()` method for runtime token updates
+- ✅ **NEW:** `ArtiusIDSDK.getFirebaseDebugInfo()` method for configuration debugging
+- ✅ **NEW:** `FirebaseConfigurationManager` for centralized Firebase handling
+- ✅ **ENHANCED:** All FCM token retrieval now uses configurable priority system
+- ✅ **BACKWARD COMPATIBLE:** Existing Firebase integrations continue to work unchanged
 
 ### **v1.2.41 (October 23, 2025) - ✅ STABLE RELEASE**
 - ✅ **FIXED:** Duplicate verification call timing issue causing millisecond-level conflicts

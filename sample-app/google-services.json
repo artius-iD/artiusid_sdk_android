@@ -7,7 +7,7 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:612058249806:android:e8f2b3c4a5d6e7f8a9b0c1d2",
+        "mobilesdk_app_id": "1:612058249806:android:4e74c1b83ec763f698e11f",
         "android_client_info": {
           "package_name": "com.artiusid.android"
         }
@@ -15,7 +15,45 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCFaBN6jkuduMDkYzAiTafX_0AtABcKJdg"
+          "current_key": "AIzaSyCZykoCkyrTho8ZgSjMY6E7yuAvVJ7ObF0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:612058249806:android:f84516f1f987d08c98e11f",
+        "android_client_info": {
+          "package_name": "com.artiusid.sampleapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZykoCkyrTho8ZgSjMY6E7yuAvVJ7ObF0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:612058249806:android:f54aff9b57522a1098e11f",
+        "android_client_info": {
+          "package_name": "com.artiusid.trinet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZykoCkyrTho8ZgSjMY6E7yuAvVJ7ObF0"
         }
       ],
       "services": {
@@ -26,4 +64,4 @@
     }
   ],
   "configuration_version": "1"
-} 
+}

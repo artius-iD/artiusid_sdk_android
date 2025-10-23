@@ -57,9 +57,8 @@ class AuthRepositoryImpl @Inject constructor(
             // Get account number from secure storage (similar to iOS keychain)
             val accountNumber = getAccountNumber() ?: "DEFAULT"
             
-            // Get FCM token using FirebaseTokenManager
-            val tokenManager = FirebaseTokenManager.getInstance()
-            val fcmToken = tokenManager?.getFCMTokenAsync()
+            // Get FCM token using FirebaseConfigurationManager (NEW in v1.2.43)
+            val fcmToken = com.artiusid.sdk.utils.FirebaseConfigurationManager.getFcmToken(context)
             
             Log.d(TAG, "Authenticating with deviceId: $deviceId, deviceModel: $deviceModel, fcmToken: $fcmToken")
             

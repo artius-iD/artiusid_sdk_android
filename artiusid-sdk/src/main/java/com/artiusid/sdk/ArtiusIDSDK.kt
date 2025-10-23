@@ -91,6 +91,9 @@ object ArtiusIDSDK {
             // ✅ Initialize client configuration (matches iOS AppConstants)
             com.artiusid.sdk.config.ClientConfiguration.initialize(sdkConfiguration!!)
             
+            // ✅ Initialize Firebase configuration manager (NEW in v1.2.43)
+            com.artiusid.sdk.utils.FirebaseConfigurationManager.initialize(sdkConfiguration!!)
+            
             // Initialize localization with overrides from host app
             com.artiusid.sdk.utils.LocalizationManager.initialize(configuration.localizationOverrides)
 
@@ -192,6 +195,9 @@ object ArtiusIDSDK {
             
             // ✅ Initialize client configuration (matches iOS AppConstants)
             com.artiusid.sdk.config.ClientConfiguration.initialize(sdkConfiguration!!)
+            
+            // ✅ Initialize Firebase configuration manager (NEW in v1.2.43)
+            com.artiusid.sdk.utils.FirebaseConfigurationManager.initialize(sdkConfiguration!!)
             
             // Update the theme manager with the new theme
             com.artiusid.sdk.ui.theme.EnhancedThemeManager.updateCurrentThemeConfig(enhancedTheme)
@@ -665,6 +671,39 @@ object ArtiusIDSDK {
             android.util.Log.e(TAG, "❌ Error sending approval response", e)
             null
         }
+    }
+
+    /**
+     * Update FCM token for client apps that handle their own Firebase notifications
+     * 
+     * NEW in SDK v1.2.43:
+     * This method allows client apps to provide their own FCM token to the SDK
+     * when they have disabled the SDK's Firebase notification handling.
+     * 
+     * @param fcmToken The FCM token from the client app's Firebase implementation
+     * 
+     * Usage example:
+     * ```kotlin
+     * // In your FirebaseMessagingService.onNewToken()
+     * override fun onNewToken(token: String) {
+     *     super.onNewToken(token)
+     *     // Provide token to ArtiusID SDK
+     *     ArtiusIDSDK.updateFcmToken(token)
+     * }
+     * ```
+     */
+    fun updateFcmToken(fcmToken: String?) {
+        android.util.Log.i(TAG, "🔄 Client provided FCM token update")
+        com.artiusid.sdk.utils.FirebaseConfigurationManager.updateClientFcmToken(fcmToken)
+    }
+    
+    /**
+     * Get current Firebase configuration information for debugging
+     * 
+     * @return Debug information about Firebase configuration
+     */
+    fun getFirebaseDebugInfo(): String {
+        return com.artiusid.sdk.utils.FirebaseConfigurationManager.getDebugInfo()
     }
 
     /**
