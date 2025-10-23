@@ -6,24 +6,24 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 ## 📦 **Latest Release**
 
-**Version:** 1.2.38 🚨 CRITICAL FIX  
+**Version:** 1.2.41 ✅ STABLE RELEASE  
 **Release Date:** October 23, 2025  
 **Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
 
 ---
 
-## 🚨 **CRITICAL FIX NOTICE - v1.2.39**
+## ✅ **STABLE RELEASE - v1.2.41**
 
-**IMMEDIATE UPGRADE RECOMMENDED** - This version fixes a critical bug where the VerificationGuard singleton got stuck in an "in progress" state, permanently blocking all verification attempts even after app restart.
+**PRODUCTION READY** - This version resolves all critical verification issues and includes iOS API compatibility improvements.
 
 **What's Fixed:**
-- ✅ VerificationGuard stuck state persisting across app restarts
-- ✅ Fixed timeout calculation handling edge cases (0L timestamps)  
-- ✅ Comprehensive state validation and automatic recovery
-- ✅ Enhanced logging for debugging stuck states
-- ✅ Resolves permanent verification blocking and (0s) elapsed time issues
+- ✅ **Duplicate verification call timing issue** - Fixed millisecond-level duplicate calls
+- ✅ **iOS-compliant approval API models** - Perfect compatibility with iOS backend responses
+- ✅ **VerificationGuard stability** - Comprehensive stuck state prevention and recovery
+- ✅ **Enhanced debugging** - Stack trace logging for duplicate call investigation
+- ✅ **Robust error handling** - Automatic recovery from all known edge cases
 
-**Impact:** Apps experiencing verification blocking should upgrade immediately.
+**Upgrade Priority:** **RECOMMENDED** - Stable production release with all critical fixes.
 
 ---
 
@@ -33,16 +33,16 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.39 (CRITICAL FIX)
-curl -L -o artiusid-sdk-1.2.39.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.39/artiusid-sdk-1.2.39.aar
+# Download SDK v1.2.41 (STABLE RELEASE)
+curl -L -o artiusid-sdk-1.2.41.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.41/artiusid-sdk-1.2.41.aar
 ```
 
 ### **2. Add to Your Project**
 
 Copy the AAR to your app's `libs` directory:
 ```bash
-cp artiusid-sdk-1.2.38.aar your-app/app/libs/
+cp artiusid-sdk-1.2.41.aar your-app/app/libs/
 ```
 
 ### **3. Configure Dependencies**
@@ -50,7 +50,7 @@ cp artiusid-sdk-1.2.38.aar your-app/app/libs/
 Add to your app's `build.gradle`:
 ```gradle
 dependencies {
-    implementation files('libs/artiusid-sdk-1.2.38.aar')
+    implementation files('libs/artiusid-sdk-1.2.41.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
@@ -279,6 +279,19 @@ The SDK will automatically:
 
 ## 📝 **Changelog**
 
+### **v1.2.41 (October 23, 2025) - ✅ STABLE RELEASE**
+- ✅ **FIXED:** Duplicate verification call timing issue causing millisecond-level conflicts
+- ✅ **NEW:** iOS-compliant approval API models (ApprovalRequestData, ApprovalRequestTestingResponse)
+- ✅ **IMPROVED:** Updated SendApprovalRequest to use nested response structure (response.approvalData.*)
+- ✅ **ENHANCED:** Stack trace logging for duplicate call investigation and debugging
+- ✅ **STABLE:** All critical verification issues resolved - production ready
+
+### **v1.2.40 (October 23, 2025) - 🔍 DIAGNOSTIC BUILD**
+- 🔍 **DIAGNOSTIC:** Added comprehensive stack trace logging to identify duplicate call sources
+- 🔍 **ENHANCED:** Detailed timing and thread ID logging in VerificationGuard
+- 🔍 **DEBUG:** Enhanced LaunchedEffect and VerificationProcessingViewModel logging
+- 🔍 **INVESTIGATION:** Millisecond-precision timing to track duplicate call origins
+
 ### **v1.2.39 (October 23, 2025) - 🚨 CRITICAL FIX**
 - 🚨 **CRITICAL:** Fixed VerificationGuard stuck state persisting across app restarts
 - ✅ Added initialization block to ensure clean state on app startup
@@ -327,7 +340,7 @@ The SDK will automatically:
 
 ## 📦 **Package Contents**
 
-- `artiusid-sdk-1.2.38.aar` - Main SDK library (25MB)
+- `artiusid-sdk-1.2.41.aar` - Main SDK library (25MB)
 - `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
 - `README_HILT_SETUP.md` - Quick HILT reference
 - `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
