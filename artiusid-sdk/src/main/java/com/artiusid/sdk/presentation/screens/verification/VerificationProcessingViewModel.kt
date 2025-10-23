@@ -104,6 +104,17 @@ object VerificationGuard {
         synchronized(lock) {
             val currentTime = System.currentTimeMillis()
             
+            // SDK v1.2.40 CRITICAL FIX: Add stack trace logging to identify duplicate call source
+            val stackTrace = Thread.currentThread().stackTrace
+            android.util.Log.d("VerificationGuard", "🔍 ========================================")
+            android.util.Log.d("VerificationGuard", "🔍 SINGLETON: tryStartVerification() called from:")
+            stackTrace.take(8).forEachIndexed { index, element ->
+                if (index > 0) { // Skip the current method
+                    android.util.Log.d("VerificationGuard", "🔍   at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})")
+                }
+            }
+            android.util.Log.d("VerificationGuard", "🔍 ========================================")
+            
             // CRITICAL FIX: Handle edge case where lastVerificationStartTime is 0 but isVerificationInProgress is true
             if (isVerificationInProgress && lastVerificationStartTime == 0L) {
                 android.util.Log.e("VerificationGuard", "🚨 ========================================")
@@ -130,15 +141,19 @@ object VerificationGuard {
             }
             
             if (isVerificationInProgress) {
-                val elapsedSeconds = if (lastVerificationStartTime > 0L) {
-                    (currentTime - lastVerificationStartTime) / 1000
+                val elapsedMs = if (lastVerificationStartTime > 0L) {
+                    currentTime - lastVerificationStartTime
                 } else {
                     0L // Handle edge case where timestamp is 0
                 }
+                val elapsedSeconds = elapsedMs / 1000
+                
                 android.util.Log.w("VerificationGuard", "⚠️ ========================================")
                 android.util.Log.w("VerificationGuard", "⚠️ SINGLETON: Verification already in progress (${elapsedSeconds}s)")
                 android.util.Log.w("VerificationGuard", "⚠️ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
+                android.util.Log.w("VerificationGuard", "⚠️ Elapsed: ${elapsedMs}ms since start")
                 android.util.Log.w("VerificationGuard", "⚠️ BLOCKING duplicate verification")
+                android.util.Log.w("VerificationGuard", "⚠️ Call originated from stack trace above")
                 android.util.Log.w("VerificationGuard", "⚠️ ========================================")
                 return false
             }
@@ -150,6 +165,7 @@ object VerificationGuard {
             android.util.Log.d("VerificationGuard", "✅ SINGLETON: Verification started at $currentTime")
             android.util.Log.d("VerificationGuard", "✅ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
             android.util.Log.d("VerificationGuard", "✅ Guard flag set - no duplicates allowed")
+            android.util.Log.d("VerificationGuard", "✅ Call originated from stack trace above")
             android.util.Log.d("VerificationGuard", "✅ ========================================")
             return true
         }
@@ -231,16 +247,31 @@ class VerificationProcessingViewModel @Inject constructor(
         passportImageBitmap: Bitmap? = null, // Add passport image option
         context: Context
     ) {
+        // SDK v1.2.40 CRITICAL FIX: Add comprehensive debugging for duplicate call investigation
+        val currentThread = Thread.currentThread()
+        val stackTrace = currentThread.stackTrace
+        
         Log.d(TAG, "🟢 ========================================")
         Log.d(TAG, "🟢 ViewModel: startVerification() CALLED")
+        Log.d(TAG, "🟢 Thread: ${currentThread.name} (ID: ${currentThread.id})")
+        Log.d(TAG, "🟢 ViewModel instance: ${this.hashCode()}")
         Log.d(TAG, "🟢 hasStartedVerification = $hasStartedVerification")
         Log.d(TAG, "🟢 activeVerificationJob?.isActive = ${activeVerificationJob?.isActive}")
+        Log.d(TAG, "🟢 startVerification() called from:")
+        stackTrace.take(8).forEachIndexed { index, element ->
+            if (index > 0) { // Skip the current method
+                Log.d(TAG, "🟢   at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})")
+            }
+        }
         Log.d(TAG, "🟢 ========================================")
         
         // CRITICAL: Check singleton guard FIRST to prevent duplicate verifications
         // even if multiple ViewModel instances are created
         if (!VerificationGuard.tryStartVerification()) {
+            Log.w(TAG, "⚠️ ========================================")
             Log.w(TAG, "⚠️ Singleton guard blocked duplicate verification")
+            Log.w(TAG, "⚠️ This call was from the stack trace above")
+            Log.w(TAG, "⚠️ ========================================")
             return
         }
         

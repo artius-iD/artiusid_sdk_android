@@ -77,9 +77,21 @@ fun VerificationProcessingScreen(
 
     // Start verification when the screen is first displayed
     LaunchedEffect(Unit) {
+        // SDK v1.2.40 CRITICAL FIX: Add comprehensive debugging for duplicate call investigation
+        val currentThread = Thread.currentThread()
+        val stackTrace = currentThread.stackTrace
+        
         Log.d("VerifProcessVM", "🔵 ========================================")
         Log.d("VerifProcessVM", "🔵 UI: LaunchedEffect TRIGGERED")
+        Log.d("VerifProcessVM", "🔵 Thread: ${currentThread.name} (ID: ${currentThread.id})")
         Log.d("VerifProcessVM", "🔵 hasTriggeredVerification = $hasTriggeredVerification")
+        Log.d("VerifProcessVM", "🔵 ViewModel instance: ${viewModel.hashCode()}")
+        Log.d("VerifProcessVM", "🔵 LaunchedEffect called from:")
+        stackTrace.take(6).forEachIndexed { index, element ->
+            if (index > 0) { // Skip the current method
+                Log.d("VerifProcessVM", "🔵   at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})")
+            }
+        }
         Log.d("VerifProcessVM", "🔵 ========================================")
         
         // Check guard flag at UI level to prevent duplicate calls during recomposition
@@ -88,12 +100,14 @@ fun VerificationProcessingScreen(
             Log.w("VerifProcessVM", "⚠️ UI: LaunchedEffect DUPLICATE DETECTED")
             Log.w("VerifProcessVM", "⚠️ Recomposition triggered LaunchedEffect again")
             Log.w("VerifProcessVM", "⚠️ BLOCKING duplicate startVerification() call")
+            Log.w("VerifProcessVM", "⚠️ Same ViewModel instance: ${viewModel.hashCode()}")
             Log.w("VerifProcessVM", "⚠️ ========================================")
             return@LaunchedEffect
         }
         hasTriggeredVerification = true
         Log.d("VerifProcessVM", "✅ ========================================")
         Log.d("VerifProcessVM", "✅ UI: Guard flag SET - proceeding with verification")
+        Log.d("VerifProcessVM", "✅ About to call viewModel.startVerification()")
         Log.d("VerifProcessVM", "✅ ========================================")
         val capturedImages = ImageStorage.getCapturedImages()
         val missing = mutableListOf<String>()
