@@ -68,8 +68,16 @@ sealed class VerificationProcessingUiState {
 }
 
 /**
- * Singleton object to track verification state across ViewModel instances
- * This prevents duplicate verifications even if the ViewModel is recreated
+ * SDK v1.2.39 CRITICAL FIX: VerificationGuard Stuck State
+ * 
+ * Singleton object to track verification state across ViewModel instances.
+ * This prevents duplicate verifications even if the ViewModel is recreated.
+ * 
+ * FIXES:
+ * 1. Added initialization block to ensure clean state on app startup
+ * 2. Fixed timeout calculation to handle edge cases (0L timestamps)
+ * 3. Added comprehensive state validation and recovery
+ * 4. Enhanced logging for debugging stuck states
  */
 object VerificationGuard {
     @Volatile
@@ -79,32 +87,68 @@ object VerificationGuard {
     private val lock = Any()
     private const val VERIFICATION_TIMEOUT_MS = 120_000L // 2 minutes timeout
     
+    init {
+        // CRITICAL FIX: Always ensure clean state on initialization
+        // This prevents stuck states from persisting across app restarts
+        synchronized(lock) {
+            isVerificationInProgress = false
+            lastVerificationStartTime = 0L
+            android.util.Log.i("VerificationGuard", "🚀 ========================================")
+            android.util.Log.i("VerificationGuard", "🚀 SINGLETON: VerificationGuard initialized")
+            android.util.Log.i("VerificationGuard", "🚀 State reset - ready for verification")
+            android.util.Log.i("VerificationGuard", "🚀 ========================================")
+        }
+    }
+    
     fun tryStartVerification(): Boolean {
         synchronized(lock) {
             val currentTime = System.currentTimeMillis()
             
-            // Check if verification is stuck (timeout safety)
-            if (isVerificationInProgress && (currentTime - lastVerificationStartTime) > VERIFICATION_TIMEOUT_MS) {
-                android.util.Log.w("VerificationGuard", "⏱️ ========================================")
-                android.util.Log.w("VerificationGuard", "⏱️ SINGLETON: Verification timed out after ${VERIFICATION_TIMEOUT_MS/1000}s")
-                android.util.Log.w("VerificationGuard", "⏱️ Auto-resetting guard to prevent permanent stuck state")
-                android.util.Log.w("VerificationGuard", "⏱️ ========================================")
+            // CRITICAL FIX: Handle edge case where lastVerificationStartTime is 0 but isVerificationInProgress is true
+            if (isVerificationInProgress && lastVerificationStartTime == 0L) {
+                android.util.Log.e("VerificationGuard", "🚨 ========================================")
+                android.util.Log.e("VerificationGuard", "🚨 CRITICAL: Detected inconsistent state!")
+                android.util.Log.e("VerificationGuard", "🚨 isVerificationInProgress=true but lastVerificationStartTime=0")
+                android.util.Log.e("VerificationGuard", "🚨 This indicates a stuck state - forcing reset")
+                android.util.Log.e("VerificationGuard", "🚨 ========================================")
                 isVerificationInProgress = false
+                lastVerificationStartTime = 0L
+            }
+            
+            // Check if verification is stuck (timeout safety)
+            if (isVerificationInProgress && lastVerificationStartTime > 0L) {
+                val elapsedMs = currentTime - lastVerificationStartTime
+                if (elapsedMs > VERIFICATION_TIMEOUT_MS) {
+                    val elapsedSeconds = elapsedMs / 1000
+                    android.util.Log.w("VerificationGuard", "⏱️ ========================================")
+                    android.util.Log.w("VerificationGuard", "⏱️ SINGLETON: Verification timed out after ${elapsedSeconds}s")
+                    android.util.Log.w("VerificationGuard", "⏱️ Auto-resetting guard to prevent permanent stuck state")
+                    android.util.Log.w("VerificationGuard", "⏱️ ========================================")
+                    isVerificationInProgress = false
+                    lastVerificationStartTime = 0L
+                }
             }
             
             if (isVerificationInProgress) {
-                val elapsedSeconds = (currentTime - lastVerificationStartTime) / 1000
+                val elapsedSeconds = if (lastVerificationStartTime > 0L) {
+                    (currentTime - lastVerificationStartTime) / 1000
+                } else {
+                    0L // Handle edge case where timestamp is 0
+                }
                 android.util.Log.w("VerificationGuard", "⚠️ ========================================")
                 android.util.Log.w("VerificationGuard", "⚠️ SINGLETON: Verification already in progress (${elapsedSeconds}s)")
+                android.util.Log.w("VerificationGuard", "⚠️ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
                 android.util.Log.w("VerificationGuard", "⚠️ BLOCKING duplicate verification")
                 android.util.Log.w("VerificationGuard", "⚠️ ========================================")
                 return false
             }
             
+            // Start verification
             isVerificationInProgress = true
             lastVerificationStartTime = currentTime
             android.util.Log.d("VerificationGuard", "✅ ========================================")
-            android.util.Log.d("VerificationGuard", "✅ SINGLETON: Verification started")
+            android.util.Log.d("VerificationGuard", "✅ SINGLETON: Verification started at $currentTime")
+            android.util.Log.d("VerificationGuard", "✅ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
             android.util.Log.d("VerificationGuard", "✅ Guard flag set - no duplicates allowed")
             android.util.Log.d("VerificationGuard", "✅ ========================================")
             return true
@@ -113,9 +157,40 @@ object VerificationGuard {
     
     fun resetVerification() {
         synchronized(lock) {
+            val wasInProgress = isVerificationInProgress
+            val previousStartTime = lastVerificationStartTime
+            
             isVerificationInProgress = false
             lastVerificationStartTime = 0L
+            
+            android.util.Log.d("VerificationGuard", "🔄 ========================================")
             android.util.Log.d("VerificationGuard", "🔄 SINGLETON: Verification guard reset")
+            android.util.Log.d("VerificationGuard", "🔄 Previous state: isInProgress=$wasInProgress, startTime=$previousStartTime")
+            android.util.Log.d("VerificationGuard", "🔄 New state: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
+            android.util.Log.d("VerificationGuard", "🔄 ========================================")
+        }
+    }
+    
+    /**
+     * Force reset the guard state - use only for debugging or emergency recovery
+     */
+    fun forceReset() {
+        synchronized(lock) {
+            android.util.Log.w("VerificationGuard", "🚨 FORCE RESET: Clearing all guard state")
+            isVerificationInProgress = false
+            lastVerificationStartTime = 0L
+            android.util.Log.w("VerificationGuard", "🚨 FORCE RESET: Complete")
+        }
+    }
+    
+    /**
+     * Get current guard state for debugging
+     */
+    fun getDebugState(): String {
+        synchronized(lock) {
+            val currentTime = System.currentTimeMillis()
+            val elapsedMs = if (lastVerificationStartTime > 0L) currentTime - lastVerificationStartTime else 0L
+            return "VerificationGuard[isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime, elapsed=${elapsedMs}ms]"
         }
     }
 }

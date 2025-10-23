@@ -52,13 +52,26 @@ fun VerificationProcessingScreen(
     // Guard flag to prevent LaunchedEffect from triggering multiple times during recomposition
     var hasTriggeredVerification by remember { mutableStateOf(false) }
     
-    // Reset guard flag when screen is disposed
+    // SDK v1.2.39 CRITICAL FIX: Enhanced cleanup on screen disposal
     DisposableEffect(Unit) {
+        // Log when the screen is composed
+        Log.d("VerifProcessVM", "🔵 UI: VerificationProcessingScreen composed")
+        Log.d("VerifProcessVM", "🔵 UI: Guard state: ${VerificationGuard.getDebugState()}")
+        
         onDispose {
-            Log.d("VerifProcessVM", "🔵 UI: Screen disposed - resetting guard flag")
+            Log.d("VerifProcessVM", "🔵 ========================================")
+            Log.d("VerifProcessVM", "🔵 UI: Screen disposed - performing cleanup")
+            Log.d("VerifProcessVM", "🔵 UI: Previous guard state: ${VerificationGuard.getDebugState()}")
+            
+            // Reset UI-level guard flag
             hasTriggeredVerification = false
-            VerificationGuard.resetVerification()  // ✅ CRITICAL FIX: Reset singleton guard
-            Log.d("VerifProcessVM", "🔵 UI: Singleton VerificationGuard reset on screen disposal")
+            Log.d("VerifProcessVM", "🔵 UI: hasTriggeredVerification reset to false")
+            
+            // CRITICAL: Reset singleton guard to prevent stuck states
+            VerificationGuard.resetVerification()
+            Log.d("VerifProcessVM", "🔵 UI: Singleton VerificationGuard reset")
+            Log.d("VerifProcessVM", "🔵 UI: New guard state: ${VerificationGuard.getDebugState()}")
+            Log.d("VerifProcessVM", "🔵 ========================================")
         }
     }
 
