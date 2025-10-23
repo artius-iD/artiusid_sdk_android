@@ -31,10 +31,12 @@ object ClientConfiguration {
      */
     fun initialize(config: SDKConfiguration) {
         currentConfig = config
-        Log.d(TAG, "✅ Client configuration initialized:")
-        Log.d(TAG, "   clientId: ${config.clientId}")
-        Log.d(TAG, "   clientGroupId: ${config.clientGroupId}")
-        Log.d(TAG, "   environment: ${config.environment}")
+        Log.i(TAG, "🎯 ========================================")
+        Log.i(TAG, "🎯 CLIENT CONFIGURATION INITIALIZED")
+        Log.i(TAG, "🎯 clientId: ${config.clientId}")
+        Log.i(TAG, "🎯 clientGroupId: ${config.clientGroupId}")
+        Log.i(TAG, "🎯 environment: ${config.environment}")
+        Log.i(TAG, "🎯 ========================================")
     }
     
     /**
@@ -44,7 +46,14 @@ object ClientConfiguration {
     fun getClientId(): Int {
         val clientId = currentConfig?.clientId ?: 1
         if (currentConfig == null) {
-            Log.w(TAG, "⚠️ ClientConfiguration not initialized, using default clientId=1")
+            Log.e(TAG, "🚨 CRITICAL: ClientConfiguration not initialized, using default clientId=1")
+            Log.e(TAG, "🚨 This indicates a timing issue - SDK components accessing clientId before initialization")
+            // Print stack trace to identify where this is being called from
+            Thread.currentThread().stackTrace.take(10).forEach { element ->
+                Log.e(TAG, "🚨   at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})")
+            }
+        } else {
+            Log.d(TAG, "✅ Using configured clientId: $clientId")
         }
         return clientId
     }
@@ -56,7 +65,14 @@ object ClientConfiguration {
     fun getClientGroupId(): Int {
         val clientGroupId = currentConfig?.clientGroupId ?: 1
         if (currentConfig == null) {
-            Log.w(TAG, "⚠️ ClientConfiguration not initialized, using default clientGroupId=1")
+            Log.e(TAG, "🚨 CRITICAL: ClientConfiguration not initialized, using default clientGroupId=1")
+            Log.e(TAG, "🚨 This indicates a timing issue - SDK components accessing clientGroupId before initialization")
+            // Print stack trace to identify where this is being called from
+            Thread.currentThread().stackTrace.take(10).forEach { element ->
+                Log.e(TAG, "🚨   at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})")
+            }
+        } else {
+            Log.d(TAG, "✅ Using configured clientGroupId: $clientGroupId")
         }
         return clientGroupId
     }

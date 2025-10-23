@@ -174,13 +174,16 @@ object VerificationGuard {
             // Start verification
             isVerificationInProgress = true
             lastVerificationStartTime = currentTime
-            android.util.Log.d("VerificationGuard", "✅ ========================================")
-            android.util.Log.d("VerificationGuard", "✅ SINGLETON: Verification started at $currentTime")
-            android.util.Log.d("VerificationGuard", "✅ ClientId=${ClientConfiguration.getClientId()}, ClientGroupId=${ClientConfiguration.getClientGroupId()}")
-            android.util.Log.d("VerificationGuard", "✅ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
-            android.util.Log.d("VerificationGuard", "✅ Guard flag set - no duplicates allowed")
-            android.util.Log.d("VerificationGuard", "✅ Call originated from stack trace above")
-            android.util.Log.d("VerificationGuard", "✅ ========================================")
+            val currentClientId = com.artiusid.sdk.config.ClientConfiguration.getClientId()
+            val currentClientGroupId = com.artiusid.sdk.config.ClientConfiguration.getClientGroupId()
+            
+            android.util.Log.i("VerificationGuard", "✅ ========================================")
+            android.util.Log.i("VerificationGuard", "✅ SINGLETON: Verification started at $currentTime")
+            android.util.Log.i("VerificationGuard", "✅ 🎯 ClientId=$currentClientId, ClientGroupId=$currentClientGroupId")
+            android.util.Log.i("VerificationGuard", "✅ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
+            android.util.Log.i("VerificationGuard", "✅ Guard flag set - no duplicates allowed")
+            android.util.Log.i("VerificationGuard", "✅ Call originated from stack trace above")
+            android.util.Log.i("VerificationGuard", "✅ ========================================")
             return true
         }
     }
@@ -282,9 +285,12 @@ class VerificationProcessingViewModel @Inject constructor(
         // CRITICAL: Check singleton guard FIRST to prevent duplicate verifications
         // even if multiple ViewModel instances are created
         if (!VerificationGuard.tryStartVerification()) {
+            val currentClientId = ClientConfiguration.getClientId()
+            val currentClientGroupId = ClientConfiguration.getClientGroupId()
+            
             Log.w(TAG, "⚠️ ========================================")
             Log.w(TAG, "⚠️ Singleton guard blocked duplicate verification")
-            Log.w(TAG, "⚠️ ClientId=${ClientConfiguration.getClientId()}, ClientGroupId=${ClientConfiguration.getClientGroupId()}")
+            Log.w(TAG, "⚠️ 🎯 ClientId=$currentClientId, ClientGroupId=$currentClientGroupId")
             Log.w(TAG, "⚠️ This call was from the stack trace above")
             Log.w(TAG, "⚠️ ========================================")
             return
