@@ -6,9 +6,23 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 ## 📦 **Latest Release**
 
-**Version:** 1.2.37  
+**Version:** 1.2.38 🚨 CRITICAL FIX  
 **Release Date:** October 23, 2025  
 **Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
+
+---
+
+## 🚨 **CRITICAL FIX NOTICE - v1.2.38**
+
+**IMMEDIATE UPGRADE RECOMMENDED** - This version fixes a critical bug where EncryptedSharedPreferences became permanently corrupted after clearing certificates, causing `AEADBadTagException` on all subsequent certificate registration attempts.
+
+**What's Fixed:**
+- ✅ Automatic corruption detection and recovery
+- ✅ Users can clear and re-register certificates without app data loss
+- ✅ No more permanent certificate registration failures
+- ✅ Comprehensive logging for debugging
+
+**Impact:** Apps using certificate management features should upgrade immediately.
 
 ---
 
@@ -18,16 +32,16 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.37
-curl -L -o artiusid-sdk-1.2.37.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.37/artiusid-sdk-1.2.37.aar
+# Download SDK v1.2.38 (CRITICAL FIX)
+curl -L -o artiusid-sdk-1.2.38.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.38/artiusid-sdk-1.2.38.aar
 ```
 
 ### **2. Add to Your Project**
 
 Copy the AAR to your app's `libs` directory:
 ```bash
-cp artiusid-sdk-1.2.37.aar your-app/app/libs/
+cp artiusid-sdk-1.2.38.aar your-app/app/libs/
 ```
 
 ### **3. Configure Dependencies**
@@ -35,7 +49,7 @@ cp artiusid-sdk-1.2.37.aar your-app/app/libs/
 Add to your app's `build.gradle`:
 ```gradle
 dependencies {
-    implementation files('libs/artiusid-sdk-1.2.37.aar')
+    implementation files('libs/artiusid-sdk-1.2.38.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
@@ -264,6 +278,16 @@ The SDK will automatically:
 
 ## 📝 **Changelog**
 
+### **v1.2.38 (October 23, 2025) - 🚨 CRITICAL FIX**
+- 🚨 **CRITICAL:** Fixed EncryptedSharedPreferences corruption after certificate clearing
+- ✅ Added automatic corruption detection and recovery
+- ✅ New EncryptedPreferencesManager utility class
+- ✅ Updated all certificate managers with safe methods
+- ✅ Comprehensive logging and error handling
+- ✅ Users can clear and re-register certificates without app data loss
+- ✅ No more permanent AEADBadTagException blocking verification
+- ✅ Production-ready recovery mechanisms
+
 ### **v1.2.37 (October 23, 2025)**
 - 🎯 **NEW: Configurable Client ID** - Match iOS SDK functionality
 - ✅ Fixes FCM notification routing between multiple apps
@@ -292,7 +316,7 @@ The SDK will automatically:
 
 ## 📦 **Package Contents**
 
-- `artiusid-sdk-1.2.37.aar` - Main SDK library (25MB)
+- `artiusid-sdk-1.2.38.aar` - Main SDK library (25MB)
 - `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
 - `README_HILT_SETUP.md` - Quick HILT reference
 - `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
@@ -324,7 +348,7 @@ This SDK is provided under license. See LICENSE.txt for full terms and condition
 
 ---
 
-**Version:** 1.2.37  
+**Version:** 1.2.38  
 **Release Date:** October 23, 2025  
 **Package Size:** 25MB  
 **Status:** Production Ready
