@@ -112,22 +112,28 @@ class HybridCertificateManager(private val context: Context) {
     /**
      * Store the software private key securely in encrypted preferences
      * This allows us to reuse the same key for certificate generation and TLS
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     private fun storeSoftwarePrivateKey(privateKey: PrivateKey) {
         try {
             val encoded = privateKey.encoded
             val base64Key = android.util.Base64.encodeToString(encoded, android.util.Base64.NO_WRAP)
             
-            val encryptedPrefs = EncryptedSharedPreferences.create(
-                "software_private_key",
-                MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val success = EncryptedPreferencesManager.safePutString(
+                context, 
+                "software_private_key", 
+                "private_key", 
+                base64Key
             )
             
-            encryptedPrefs.edit().putString("private_key", base64Key).apply()
-            Log.d(TAG, "Stored software private key securely")
+            if (success) {
+                Log.d(TAG, "Stored software private key securely")
+            } else {
+                throw Exception("EncryptedPreferencesManager.safePutString failed for software private key")
+            }
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to store software private key: ${e.message}", e)
@@ -137,18 +143,20 @@ class HybridCertificateManager(private val context: Context) {
     
     /**
      * Load the software private key from encrypted storage
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     private fun loadSoftwarePrivateKey(): PrivateKey? {
         try {
-            val encryptedPrefs = EncryptedSharedPreferences.create(
-                "software_private_key",
-                MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val base64Key = EncryptedPreferencesManager.safeGetString(
+                context, 
+                "software_private_key", 
+                "private_key", 
+                null
+            ) ?: return null
             
-            val base64Key = encryptedPrefs.getString("private_key", null) ?: return null
             val keyBytes = android.util.Base64.decode(base64Key, android.util.Base64.NO_WRAP)
             
             val keyFactory = KeyFactory.getInstance("RSA")
@@ -166,19 +174,24 @@ class HybridCertificateManager(private val context: Context) {
     
     /**
      * Clear stored software private key to force regeneration
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     fun clearSoftwareKeys() {
         try {
-            val encryptedPrefs = EncryptedSharedPreferences.create(
-                "software_private_key",
-                MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC),
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val success = EncryptedPreferencesManager.safeRemove(
+                context, 
+                "software_private_key", 
+                "private_key"
             )
             
-            encryptedPrefs.edit().remove("private_key").apply()
-            Log.d(TAG, "Cleared software private key")
+            if (success) {
+                Log.d(TAG, "Cleared software private key")
+            } else {
+                Log.w(TAG, "Failed to clear software private key via EncryptedPreferencesManager")
+            }
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to clear software private key: ${e.message}", e)
@@ -285,24 +298,26 @@ class CertificateManager(private val context: Context) {
 
     /**
      * Store the certificate PEM string in encrypted storage (like iOS Keychain).
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     fun storeCertificatePem(certPem: String) {
         try {
-            // Use EncryptedSharedPreferences for maximum security (like FCM token and Member ID)
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            val encryptedPrefs = EncryptedSharedPreferences.create(
-                ENCRYPTED_PREFS_NAME,
-                masterKeyAlias,
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val success = EncryptedPreferencesManager.safePutString(
+                context, 
+                ENCRYPTED_PREFS_NAME, 
+                CERT_PEM_KEY, 
+                certPem
             )
             
-            encryptedPrefs.edit()
-                .putString(CERT_PEM_KEY, certPem)
-                .apply()
-            
-            Log.d(TAG, "✅ Certificate PEM stored securely in encrypted storage (iOS Keychain equivalent)")
+            if (success) {
+                Log.d(TAG, "✅ Certificate PEM stored securely in encrypted storage (iOS Keychain equivalent)")
+            } else {
+                Log.w(TAG, "⚠️ Failed to store certificate PEM in encrypted storage, using fallback")
+                throw Exception("EncryptedPreferencesManager.safePutString failed")
+            }
             
             // Also maintain file-based storage for backward compatibility
             val file = File(context.filesDir, CERT_FILE_NAME)
@@ -322,20 +337,20 @@ class CertificateManager(private val context: Context) {
      * Load the certificate PEM string from encrypted storage (iOS Keychain equivalent).
      * Falls back to file storage for backward compatibility.
      * Returns null if not found.
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     fun loadCertificatePem(): String? {
         try {
-            // Try encrypted storage first (like iOS Keychain)
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            val encryptedPrefs = EncryptedSharedPreferences.create(
-                ENCRYPTED_PREFS_NAME,
-                masterKeyAlias,
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val encryptedCertPem = EncryptedPreferencesManager.safeGetString(
+                context, 
+                ENCRYPTED_PREFS_NAME, 
+                CERT_PEM_KEY, 
+                null
             )
             
-            val encryptedCertPem = encryptedPrefs.getString(CERT_PEM_KEY, null)
             if (encryptedCertPem != null) {
                 Log.d(TAG, "✅ Certificate PEM loaded from encrypted storage (iOS Keychain equivalent)")
                 return encryptedCertPem
@@ -370,24 +385,25 @@ class CertificateManager(private val context: Context) {
 
     /**
      * Store the private key PEM string in encrypted storage (like iOS Keychain).
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     fun storePrivateKeyPem(privateKeyPem: String) {
         try {
-            // Use EncryptedSharedPreferences for maximum security (like FCM token and Member ID)
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            val encryptedPrefs = EncryptedSharedPreferences.create(
-                ENCRYPTED_PREFS_NAME,
-                masterKeyAlias,
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val success = EncryptedPreferencesManager.safePutString(
+                context, 
+                ENCRYPTED_PREFS_NAME, 
+                PRIVATE_KEY_KEY, 
+                privateKeyPem
             )
             
-            encryptedPrefs.edit()
-                .putString(PRIVATE_KEY_KEY, privateKeyPem)
-                .apply()
-            
-            Log.d(TAG, "✅ Private Key PEM stored securely in encrypted storage (iOS Keychain equivalent)")
+            if (success) {
+                Log.d(TAG, "✅ Private Key PEM stored securely in encrypted storage (iOS Keychain equivalent)")
+            } else {
+                throw Exception("EncryptedPreferencesManager.safePutString failed for private key")
+            }
             
         } catch (e: Exception) {
             Log.e(TAG, "❌ Failed to store private key PEM in encrypted storage", e)
@@ -398,20 +414,20 @@ class CertificateManager(private val context: Context) {
     /**
      * Load the private key PEM string from encrypted storage (iOS Keychain equivalent).
      * Returns null if not found.
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     fun loadPrivateKeyPem(): String? {
         try {
-            // Load from encrypted storage (like iOS Keychain)
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            val encryptedPrefs = EncryptedSharedPreferences.create(
-                ENCRYPTED_PREFS_NAME,
-                masterKeyAlias,
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val encryptedPrivateKeyPem = EncryptedPreferencesManager.safeGetString(
+                context, 
+                ENCRYPTED_PREFS_NAME, 
+                PRIVATE_KEY_KEY, 
+                null
             )
             
-            val encryptedPrivateKeyPem = encryptedPrefs.getString(PRIVATE_KEY_KEY, null)
             if (encryptedPrivateKeyPem != null) {
                 Log.d(TAG, "✅ Private Key PEM loaded from encrypted storage (iOS Keychain equivalent)")
                 return encryptedPrivateKeyPem
@@ -428,25 +444,21 @@ class CertificateManager(private val context: Context) {
 
     /**
      * Remove the certificate and private key from both encrypted and file storage.
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     fun removeCertificatePem() {
         try {
-            // Remove from encrypted storage
-            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-            val encryptedPrefs = EncryptedSharedPreferences.create(
-                ENCRYPTED_PREFS_NAME,
-                masterKeyAlias,
-                context,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val success1 = EncryptedPreferencesManager.safeRemove(context, ENCRYPTED_PREFS_NAME, CERT_PEM_KEY)
+            val success2 = EncryptedPreferencesManager.safeRemove(context, ENCRYPTED_PREFS_NAME, PRIVATE_KEY_KEY)
             
-            encryptedPrefs.edit()
-                .remove(CERT_PEM_KEY)
-                .remove(PRIVATE_KEY_KEY)
-                .apply()
-            
-            Log.d(TAG, "✅ Certificate and private key removed from encrypted storage")
+            if (success1 && success2) {
+                Log.d(TAG, "✅ Certificate and private key removed from encrypted storage")
+            } else {
+                Log.w(TAG, "⚠️ Partial failure removing from encrypted storage (cert: $success1, key: $success2)")
+            }
             
         } catch (e: Exception) {
             Log.w(TAG, "⚠️ Failed to remove certificate from encrypted storage", e)

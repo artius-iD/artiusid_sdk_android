@@ -55,16 +55,8 @@ class CertificateManager private constructor(private val context: Context) {
         KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
     }
     
-    private val encryptedPrefs by lazy {
-        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
-        EncryptedSharedPreferences.create(
-            ENCRYPTED_PREFS_NAME,
-            masterKeyAlias,
-            context,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-    }
+    // SDK v1.2.38 CRITICAL FIX: Removed lazy encryptedPrefs to use EncryptedPreferencesManager
+    // for automatic corruption detection and recovery from AEADBadTagException
     
     private val apiService: ApiService by lazy {
         // Initialize your API service here
@@ -109,12 +101,25 @@ class CertificateManager private constructor(private val context: Context) {
     
     /**
      * Remove stored certificate and private key
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     fun removeCertificate() {
         Log.d(TAG, "Removing existing certificate from storage...")
         
-        // Remove from encrypted preferences
-        encryptedPrefs.edit().remove(CERTIFICATE_KEY).apply()
+        // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+        val success = com.artiusid.sdk.utils.EncryptedPreferencesManager.safeRemove(
+            context, 
+            ENCRYPTED_PREFS_NAME, 
+            CERTIFICATE_KEY
+        )
+        
+        if (success) {
+            Log.d(TAG, "Certificate removed from encrypted preferences")
+        } else {
+            Log.w(TAG, "Failed to remove certificate from encrypted preferences")
+        }
         
         // Remove from Android KeyStore
         try {
@@ -128,18 +133,42 @@ class CertificateManager private constructor(private val context: Context) {
     
     /**
      * Check if certificate exists
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     fun hasCertificate(): Boolean {
-        return encryptedPrefs.contains(CERTIFICATE_KEY) && 
-               keyStore.containsAlias(PRIVATE_KEY_ALIAS)
+        try {
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val certExists = com.artiusid.sdk.utils.EncryptedPreferencesManager.safeGetString(
+                context, 
+                ENCRYPTED_PREFS_NAME, 
+                CERTIFICATE_KEY, 
+                null
+            ) != null
+            
+            return certExists && keyStore.containsAlias(PRIVATE_KEY_ALIAS)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to check certificate existence", e)
+            return false
+        }
     }
     
     /**
      * Get stored certificate
+     * 
+     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
+     * corruption detection and recovery from AEADBadTagException.
      */
     fun getCertificate(): ByteArray? {
         return try {
-            val base64Cert = encryptedPrefs.getString(CERTIFICATE_KEY, null)
+            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
+            val base64Cert = com.artiusid.sdk.utils.EncryptedPreferencesManager.safeGetString(
+                context, 
+                ENCRYPTED_PREFS_NAME, 
+                CERTIFICATE_KEY, 
+                null
+            )
             base64Cert?.let { Base64.decode(it, Base64.DEFAULT) }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to retrieve certificate", e)
@@ -227,9 +256,18 @@ class CertificateManager private constructor(private val context: Context) {
             throw CertError.InvalidCertificate
         }
         
-        // Store certificate in encrypted preferences (base64 encoded for storage)
+        // SDK v1.2.38: Store certificate using EncryptedPreferencesManager for corruption recovery
         val base64Cert = Base64.encodeToString(derCert, Base64.NO_WRAP)
-        encryptedPrefs.edit().putString(CERTIFICATE_KEY, base64Cert).apply()
+        val success = com.artiusid.sdk.utils.EncryptedPreferencesManager.safePutString(
+            context, 
+            ENCRYPTED_PREFS_NAME, 
+            CERTIFICATE_KEY, 
+            base64Cert
+        )
+        
+        if (!success) {
+            throw CertError.StorageError
+        }
         
         // Store private key in Android KeyStore
         storePrivateKey(keyPair.private)
@@ -258,11 +296,19 @@ class CertificateManager private constructor(private val context: Context) {
      */
     private fun storePrivateKey(privateKey: PrivateKey) {
         try {
-            // For this implementation, we'll store the key data in encrypted preferences
-            // In a production app, you might want to use Android KeyStore's key generation
+            // SDK v1.2.38: Store private key using EncryptedPreferencesManager for corruption recovery
             val privateKeyBytes = privateKey.encoded
             val base64Key = Base64.encodeToString(privateKeyBytes, Base64.NO_WRAP)
-            encryptedPrefs.edit().putString("${PRIVATE_KEY_ALIAS}_data", base64Key).apply()
+            val success = com.artiusid.sdk.utils.EncryptedPreferencesManager.safePutString(
+                context, 
+                ENCRYPTED_PREFS_NAME, 
+                "${PRIVATE_KEY_ALIAS}_data", 
+                base64Key
+            )
+            
+            if (!success) {
+                throw CertError.StorageError
+            }
             
             // Create a placeholder entry in Android KeyStore for consistency
             // Note: This is a simplified approach. In production, you'd generate the key 
