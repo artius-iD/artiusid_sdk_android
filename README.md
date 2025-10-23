@@ -6,8 +6,8 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 ## 📦 **Latest Release**
 
-**Version:** 1.2.21  
-**Release Date:** October 21, 2025  
+**Version:** 1.2.37  
+**Release Date:** October 23, 2025  
 **Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
 
 ---
@@ -18,16 +18,16 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.21
-curl -L -o artiusid-sdk-1.2.21.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.21/artiusid-sdk-1.2.21.aar
+# Download SDK v1.2.37
+curl -L -o artiusid-sdk-1.2.37.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.37/artiusid-sdk-1.2.37.aar
 ```
 
 ### **2. Add to Your Project**
 
 Copy the AAR to your app's `libs` directory:
 ```bash
-cp artiusid-sdk-1.2.21.aar your-app/app/libs/
+cp artiusid-sdk-1.2.37.aar your-app/app/libs/
 ```
 
 ### **3. Configure Dependencies**
@@ -35,7 +35,7 @@ cp artiusid-sdk-1.2.21.aar your-app/app/libs/
 Add to your app's `build.gradle`:
 ```gradle
 dependencies {
-    implementation files('libs/artiusid-sdk-1.2.21.aar')
+    implementation files('libs/artiusid-sdk-1.2.37.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
@@ -80,6 +80,11 @@ class MainActivity : ComponentActivity() {
         val config = SDKConfiguration(
             apiKey = "your-api-key",
             environment = Environment.PRODUCTION,
+            
+            // ✅ NEW: Configurable client ID (v1.2.37+)
+            clientId = 1,        // Your unique client ID
+            clientGroupId = 1,   // Your client group ID
+            
             enableLogging = BuildConfig.DEBUG
         )
         
@@ -135,6 +140,9 @@ ArtiusIDSDK.startVerification(
 - **[Localization Guide](sample-app/LOCALIZATION_GUIDE.md)** - How to customize SDK strings
 - **[Asset Documentation](sample-app/src/main/assets/README.md)** - Theme assets and customization
 
+### **Technical Documentation:**
+- **[Enhanced Autofocus Guide](artiusid-sdk/src/main/java/com/artiusid/sdk/documentation/EnhancedAutofocusGuide.md)** - Camera autofocus implementation
+
 ---
 
 ## 🔧 **HILT Setup**
@@ -151,6 +159,36 @@ ArtiusIDSDK.startVerification(
 
 ### **Manual Setup:**
 Follow the step-by-step guide in [HILT_INTEGRATION_GUIDE.md](HILT_INTEGRATION_GUIDE.md)
+
+---
+
+## 🎯 **Configurable Client ID (NEW in v1.2.37)**
+
+Configure unique client identities for different applications:
+
+```kotlin
+val config = SDKConfiguration(
+    apiKey = "your-api-key",
+    environment = Environment.PRODUCTION,
+    
+    // Different apps use different client IDs
+    clientId = 2,        // TriNet app uses clientId=2
+    clientGroupId = 2,   // TriNet app uses clientGroupId=2
+    
+    enableLogging = BuildConfig.DEBUG
+)
+```
+
+### **Benefits:**
+- ✅ **Fixes FCM notification routing** - No more cross-app notifications
+- ✅ **Backend client separation** - Each app has unique identity
+- ✅ **iOS SDK compatibility** - Matches iOS AppConstants functionality
+- ✅ **Multi-client architecture** - Supports enterprise deployments
+
+### **Usage Examples:**
+- **Sample App:** `clientId = 1` (default/demo)
+- **TriNet App:** `clientId = 2` (production client)
+- **Enterprise App:** `clientId = 100` (custom client)
 
 ---
 
@@ -226,32 +264,35 @@ The SDK will automatically:
 
 ## 📝 **Changelog**
 
+### **v1.2.37 (October 23, 2025)**
+- 🎯 **NEW: Configurable Client ID** - Match iOS SDK functionality
+- ✅ Fixes FCM notification routing between multiple apps
+- ✅ Enables proper multi-client backend architecture
+- ✅ Backward compatible (defaults to clientId=1)
+- ✅ Centralized ClientConfiguration management
+
+### **v1.2.36 (October 22, 2025)**
+- 🐛 **CRITICAL FIX:** VerificationGuard singleton stuck state
+- ✅ Added 2-minute timeout safety mechanism
+- ✅ Fixed DisposableEffect guard reset
+- ✅ Prevents permanent verification blocking
+
+### **v1.2.35 (October 22, 2025)**
+- 🐛 Fixed duplicate verification submissions
+- ✅ Singleton VerificationGuard implementation
+- ✅ Cross-ViewModel instance protection
+
 ### **v1.2.21 (October 21, 2025)**
 - 🐛 Fixed duplicate verification requests
 - 🐛 Fixed duplicate authentication requests
 - ✅ Only ONE verification request per flow
 - ✅ 50% reduction in backend load
 
-### **v1.2.20 (October 21, 2025)**
-- ✅ FCM token async retrieval for host apps
-- ✅ Improved token handling
-
-### **v1.2.19 (October 21, 2025)**
-- ✅ Duplicate verification prevention with ViewModel guard
-
-### **v1.2.18 (October 20, 2025)**
-- ✅ Error callback triggered on verification failure
-- ✅ Host app controls error UI
-
-### **v1.2.17 (October 20, 2025)**
-- ✅ Certificate retry logic (3 attempts)
-- ✅ Improved certificate registration reliability
-
 ---
 
 ## 📦 **Package Contents**
 
-- `artiusid-sdk-1.2.21.aar` - Main SDK library (25MB)
+- `artiusid-sdk-1.2.37.aar` - Main SDK library (25MB)
 - `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
 - `README_HILT_SETUP.md` - Quick HILT reference
 - `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
@@ -283,8 +324,8 @@ This SDK is provided under license. See LICENSE.txt for full terms and condition
 
 ---
 
-**Version:** 1.2.21  
-**Release Date:** October 21, 2025  
+**Version:** 1.2.37  
+**Release Date:** October 23, 2025  
 **Package Size:** 25MB  
 **Status:** Production Ready
 
