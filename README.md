@@ -12,17 +12,18 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 ---
 
-## 🚨 **CRITICAL FIX NOTICE - v1.2.38**
+## 🚨 **CRITICAL FIX NOTICE - v1.2.39**
 
-**IMMEDIATE UPGRADE RECOMMENDED** - This version fixes a critical bug where EncryptedSharedPreferences became permanently corrupted after clearing certificates, causing `AEADBadTagException` on all subsequent certificate registration attempts.
+**IMMEDIATE UPGRADE RECOMMENDED** - This version fixes a critical bug where the VerificationGuard singleton got stuck in an "in progress" state, permanently blocking all verification attempts even after app restart.
 
 **What's Fixed:**
-- ✅ Automatic corruption detection and recovery
-- ✅ Users can clear and re-register certificates without app data loss
-- ✅ No more permanent certificate registration failures
-- ✅ Comprehensive logging for debugging
+- ✅ VerificationGuard stuck state persisting across app restarts
+- ✅ Fixed timeout calculation handling edge cases (0L timestamps)  
+- ✅ Comprehensive state validation and automatic recovery
+- ✅ Enhanced logging for debugging stuck states
+- ✅ Resolves permanent verification blocking and (0s) elapsed time issues
 
-**Impact:** Apps using certificate management features should upgrade immediately.
+**Impact:** Apps experiencing verification blocking should upgrade immediately.
 
 ---
 
@@ -32,9 +33,9 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.38 (CRITICAL FIX)
-curl -L -o artiusid-sdk-1.2.38.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.38/artiusid-sdk-1.2.38.aar
+# Download SDK v1.2.39 (CRITICAL FIX)
+curl -L -o artiusid-sdk-1.2.39.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.39/artiusid-sdk-1.2.39.aar
 ```
 
 ### **2. Add to Your Project**
@@ -277,6 +278,16 @@ The SDK will automatically:
 ---
 
 ## 📝 **Changelog**
+
+### **v1.2.39 (October 23, 2025) - 🚨 CRITICAL FIX**
+- 🚨 **CRITICAL:** Fixed VerificationGuard stuck state persisting across app restarts
+- ✅ Added initialization block to ensure clean state on app startup
+- ✅ Fixed timeout calculation handling edge cases (0L timestamps)
+- ✅ Added comprehensive state validation and automatic recovery
+- ✅ Enhanced logging with detailed state information for debugging
+- ✅ Improved DisposableEffect cleanup with robust error handling
+- ✅ Added getDebugState() and forceReset() methods for troubleshooting
+- ✅ Resolves permanent verification blocking and (0s) elapsed time issues
 
 ### **v1.2.38 (October 23, 2025) - 🚨 CRITICAL FIX**
 - 🚨 **CRITICAL:** Fixed EncryptedSharedPreferences corruption after certificate clearing
