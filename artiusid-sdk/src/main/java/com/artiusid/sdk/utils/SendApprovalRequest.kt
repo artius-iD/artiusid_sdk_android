@@ -80,7 +80,12 @@ class SendApprovalRequest(
                 Log.d(TAG, "📞 [Call $callId] 📤   ApprovalDescription: ${request.approvalDescription}")
                 Log.d(TAG, "📞 [Call $callId] 📤   Timeout: ${request.timeout}")
             
-                Log.d(TAG, "📞 [Call $callId] 🌐 Calling apiService.sendApprovalRequestIOS() via Retrofit...")
+                Log.d(TAG, "📞 [Call $callId] 🌐 ========================================")
+                Log.d(TAG, "📞 [Call $callId] 🌐 CALLING BACKEND API: apiService.sendApprovalRequestIOS()")
+                Log.d(TAG, "📞 [Call $callId] 🌐 This is the ACTUAL network call that triggers Firebase notifications")
+                Log.d(TAG, "📞 [Call $callId] 🌐 If you see 3 Firebase notifications, check if this log appears 3 times")
+                Log.d(TAG, "📞 [Call $callId] 🌐 Thread: ${Thread.currentThread().name}")
+                Log.d(TAG, "📞 [Call $callId] 🌐 ========================================")
                 val apiCallStartTime = System.currentTimeMillis()
                 
                 // Call API endpoint exactly like standalone Android app
@@ -93,23 +98,35 @@ class SendApprovalRequest(
                 Log.d(TAG, "📞 [Call $callId] 📋 Server response received:")
                 Log.d(TAG, "📞 [Call $callId] 📋   Response object: $response")
                 Log.d(TAG, "📞 [Call $callId] 📋   ApprovalData: ${response.approvalData}")
-                Log.d(TAG, "📞 [Call $callId] 📋   RequestId: ${response.approvalData.requestId}")
-                Log.d(TAG, "📞 [Call $callId] 📋   Success: ${response.approvalData.success}")
-
-                // Check response exactly like iOS (nested structure)
-                if (response.approvalData.success) {
-                    val requestId = response.approvalData.requestId
-                    val totalDuration = System.currentTimeMillis() - startTime
-                    Log.d(TAG, "📞 [Call $callId] ✅ Approval request sent successfully")
-                    Log.d(TAG, "📞 [Call $callId] ✅ Received requestId: $requestId")
-                    Log.d(TAG, "📞 [Call $callId] ✅ Total duration: ${totalDuration}ms")
-                    Log.d(TAG, "📞 [Call $callId] ========================================")
-                    Pair(true, requestId)
-                } else {
-                    Log.e(TAG, "📞 [Call $callId] ❌ Approval response success=false - server rejected request")
-                    Log.w(TAG, "📞 [Call $callId] ⚠️ No Firebase notification will be sent")
+                
+                // Check if approvalData is null (backend error)
+                if (response.approvalData == null) {
+                    Log.e(TAG, "📞 [Call $callId] ❌ BACKEND ERROR: approvalData is null")
+                    Log.e(TAG, "📞 [Call $callId] ❌ Expected: {approvalData: {requestId: Int, success: Boolean}}")
+                    Log.e(TAG, "📞 [Call $callId] ❌ Actual: {approvalData: null}")
+                    Log.e(TAG, "📞 [Call $callId] ❌ This is a backend API issue, not an SDK issue")
                     Log.d(TAG, "📞 [Call $callId] ========================================")
                     Pair(false, null)
+                } else {
+                    // Log the approval data details
+                    Log.d(TAG, "📞 [Call $callId] 📋   RequestId: ${response.approvalData.requestId}")
+                    Log.d(TAG, "📞 [Call $callId] 📋   Success: ${response.approvalData.success}")
+
+                    // Check response exactly like iOS (nested structure)
+                    if (response.approvalData.success) {
+                        val requestId = response.approvalData.requestId
+                        val totalDuration = System.currentTimeMillis() - startTime
+                        Log.d(TAG, "📞 [Call $callId] ✅ Approval request sent successfully")
+                        Log.d(TAG, "📞 [Call $callId] ✅ Received requestId: $requestId")
+                        Log.d(TAG, "📞 [Call $callId] ✅ Total duration: ${totalDuration}ms")
+                        Log.d(TAG, "📞 [Call $callId] ========================================")
+                        Pair(true, requestId)
+                    } else {
+                        Log.e(TAG, "📞 [Call $callId] ❌ Approval response success=false - server rejected request")
+                        Log.w(TAG, "📞 [Call $callId] ⚠️ No Firebase notification will be sent")
+                        Log.d(TAG, "📞 [Call $callId] ========================================")
+                        Pair(false, null)
+                    }
                 }
             
         } catch (e: Exception) {

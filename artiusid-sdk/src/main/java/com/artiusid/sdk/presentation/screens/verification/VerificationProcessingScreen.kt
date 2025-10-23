@@ -76,7 +76,8 @@ fun VerificationProcessingScreen(
     }
 
     // Start verification when the screen is first displayed
-    LaunchedEffect(Unit) {
+    // CRITICAL FIX v1.2.44: Use viewModel as key to prevent duplicate calls across recompositions
+    LaunchedEffect(viewModel) {
         // SDK v1.2.40 CRITICAL FIX: Add comprehensive debugging for duplicate call investigation
         val currentThread = Thread.currentThread()
         val stackTrace = currentThread.stackTrace

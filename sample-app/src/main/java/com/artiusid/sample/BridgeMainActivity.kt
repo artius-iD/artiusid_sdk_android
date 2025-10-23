@@ -843,7 +843,11 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 sharedCertificateContext = true,
                 sharedFirebaseContext = true,
                 localizationOverrides = localizationOverrides,
-                imageOverrides = selectedImageOverride.overrides
+                imageOverrides = selectedImageOverride.overrides,
+                
+                // ✅ NEW: Sample app handles its own Firebase notifications and tokens
+                handleFirebaseNotifications = false, // Disable SDK Firebase handling
+                customFcmToken = null // Will be set dynamically when FCM token is available
             )
             
             // Initialize SDK with enhanced theme
@@ -855,6 +859,9 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             )
             
             android.util.Log.d("BridgeMainActivity", "✅ SDK initialized successfully on startup")
+            
+            // ✅ NEW: Sample app manages its own Firebase tokens
+            setupFirebaseTokenManagement()
             
         } catch (e: Exception) {
             android.util.Log.e("BridgeMainActivity", "❌ Failed to initialize SDK on startup", e)
@@ -1468,6 +1475,56 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = "⏹️ Authentication Cancelled [$timestamp]"
+    }
+    
+    /**
+     * ✅ NEW: Sample app manages its own Firebase tokens
+     * This demonstrates how client apps can handle FCM tokens when SDK Firebase handling is disabled
+     */
+    private fun setupFirebaseTokenManagement() {
+        try {
+            android.util.Log.d("BridgeMainActivity", "🔥 Setting up Firebase token management for sample app")
+            
+            // CRITICAL FIX: Get FCM token synchronously first, then set up async listener
+            // This ensures the SDK has a token BEFORE any verification requests
+            
+            // Step 1: Try to get cached token immediately (synchronous)
+            val tokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this)
+            val cachedToken = tokenManager?.getFCMToken()
+            
+            if (!cachedToken.isNullOrEmpty()) {
+                android.util.Log.d("BridgeMainActivity", "🔥 Using cached FCM token: ${cachedToken.take(20)}...")
+                ArtiusIDSDK.updateFcmToken(cachedToken)
+                android.util.Log.d("BridgeMainActivity", "🔥 ✅ Cached FCM token provided to SDK immediately")
+            } else {
+                android.util.Log.d("BridgeMainActivity", "🔥 No cached token, will wait for Firebase async token...")
+            }
+            
+            // Step 2: Set up async listener for token updates (for future token refreshes)
+            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    android.util.Log.w("BridgeMainActivity", "🔥 Failed to get FCM token", task.exception)
+                    return@addOnCompleteListener
+                }
+                
+                // Get new FCM Registration Token
+                val token = task.result
+                android.util.Log.d("BridgeMainActivity", "🔥 Sample app FCM token: ${token?.take(20)}...")
+                
+                // Provide token to SDK for approval requests
+                if (!token.isNullOrEmpty()) {
+                    ArtiusIDSDK.updateFcmToken(token)
+                    android.util.Log.d("BridgeMainActivity", "🔥 ✅ FCM token provided to SDK")
+                }
+            }
+            
+            // Listen for token refresh (optional - for production apps)
+            // Note: In a real app, you'd implement FirebaseMessagingService to handle token updates
+            android.util.Log.d("BridgeMainActivity", "🔥 ✅ Firebase token management setup complete")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("BridgeMainActivity", "🔥 ❌ Failed to setup Firebase token management", e)
+        }
     }
 }
 

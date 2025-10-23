@@ -149,8 +149,19 @@ object VerificationGuard {
                 }
                 val elapsedSeconds = elapsedMs / 1000
                 
-                // CRITICAL FIX: If first call appears stuck (no progress for 30+ seconds), allow recovery
-                if (elapsedMs > STUCK_STATE_TIMEOUT_MS) {
+                // CRITICAL FIX v1.2.44: Handle race conditions (<100ms) differently than stuck states (>30s)
+                if (elapsedMs < 100L) {
+                    // Race condition detected - likely duplicate call from Compose recomposition
+                    android.util.Log.w("VerificationGuard", "🚨 ========================================")
+                    android.util.Log.w("VerificationGuard", "🚨 RACE CONDITION DETECTED: Duplicate call within ${elapsedMs}ms")
+                    android.util.Log.w("VerificationGuard", "🚨 This is likely a Compose recomposition issue")
+                    android.util.Log.w("VerificationGuard", "🚨 RESETTING guard to allow verification to proceed")
+                    android.util.Log.w("VerificationGuard", "🚨 ========================================")
+                    isVerificationInProgress = false
+                    lastVerificationStartTime = 0L
+                    // Allow this call to proceed - it's likely the legitimate call
+                } else if (elapsedMs > STUCK_STATE_TIMEOUT_MS) {
+                    // Stuck state detected - reset after 30 seconds
                     android.util.Log.e("VerificationGuard", "🚨 ========================================")
                     android.util.Log.e("VerificationGuard", "🚨 SINGLETON: First verification call appears STUCK")
                     android.util.Log.e("VerificationGuard", "🚨 No progress for ${elapsedSeconds}s - allowing recovery")
@@ -160,6 +171,7 @@ object VerificationGuard {
                     lastVerificationStartTime = 0L
                     // Allow this call to proceed
                 } else {
+                    // Normal duplicate call - block it
                     android.util.Log.w("VerificationGuard", "⚠️ ========================================")
                     android.util.Log.w("VerificationGuard", "⚠️ SINGLETON: Verification already in progress (${elapsedSeconds}s)")
                     android.util.Log.w("VerificationGuard", "⚠️ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")

@@ -590,18 +590,32 @@ object ArtiusIDSDK {
     suspend fun sendApprovalRequest(context: Context): Triple<Boolean, String, Int?> {
         // Generate unique call ID for tracking
         val callId = java.util.UUID.randomUUID().toString().substring(0, 8)
-        android.util.Log.d(TAG, "📞 [Call $callId] sendApprovalRequest() STARTED")
+        val startTime = System.currentTimeMillis()
+        
+        android.util.Log.d(TAG, "📞 ========================================")
+        android.util.Log.d(TAG, "📞 [Call $callId] sendApprovalRequest() STARTED at $startTime")
+        android.util.Log.d(TAG, "📞 [Call $callId] Thread: ${Thread.currentThread().name}")
+        android.util.Log.d(TAG, "📞 [Call $callId] Stack trace:")
+        Thread.currentThread().stackTrace.take(8).forEach { element ->
+            android.util.Log.d(TAG, "📞 [Call $callId]   at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})")
+        }
+        android.util.Log.d(TAG, "📞 ========================================")
         
         return try {
             // Guard flag to prevent duplicate requests
             synchronized(approvalRequestLock) {
                 if (isApprovalRequestInProgress) {
-                    android.util.Log.w(TAG, "📞 [Call $callId] ⚠️ Approval request already in progress, ignoring duplicate call")
-                    android.util.Log.w(TAG, "📞 [Call $callId] This prevents duplicate backend requests and duplicate notifications")
+                    android.util.Log.w(TAG, "📞 ========================================")
+                    android.util.Log.w(TAG, "📞 [Call $callId] ⚠️ DUPLICATE APPROVAL REQUEST DETECTED!")
+                    android.util.Log.w(TAG, "📞 [Call $callId] ⚠️ Another approval request is already in progress")
+                    android.util.Log.w(TAG, "📞 [Call $callId] ⚠️ This prevents duplicate backend requests and duplicate notifications")
+                    android.util.Log.w(TAG, "📞 [Call $callId] ⚠️ BLOCKING this duplicate call")
+                    android.util.Log.w(TAG, "📞 ========================================")
                     return Triple(false, "Request already in progress", null)
                 }
                 isApprovalRequestInProgress = true
-                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Guard flag set - this is the first and only call")
+                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Guard flag set - this is the FIRST and ONLY call")
+                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Proceeding with approval request...")
             }
             
             if (!_isInitialized) {
@@ -630,14 +644,25 @@ object ArtiusIDSDK {
                 
                 // Reset guard flag after completion
                 isApprovalRequestInProgress = false
+                val totalDuration = System.currentTimeMillis() - startTime
+                android.util.Log.d(TAG, "📞 ========================================")
                 android.util.Log.d(TAG, "📞 [Call $callId] ✅ sendApprovalRequest() COMPLETED successfully")
+                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Total duration: ${totalDuration}ms")
+                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Guard flag RESET - ready for next request")
+                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Result: success=${result.first}, message='${result.second}', requestId=${result.third}")
+                android.util.Log.d(TAG, "📞 ========================================")
                 
                 result
             }
         } catch (e: Exception) {
             // Reset guard flag on error
             isApprovalRequestInProgress = false
-            android.util.Log.e(TAG, "📞 [Call $callId] ❌ sendApprovalRequest() FAILED: ${e.message}", e)
+            val totalDuration = System.currentTimeMillis() - startTime
+            android.util.Log.e(TAG, "📞 ========================================")
+            android.util.Log.e(TAG, "📞 [Call $callId] ❌ sendApprovalRequest() FAILED after ${totalDuration}ms")
+            android.util.Log.e(TAG, "📞 [Call $callId] ❌ Error: ${e.message}", e)
+            android.util.Log.e(TAG, "📞 [Call $callId] ❌ Guard flag RESET due to error")
+            android.util.Log.e(TAG, "📞 ========================================")
             Triple(false, "Error: ${e.message}", null)
         }
     }

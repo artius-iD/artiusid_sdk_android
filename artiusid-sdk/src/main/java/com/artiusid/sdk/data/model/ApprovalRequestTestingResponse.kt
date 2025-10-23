@@ -17,5 +17,5 @@ import com.google.gson.annotations.SerializedName
  */
 data class ApprovalRequestTestingResponse(
     @SerializedName("approvalData")
-    val approvalData: ApprovalRequestData
+    val approvalData: ApprovalRequestData?
 )
