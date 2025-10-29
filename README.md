@@ -2,6 +2,8 @@
 
 A secure Android SDK for identity verification, face liveness detection, document scanning, and NFC passport reading.
 
+> **📝 Note for Internal Developers:** This README is client-facing documentation. For internal development, see **[DEVELOPER_README.md](DEVELOPER_README.md)**.
+
 ---
 
 ## 📦 **Latest Release**
