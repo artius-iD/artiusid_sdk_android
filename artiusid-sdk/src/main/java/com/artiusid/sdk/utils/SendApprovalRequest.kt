@@ -59,6 +59,7 @@ class SendApprovalRequest(
             }
 
                 // Create request exactly like iOS ApprovalRequestTestingRequest.swift
+                // CRITICAL FIX: NO FCM token - iOS doesn't include it!
                 val request = ApprovalRequestTestingRequest(
                     clientId = ClientConfiguration.getClientId(), // Configurable client ID
                     clientGroupId = ClientConfiguration.getClientGroupId(), // Configurable client group ID
@@ -72,13 +73,14 @@ class SendApprovalRequest(
             Log.d(TAG, "📞 [Call $callId] Account Number (Member ID): $accountNumber")
             
             // Log the full request for debugging
-                Log.d(TAG, "📞 [Call $callId] 📤 Request payload:")
+                Log.d(TAG, "📞 [Call $callId] 📤 Request payload (matching iOS exactly):")
                 Log.d(TAG, "📞 [Call $callId] 📤   ClientId: ${request.clientId}")
                 Log.d(TAG, "📞 [Call $callId] 📤   ClientGroupId: ${request.clientGroupId}")
                 Log.d(TAG, "📞 [Call $callId] 📤   DeviceId: ${request.deviceId}")
                 Log.d(TAG, "📞 [Call $callId] 📤   ApprovalTitle: ${request.approvalTitle}")
                 Log.d(TAG, "📞 [Call $callId] 📤   ApprovalDescription: ${request.approvalDescription}")
                 Log.d(TAG, "📞 [Call $callId] 📤   Timeout: ${request.timeout}")
+                Log.d(TAG, "📞 [Call $callId] 📤   NOTE: NO FCM token (iOS doesn't include it)")
             
                 Log.d(TAG, "📞 [Call $callId] 🌐 ========================================")
                 Log.d(TAG, "📞 [Call $callId] 🌐 CALLING BACKEND API: apiService.sendApprovalRequestIOS()")
@@ -94,39 +96,27 @@ class SendApprovalRequest(
                 val apiCallDuration = System.currentTimeMillis() - apiCallStartTime
                 Log.d(TAG, "📞 [Call $callId] ✅ API call completed in ${apiCallDuration}ms")
 
+                // 🚨 CRITICAL FIX: iOS-style direct response handling
                 // Log the full response for debugging
-                Log.d(TAG, "📞 [Call $callId] 📋 Server response received:")
+                Log.d(TAG, "📞 [Call $callId] 📋 Server response received (iOS-style direct decode):")
                 Log.d(TAG, "📞 [Call $callId] 📋   Response object: $response")
-                Log.d(TAG, "📞 [Call $callId] 📋   ApprovalData: ${response.approvalData}")
+                Log.d(TAG, "📞 [Call $callId] 📋   RequestId: ${response.requestId}")
+                Log.d(TAG, "📞 [Call $callId] 📋   Success: ${response.success}")
                 
-                // Check if approvalData is null (backend error)
-                if (response.approvalData == null) {
-                    Log.e(TAG, "📞 [Call $callId] ❌ BACKEND ERROR: approvalData is null")
-                    Log.e(TAG, "📞 [Call $callId] ❌ Expected: {approvalData: {requestId: Int, success: Boolean}}")
-                    Log.e(TAG, "📞 [Call $callId] ❌ Actual: {approvalData: null}")
-                    Log.e(TAG, "📞 [Call $callId] ❌ This is a backend API issue, not an SDK issue")
+                // Check response exactly like iOS (direct structure)
+                if (response.success) {
+                    val requestId = response.requestId
+                    val totalDuration = System.currentTimeMillis() - startTime
+                    Log.d(TAG, "📞 [Call $callId] ✅ Approval request sent successfully (iOS-style)")
+                    Log.d(TAG, "📞 [Call $callId] ✅ Received requestId: $requestId")
+                    Log.d(TAG, "📞 [Call $callId] ✅ Total duration: ${totalDuration}ms")
+                    Log.d(TAG, "📞 [Call $callId] ========================================")
+                    Pair(true, requestId)
+                } else {
+                    Log.e(TAG, "📞 [Call $callId] ❌ Approval response success=false - server rejected request")
+                    Log.w(TAG, "📞 [Call $callId] ⚠️ No Firebase notification will be sent")
                     Log.d(TAG, "📞 [Call $callId] ========================================")
                     Pair(false, null)
-                } else {
-                    // Log the approval data details
-                    Log.d(TAG, "📞 [Call $callId] 📋   RequestId: ${response.approvalData.requestId}")
-                    Log.d(TAG, "📞 [Call $callId] 📋   Success: ${response.approvalData.success}")
-
-                    // Check response exactly like iOS (nested structure)
-                    if (response.approvalData.success) {
-                        val requestId = response.approvalData.requestId
-                        val totalDuration = System.currentTimeMillis() - startTime
-                        Log.d(TAG, "📞 [Call $callId] ✅ Approval request sent successfully")
-                        Log.d(TAG, "📞 [Call $callId] ✅ Received requestId: $requestId")
-                        Log.d(TAG, "📞 [Call $callId] ✅ Total duration: ${totalDuration}ms")
-                        Log.d(TAG, "📞 [Call $callId] ========================================")
-                        Pair(true, requestId)
-                    } else {
-                        Log.e(TAG, "📞 [Call $callId] ❌ Approval response success=false - server rejected request")
-                        Log.w(TAG, "📞 [Call $callId] ⚠️ No Firebase notification will be sent")
-                        Log.d(TAG, "📞 [Call $callId] ========================================")
-                        Pair(false, null)
-                    }
                 }
             
         } catch (e: Exception) {

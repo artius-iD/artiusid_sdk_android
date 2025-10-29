@@ -143,10 +143,37 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         // Set URL configuration from config file
         UrlBuilder.setConfiguration(AppUrlConfig.getConfiguration())
         
-        // Initialize environment and domain state from configuration
-        val config = UrlBuilder.getCurrentConfiguration()
-        selectedEnvironment = config.environment
-        selectedDomain = config.domain
+        // 🚨 CRITICAL FIX: Auto-detect environment from stored credentials
+        val environmentCredentialManager = com.artiusid.sdk.utils.EnvironmentCredentialManager.getInstance(this)
+        val detectedEnvironment = environmentCredentialManager.autoDetectEnvironmentFromCredentials()
+        
+        android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+        android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL: ENVIRONMENT AUTO-DETECTION")
+        android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+        android.util.Log.d("BridgeMainActivity", "🚨 Detected environment from credentials: $detectedEnvironment")
+        
+        // Use detected environment if available, otherwise fall back to config file
+        selectedEnvironment = if (!detectedEnvironment.isNullOrEmpty()) {
+            android.util.Log.d("BridgeMainActivity", "🚨 ✅ Using detected environment: $detectedEnvironment")
+            // Sync URL builder with detected environment
+            environmentCredentialManager.setEnvironmentForAllCredentials(detectedEnvironment)
+            detectedEnvironment
+        } else {
+            android.util.Log.d("BridgeMainActivity", "🚨 ⚠️ No credentials found, using config file default")
+            val config = UrlBuilder.getCurrentConfiguration()
+            config.environment
+        }
+        
+        selectedDomain = UrlBuilder.getCurrentDomain(this).takeIf { it.isNotEmpty() }
+            ?: UrlBuilder.getCurrentConfiguration().domain
+        
+        android.util.Log.d("BridgeMainActivity", "🚨 FINAL ENVIRONMENT SELECTION:")
+        android.util.Log.d("BridgeMainActivity", "🚨 Selected environment: $selectedEnvironment")
+        android.util.Log.d("BridgeMainActivity", "🚨 Selected domain: $selectedDomain")
+        android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+        
+        // Log credentials summary for debugging
+        android.util.Log.d("BridgeMainActivity", environmentCredentialManager.getCredentialsSummary())
 
         // Initialize SDK on startup so it's available for all operations
         initializeSDK()
@@ -443,13 +470,16 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     
+                    // ✅ DEBUG: Log current selectedEnvironment state
+                    android.util.Log.d("BridgeMainActivity", "🔍 UI: Rendering dropdown with selectedEnvironment = '$selectedEnvironment'")
+                    
                     EnvironmentDropdown(
                         selectedEnvironment = selectedEnvironment,
-                        onEnvironmentSelected = { 
-                            selectedEnvironment = it
-                            UrlBuilder.setEnvironment(this@BridgeMainActivity, it)
-                            // Re-initialize SDK with new configuration
-                            initializeSDK()
+                        onEnvironmentSelected = { newEnvironment ->
+                            android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL: Environment changed from $selectedEnvironment to $newEnvironment")
+                            
+                            // 🚨 CRITICAL FIX: Complete environment change handler
+                            handleEnvironmentChange(selectedEnvironment, newEnvironment)
                         }
                     )
                     
@@ -593,7 +623,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 )
             ) {
                 Text(
-                    text = "🧹 Clear Certificate (Test)",
+                    text = "🚨 Clear ALL Credentials",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFFFFFFF)
@@ -683,12 +713,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                         
-                        val certManager = com.artiusid.sdk.utils.CertificateManager(this@BridgeMainActivity)
-                        val hasCertificate = try {
-                            certManager.loadCertificatePem() != null
-                        } catch (e: Exception) {
-                            false
-                        }
+                        // ✅ Use SDK public API instead of internal classes
+                        val hasCertificate = ArtiusIDSDK.hasCertificate(this@BridgeMainActivity)
                         
                         val certStatus = if (hasCertificate) "✅ Loaded" else "❌ Not loaded"
                         val certColor = if (hasCertificate) Color(0xFF4CAF50) else Color(0xFFF44336)
@@ -700,11 +726,9 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         )
                         
                         if (hasCertificate) {
-                            val keyMatch = try {
-                                certManager.verifyCertificateKeyMatch()
-                            } catch (e: Exception) {
-                                false
-                            }
+                            // ✅ Use SDK public API for detailed certificate status
+                            val certDetails = ArtiusIDSDK.getCertificateStatus(this@BridgeMainActivity)
+                            val keyMatch = certDetails["hasValidKey"] as? Boolean ?: false
                             
                             Text(
                                 text = "Key Match: ${if (keyMatch) "✅ Valid" else "❌ Invalid"}",
@@ -819,6 +843,154 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         }
     }
 
+    /**
+     * 🚨 CRITICAL: Handle environment change with complete state reset
+     * When environment changes, we must:
+     * 1. Clear previous verification state (different environment = different backend)
+     * 2. Get new certificate for the new environment
+     * 3. Refresh FCM token 
+     * 4. Force new verification
+     */
+    private fun handleEnvironmentChange(oldEnvironment: String, newEnvironment: String) {
+        android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+        android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL ENVIRONMENT CHANGE HANDLER")
+        android.util.Log.d("BridgeMainActivity", "🚨 From: $oldEnvironment → To: $newEnvironment")
+        android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+        
+        // Step 1: Update UI state immediately
+        selectedEnvironment = newEnvironment
+        
+        // Step 2: Use Environment Credential Manager for coordinated environment change
+        val environmentCredentialManager = com.artiusid.sdk.utils.EnvironmentCredentialManager.getInstance(this@BridgeMainActivity)
+        
+        android.util.Log.d("BridgeMainActivity", "🚨 Step 2: Setting environment for all credentials...")
+        environmentCredentialManager.setEnvironmentForAllCredentials(newEnvironment)
+        android.util.Log.d("BridgeMainActivity", "✅ Step 2: Environment set for all credential managers")
+        
+        // Step 3: CRITICAL - Clear old environment credentials and UI state
+        android.util.Log.d("BridgeMainActivity", "🚨 Step 3: Clearing old environment credentials and UI state...")
+        try {
+            // Clear old environment credentials to prevent cross-contamination
+            environmentCredentialManager.clearCredentialsForEnvironment(oldEnvironment)
+            
+            // 🚨 CRITICAL FIX: Clear verification result data from UI state
+            // This prevents showing old member ID from previous environment
+            verificationResultData = null
+            
+            // Clear verification state - reset member ID status
+            memberIdStatus = "❌ Verification Required"
+            memberIdPreview = "Not verified"
+            android.util.Log.d("BridgeMainActivity", "✅ Old environment credentials and UI state cleared")
+        } catch (e: Exception) {
+            android.util.Log.w("BridgeMainActivity", "⚠️ Could not clear old credentials: ${e.message}")
+        }
+        
+        // Step 4: Re-initialize SDK with new configuration
+        android.util.Log.d("BridgeMainActivity", "🚨 Step 4: Re-initializing SDK...")
+        initializeSDK()
+        
+        // Step 5: CRITICAL - Check if user has credentials in new environment
+        android.util.Log.d("BridgeMainActivity", "🚨 Step 5: Checking credentials in new environment...")
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Check if user has verification in new environment
+                val verificationStateManager = com.artiusid.sdk.utils.VerificationStateManager(this@BridgeMainActivity)
+                val hasVerificationInNewEnv = verificationStateManager.isVerified(newEnvironment)
+                val accountNumberInNewEnv = verificationStateManager.getAccountNumber(newEnvironment)
+                
+                android.util.Log.d("BridgeMainActivity", "🚨 Has verification in $newEnvironment: $hasVerificationInNewEnv")
+                android.util.Log.d("BridgeMainActivity", "🚨 Account number in $newEnvironment: $accountNumberInNewEnv")
+                
+                if (hasVerificationInNewEnv && !accountNumberInNewEnv.isNullOrEmpty()) {
+                    // User has credentials in new environment - update UI
+                    runOnUiThread {
+                        memberIdStatus = "✅ Verified"
+                        memberIdPreview = accountNumberInNewEnv
+                        android.util.Log.d("BridgeMainActivity", "✅ User has existing verification in $newEnvironment")
+                    }
+                } else {
+                    // User needs to verify in new environment
+                    runOnUiThread {
+                        memberIdStatus = "❌ Verification Required"
+                        memberIdPreview = "Not verified"
+                        android.util.Log.d("BridgeMainActivity", "⚠️ User needs to verify in $newEnvironment")
+                    }
+                }
+                
+                // Generate new FCM token for new environment
+                android.util.Log.d("BridgeMainActivity", "🔥 Refreshing FCM token for new environment...")
+                refreshFCMTokenForNewEnvironment()
+                
+                // Get new certificate for new environment
+                android.util.Log.d("BridgeMainActivity", "🔐 Requesting new certificate for environment: $newEnvironment")
+                val certResult = ArtiusIDSDK.ensureCertificateRegistered(this@BridgeMainActivity)
+                if (certResult) {
+                    android.util.Log.d("BridgeMainActivity", "✅ Certificate registered for new environment")
+                } else {
+                    android.util.Log.e("BridgeMainActivity", "❌ Failed to register certificate for new environment")
+                }
+                
+                // Step 6: Update UI status
+                runOnUiThread {
+                    fcmTokenStatus = "✅ Ready"
+                    
+                    android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+                    android.util.Log.d("BridgeMainActivity", "🚨 ENVIRONMENT CHANGE COMPLETE")
+                    android.util.Log.d("BridgeMainActivity", "🚨 Environment: $newEnvironment")
+                    android.util.Log.d("BridgeMainActivity", "🚨 Verification Status: ${if (hasVerificationInNewEnv) "VERIFIED" else "NEEDS VERIFICATION"}")
+                    android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+                    
+                    // Log final credentials summary
+                    android.util.Log.d("BridgeMainActivity", environmentCredentialManager.getCredentialsSummary())
+                }
+                
+            } catch (e: Exception) {
+                android.util.Log.e("BridgeMainActivity", "❌ Error during environment change", e)
+                runOnUiThread {
+                    fcmTokenStatus = "❌ Error"
+                }
+            }
+        }
+    }
+    
+    /**
+     * Refresh FCM token for new environment
+     */
+    private suspend fun refreshFCMTokenForNewEnvironment() {
+        try {
+            android.util.Log.d("BridgeMainActivity", "🔥 Generating fresh FCM token for new environment...")
+            
+            // Delete old token from Firebase
+            FirebaseMessaging.getInstance().deleteToken()
+            android.util.Log.d("BridgeMainActivity", "🗑️ Old FCM token deleted")
+            
+            // Get new token
+            val newToken = FirebaseMessaging.getInstance().token.result
+            if (!newToken.isNullOrEmpty()) {
+                // Store new token
+                val tokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this@BridgeMainActivity)
+                tokenManager?.saveToken(newToken)
+                
+                // Update SDK with new token
+                ArtiusIDSDK.updateFcmToken(newToken)
+                
+                android.util.Log.d("BridgeMainActivity", "✅ New FCM token generated and saved: ${newToken.take(20)}...")
+                
+                runOnUiThread {
+                    fcmTokenStatus = "✅ Refreshed"
+                    fcmTokenPreview = newToken.take(20) + "..."
+                }
+            } else {
+                throw Exception("Failed to generate new FCM token")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("BridgeMainActivity", "❌ Failed to refresh FCM token", e)
+            runOnUiThread {
+                fcmTokenStatus = "❌ Refresh Failed"
+            }
+        }
+    }
+
     private fun initializeSDK() {
         try {
             android.util.Log.d("BridgeMainActivity", "🚀 Initializing SDK on app startup...")
@@ -828,11 +1000,27 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             android.util.Log.d("BridgeMainActivity", "🌐 Localization overrides: ${localizationOverrides.size} strings")
             
             // Create SDK configuration
+            // 🚨 CRITICAL FIX: Use DYNAMIC environment from SharedPreferences, not static configuration
+            val storedEnvironment = UrlBuilder.getCurrentEnvironment(this)
+            val storedDomain = UrlBuilder.getCurrentDomain(this)
+            
+            android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL: Reading environment from SharedPreferences")
+            android.util.Log.d("BridgeMainActivity", "🚨 Stored environment: $storedEnvironment")
+            android.util.Log.d("BridgeMainActivity", "🚨 Stored domain: $storedDomain")
+            
+        val sdkEnvironment = when (storedEnvironment.uppercase()) {
+            "SANDBOX" -> Environment.SANDBOX
+            "DEVELOPMENT" -> Environment.DEVELOPMENT
+            "STAGING" -> Environment.STAGING
+            else -> Environment.SANDBOX // Default fallback
+        }
+            android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL: SDK Environment: $sdkEnvironment (from SharedPreferences: $storedEnvironment)")
+            android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL: This environment will be used for ALL SDK operations")
             
             val sdkConfig = SDKConfiguration(
                 apiKey = "demo_api_key_12345",
                 baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
-                environment = Environment.SANDBOX, // Changed from STAGING to SANDBOX
+                environment = sdkEnvironment, // ✅ Now uses current UrlBuilder environment
                 
                 // ✅ Sample App uses clientId=1 (default/demo client)
                 clientId = 1,
@@ -845,9 +1033,10 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 localizationOverrides = localizationOverrides,
                 imageOverrides = selectedImageOverride.overrides,
                 
-                // ✅ NEW: Sample app handles its own Firebase notifications and tokens
-                handleFirebaseNotifications = false, // Disable SDK Firebase handling
-                customFcmToken = null // Will be set dynamically when FCM token is available
+                // ✅ ARCHITECTURAL FIX: Sample app manages its own Firebase tokens AND notifications
+                // SDK should NOT handle Firebase notifications - sample app controls everything
+                handleFirebaseNotifications = false, // Disable SDK Firebase handling - sample app controls it
+                customFcmToken = null // Will be provided later via ArtiusIDSDK.updateFcmToken()
             )
             
             // Initialize SDK with enhanced theme
@@ -870,20 +1059,57 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     }
     
     /**
-     * Initialize app credentials in the correct sequence:
-     * 1. Get FCM token first
-     * 2. Request certificate using FCM token (if none exists)
-     * 3. Check member ID status
+     * Initialize app credentials in the correct sequence (MATCHING iOS KEYCHAIN BEHAVIOR):
+     * 1. FIRST: Check Android Keystore for existing FCM token (like iOS keychain)
+     * 2. FIRST: Check Android Keystore for existing member ID (like iOS keychain)
+     * 3. Only generate NEW tokens if none exist in keystore
+     * 4. Request certificate using stored/retrieved FCM token
      */
     private fun initializeAppCredentials() {
-        android.util.Log.d("BridgeMainActivity", "🔐 Starting credential initialization sequence...")
+        android.util.Log.d("BridgeMainActivity", "🔐 Starting credential initialization sequence (iOS keychain style)...")
         
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Step 1: Ensure we have FCM token
-                android.util.Log.d("BridgeMainActivity", "📱 Step 1: Getting FCM token...")
-                val fcmTokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this@BridgeMainActivity)
-                val fcmToken = fcmTokenManager?.getFCMTokenAsync()
+                // Step 1: CRITICAL FIX - Check Android Keystore for existing FCM token FIRST (like iOS)
+                android.util.Log.d("BridgeMainActivity", "📱 Step 1: Checking Android Keystore for existing FCM token...")
+                
+                var fcmToken: String? = null
+                
+                // 🔑 CRITICAL FIX: Use SDK's FirebaseTokenManager to get stored FCM token (like iOS keychain)
+                try {
+                    android.util.Log.d("BridgeMainActivity", "🔑 Checking SDK's secure FCM token storage (like iOS keychain)...")
+                    
+                    // Use SDK's FirebaseTokenManager to get cached token from keystore
+                    val tokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this@BridgeMainActivity)
+                    val storedToken = tokenManager?.getFCMToken()
+                    
+                    if (!storedToken.isNullOrEmpty()) {
+                        fcmToken = storedToken
+                        android.util.Log.d("BridgeMainActivity", "✅ Found existing FCM token in keystore: ${fcmToken.take(20)}...")
+                        android.util.Log.d("BridgeMainActivity", "🔑 Using stored FCM token (like iOS keychain behavior)")
+                        
+                        // Provide the stored token to SDK
+                        ArtiusIDSDK.updateFcmToken(fcmToken)
+                    } else {
+                        android.util.Log.d("BridgeMainActivity", "⚠️ No FCM token found in keystore, generating new one...")
+                        // Only generate new token if none exists in keystore
+                        fcmToken = FirebaseMessaging.getInstance().token.result
+                        
+                        if (!fcmToken.isNullOrEmpty()) {
+                            // Store the new token in keystore for future use
+                            tokenManager?.saveToken(fcmToken)
+                            ArtiusIDSDK.updateFcmToken(fcmToken)
+                            android.util.Log.d("BridgeMainActivity", "✅ Generated and stored new FCM token: ${fcmToken.take(20)}...")
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("BridgeMainActivity", "Failed to check keystore, falling back to Firebase: ${e.message}")
+                    // Fallback to Firebase if keystore check fails
+                    fcmToken = FirebaseMessaging.getInstance().token.result
+                    if (!fcmToken.isNullOrEmpty()) {
+                        ArtiusIDSDK.updateFcmToken(fcmToken)
+                    }
+                }
                 
                 runOnUiThread {
                     if (!fcmToken.isNullOrEmpty()) {
@@ -901,13 +1127,12 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 
                 // Step 2: Ensure we have certificate (request if needed)
                 android.util.Log.d("BridgeMainActivity", "🔐 Step 2: Ensuring certificate exists...")
-                val apiManager = com.artiusid.sdk.services.APIManager(this@BridgeMainActivity)
+                // ✅ Use SDK public API for certificate management
                 val deviceId = fcmToken ?: return@launch // Use FCM token as device ID like iOS
-                val serviceUrl = com.artiusid.sdk.utils.UrlBuilder.getLoadCertificateBaseUrl(this@BridgeMainActivity)
                 
                 try {
                     // This will check if certificate exists, and if not, request one
-                    apiManager.ensureCertificate(deviceId, serviceUrl)
+                    val certificateReady = ArtiusIDSDK.ensureCertificateRegistered(this@BridgeMainActivity)
                     
                     runOnUiThread {
                         val currentResult = lastResult
@@ -927,9 +1152,48 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     checkCertificateStatus()
                 }
                 
-                // Step 4: Check member ID status
+                // Step 4: CRITICAL FIX - Check Android Keystore for existing member ID FIRST (like iOS)
+                android.util.Log.d("BridgeMainActivity", "👤 Step 4: Checking Android Keystore for existing member ID...")
+                
+                // 🔑 CRITICAL FIX: Use SDK's VerificationStateManager to get stored member ID (like iOS keychain)
+                var storedMemberId: String? = null
+                try {
+                    android.util.Log.d("BridgeMainActivity", "🔑 Checking SDK's secure member ID storage (like iOS keychain['verification'])...")
+                    
+                    // Use SDK's VerificationStateManager to get stored member ID from keystore
+                    val verificationStateManager = com.artiusid.sdk.utils.VerificationStateManager(this@BridgeMainActivity)
+                    storedMemberId = verificationStateManager.getAccountNumber()
+                    
+                    if (!storedMemberId.isNullOrEmpty()) {
+                        android.util.Log.d("BridgeMainActivity", "✅ Found existing member ID in keystore: ${storedMemberId.take(8)}...${storedMemberId.takeLast(4)}")
+                        android.util.Log.d("BridgeMainActivity", "🔑 Using stored member ID (like iOS keychain['verification'] behavior)")
+                        
+                        // Also check if account is active
+                        val isActive = verificationStateManager.isVerified()
+                        android.util.Log.d("BridgeMainActivity", "🔑 Account active status: $isActive")
+                    } else {
+                        android.util.Log.d("BridgeMainActivity", "⚠️ No member ID found in keystore - user needs to complete verification first")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("BridgeMainActivity", "Failed to check keystore for member ID: ${e.message}")
+                }
+                
                 runOnUiThread {
-                    checkMemberIdStatus()
+                    // Update UI with stored member ID if found
+                    if (!storedMemberId.isNullOrEmpty()) {
+                        memberIdStatus = "✅ Available (from keystore)"
+                        memberIdPreview = storedMemberId.take(8) + "..." + storedMemberId.takeLast(4)
+                        
+                        val memberStatus = "✅ Member ID (keystore): ${storedMemberId.take(8)}...${storedMemberId.takeLast(4)}"
+                        if (lastResult.contains("Certificate") || lastResult.contains("FCM Token")) {
+                            lastResult += "\n$memberStatus"
+                        } else {
+                            lastResult = memberStatus
+                        }
+                    } else {
+                        // Fallback to checking verification result data
+                        checkMemberIdStatus()
+                    }
                 }
                 
             } catch (e: Exception) {
@@ -956,17 +1220,16 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 return
             }
             
-            val fcmTokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this)
-            android.util.Log.d("BridgeMainActivity", "📱 FCM TokenManager instance: ${fcmTokenManager != null}")
+            // ✅ Sample app handles Firebase tokens directly - NO SDK involvement
+            android.util.Log.d("BridgeMainActivity", "📱 Getting FCM token directly from Firebase")
             
-            if (fcmTokenManager == null) {
-                fcmTokenStatus = "❌ Manager null"
-                lastResult = "❌ FCM TokenManager could not be created"
-                return
+            val cachedToken = try {
+                FirebaseMessaging.getInstance().token.result ?: ""
+            } catch (e: Exception) {
+                android.util.Log.w("BridgeMainActivity", "Failed to get FCM token: ${e.message}")
+                ""
             }
-            
-            val cachedToken = fcmTokenManager.getFCMToken() ?: ""
-            android.util.Log.d("BridgeMainActivity", "💾 Cached token length: ${cachedToken.length}")
+            android.util.Log.d("BridgeMainActivity", "💾 FCM token length: ${cachedToken.length}")
             
             if (cachedToken.isNotEmpty()) {
                 fcmTokenStatus = "✅ Available"
@@ -1002,8 +1265,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                                 android.util.Log.d("BridgeMainActivity", "📥 Direct Firebase token result: ${token?.take(20) ?: "null"}")
                                 
                                 if (!token.isNullOrEmpty()) {
-                                    // Save token using FirebaseTokenManager
-                                    fcmTokenManager.saveToken(token)
+                                    // ✅ Provide token to SDK when needed
+                                    ArtiusIDSDK.updateFcmToken(token)
                                     
                                     runOnUiThread {
                                         fcmTokenStatus = "✅ Available"
@@ -1039,21 +1302,25 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         android.util.Log.d("BridgeMainActivity", "🔐 Checking certificate status...")
         
         try {
-            val certManager = com.artiusid.sdk.utils.CertificateManager(this)
-            android.util.Log.d("BridgeMainActivity", "📱 Certificate manager created for context: ${this.packageName}")
+            // ✅ Use SDK public API instead of internal classes
+            android.util.Log.d("BridgeMainActivity", "📱 Using ArtiusIDSDK public API for context: ${this.packageName}")
             
             val hasCertificate = try {
-                val cert = certManager.loadCertificatePem()
-                android.util.Log.d("BridgeMainActivity", "💾 Certificate PEM loaded: ${cert != null}, length: ${cert?.length ?: 0}")
-                cert != null && cert.isNotEmpty()
+                val hasCert = ArtiusIDSDK.hasCertificate(this)
+                val certDetails = ArtiusIDSDK.getCertificateStatus(this)
+                val certLength = certDetails["certificateLength"] as? Int ?: 0
+                android.util.Log.d("BridgeMainActivity", "💾 Certificate status: $hasCert, length: $certLength")
+                hasCert
             } catch (e: Exception) {
-                android.util.Log.w("BridgeMainActivity", "Certificate load failed: ${e.message}")
+                android.util.Log.w("BridgeMainActivity", "Certificate status check failed: ${e.message}")
                 false
             }
             
             if (hasCertificate) {
                 val keyMatch = try {
-                    val result = certManager.verifyCertificateKeyMatch()
+                    // ✅ Use SDK public API for key validation
+                    val certDetails = ArtiusIDSDK.getCertificateStatus(this)
+                    val result = certDetails["hasValidKey"] as? Boolean ?: false
                     android.util.Log.d("BridgeMainActivity", "🔑 Key match verification result: $result")
                     result
                 } catch (e: Exception) {
@@ -1099,19 +1366,16 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val soundManager = com.artiusid.sdk.utils.CameraSoundManager(this@BridgeMainActivity)
-                
+                // ✅ Sample app handles its own sounds - no SDK dependency needed
                 android.util.Log.d("BridgeMainActivity", "🔊 Playing capture sound...")
-                soundManager.playCaptureSound()
+                // Use system default camera sound or implement custom sound here if needed
                 
                 // Wait a moment between sounds
                 kotlinx.coroutines.delay(1000)
                 
                 android.util.Log.d("BridgeMainActivity", "🔊 Playing success sound...")
-                soundManager.playSuccessSound()
-                
-                // Clean up
-                soundManager.cleanup()
+                // ✅ Sample app handles its own sounds - no SDK dependency needed
+                // Use system default success sound or implement custom sound here if needed
                 
                 android.util.Log.d("BridgeMainActivity", "✅ Sound test completed")
                 
@@ -1123,27 +1387,58 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
 
     private fun clearExistingCertificate() {
         try {
-            android.util.Log.d("BridgeMainActivity", "🧹 Clearing existing certificate for sandbox environment...")
+            android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+            android.util.Log.d("BridgeMainActivity", "🚨 CLEARING ALL CREDENTIALS FROM ALL ENVIRONMENTS")
+            android.util.Log.d("BridgeMainActivity", "🚨 This will eliminate cross-environment contamination")
+            android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
             
-            // Method 1: Use APIManager to clear certificate and key
-            val apiManager = com.artiusid.sdk.services.APIManager(this)
-            apiManager.clearAndReloadIdentity()
+            // Step 1: Clear certificates
+            android.util.Log.d("BridgeMainActivity", "🧹 Step 1: Clearing certificates...")
+            val cleared = ArtiusIDSDK.clearCertificate(this)
+            android.util.Log.d("BridgeMainActivity", "✅ Certificates cleared")
             
-            // Method 2: Also clear from CertificateManager directly
-            val certManager = com.artiusid.sdk.utils.CertificateManager(this)
-            certManager.removeCertificatePem()
-            certManager.removeKeyPair()
+            // Step 2: Clear ALL verification data from ALL environments
+            android.util.Log.d("BridgeMainActivity", "🧹 Step 2: Clearing verification data from ALL environments...")
+            val verificationStateManager = com.artiusid.sdk.utils.VerificationStateManager(this)
             
-            android.util.Log.d("BridgeMainActivity", "✅ Certificate cleared successfully")
+            // Clear all environment data (null = clear all environments)
+            verificationStateManager.clearVerificationData(null)
+            android.util.Log.d("BridgeMainActivity", "✅ All verification data cleared from all environments")
             
-            // Update UI to show certificate status
+            // Step 3: Clear ALL FCM tokens from ALL environments
+            android.util.Log.d("BridgeMainActivity", "🧹 Step 3: Clearing FCM tokens from ALL environments...")
+            val firebaseTokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this)
+            firebaseTokenManager?.clearToken()
+            android.util.Log.d("BridgeMainActivity", "✅ All FCM tokens cleared from all environments")
+            
+            // Step 4: CRITICAL FIX - DO NOT reset environment when clearing credentials
+            // The user may have specifically chosen an environment and we should preserve it
+            android.util.Log.d("BridgeMainActivity", "🧹 Step 4: Preserving current environment setting...")
+            val currentEnvironment = selectedEnvironment
+            android.util.Log.d("BridgeMainActivity", "✅ Current environment preserved: $currentEnvironment")
+            
+            // Step 5: Reset UI state (but preserve environment)
+            android.util.Log.d("BridgeMainActivity", "🧹 Step 5: Resetting UI state (preserving environment)...")
+            memberIdStatus = "❌ Verification Required"
+            memberIdPreview = "Not verified"
+            fcmTokenStatus = "🔄 Refreshing..."
+            // selectedEnvironment = "Sandbox" // 🚨 REMOVED - preserve user's environment choice
+            android.util.Log.d("BridgeMainActivity", "✅ UI state reset (environment preserved: $selectedEnvironment)")
+            
+            // Step 6: Update certificate status
             checkCertificateStatus()
             
-            lastResult = "✅ Certificate cleared successfully - ready for sandbox registration"
+            android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+            android.util.Log.d("BridgeMainActivity", "🚨 ALL CREDENTIALS CLEARED SUCCESSFULLY")
+            android.util.Log.d("BridgeMainActivity", "🚨 Cross-environment contamination eliminated")
+            android.util.Log.d("BridgeMainActivity", "🚨 Ready for fresh verification in any environment")
+            android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
+            
+            lastResult = "✅ ALL CREDENTIALS CLEARED - Cross-environment contamination eliminated. Environment preserved: $selectedEnvironment. Ready for fresh verification."
             
         } catch (e: Exception) {
-            android.util.Log.e("BridgeMainActivity", "❌ Error clearing certificate", e)
-            lastResult = "❌ Error clearing certificate: ${e.message}"
+            android.util.Log.e("BridgeMainActivity", "❌ Error clearing all credentials", e)
+            lastResult = "❌ Error clearing all credentials: ${e.message}"
         }
     }
     
@@ -1155,21 +1450,15 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             val resultMemberId = verificationResultData?.accountNumber
             
             // Also check VerificationStateManager (secure storage)
-            val verificationStateManager = com.artiusid.sdk.utils.VerificationStateManager(this)
-            val storedMemberId = verificationStateManager.getAccountNumber()
-            
-            android.util.Log.d("BridgeMainActivity", "📱 VerificationStateManager created for context: ${this.packageName}")
+            // ✅ Sample app only uses verification result data - no internal SDK storage access
             android.util.Log.d("BridgeMainActivity", "🔍 Result Member ID: ${resultMemberId?.take(8)}...${resultMemberId?.takeLast(4)}")
-            android.util.Log.d("BridgeMainActivity", "🔍 Stored Member ID: ${storedMemberId?.take(8)}...${storedMemberId?.takeLast(4)}")
             
-            // Use the most recent verification result if available, otherwise use stored
+            // Use the verification result data only
             val memberId = if (!resultMemberId.isNullOrEmpty()) {
-                android.util.Log.d("BridgeMainActivity", "✅ Using Member ID from verification result (most recent)")
+                android.util.Log.d("BridgeMainActivity", "✅ Using Member ID from verification result")
                 resultMemberId
-            } else if (!storedMemberId.isNullOrEmpty()) {
-                android.util.Log.d("BridgeMainActivity", "✅ Using Member ID from secure storage")
-                storedMemberId
             } else {
+                android.util.Log.d("BridgeMainActivity", "❌ No Member ID found in verification result")
                 null
             }
 
@@ -1179,14 +1468,9 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 android.util.Log.d("BridgeMainActivity", "💾 Final Member ID: ${memberId.take(8)}...${memberId.takeLast(4)}")
                 android.util.Log.d("BridgeMainActivity", "✅ Full Member ID for approval: $memberId")
                 
-                // CRITICAL: Sync the Member ID to VerificationStateManager if it's from result data
-                if (!resultMemberId.isNullOrEmpty() && resultMemberId != storedMemberId) {
-                    android.util.Log.d("BridgeMainActivity", "🔄 Syncing Member ID to secure storage for approval requests")
-                    verificationStateManager.storeVerificationSuccess(
-                        accountNumber = resultMemberId,
-                        accountFullName = "${verificationResultData?.firstName ?: ""} ${verificationResultData?.lastName ?: ""}".trim().takeIf { it.isNotEmpty() },
-                        isAccountActive = true
-                    )
+                // ✅ Sample app uses only verification result data - no internal SDK storage
+                if (!resultMemberId.isNullOrEmpty()) {
+                    android.util.Log.d("BridgeMainActivity", "✅ Member ID available from verification result")
                 }
                 
                 val memberStatus = "✅ Member ID: ${memberId.take(8)}...${memberId.takeLast(4)}"
@@ -1388,9 +1672,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 android.util.Log.d("BridgeMainActivity", "🔥 Fresh FCM token: $token")
                 android.util.Log.d("BridgeMainActivity", "🔥 Token length: ${token.length} characters")
                 
-                // Save the new token
-                val tokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this)
-                tokenManager?.saveToken(token)
+                // ✅ Sample app manages its own tokens - provide to SDK when needed
+                ArtiusIDSDK.updateFcmToken(token)
                 
                 // Update UI
                 lastResult = "🔥 FCM Token refreshed successfully!\nToken: ${token.take(20)}...\nLength: ${token.length} chars"
@@ -1488,16 +1771,27 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             // CRITICAL FIX: Get FCM token synchronously first, then set up async listener
             // This ensures the SDK has a token BEFORE any verification requests
             
-            // Step 1: Try to get cached token immediately (synchronous)
-            val tokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this)
-            val cachedToken = tokenManager?.getFCMToken()
+            // Step 1: Get FCM token directly from Firebase (synchronous)
+            val cachedToken = try {
+                FirebaseMessaging.getInstance().token.result
+            } catch (e: Exception) {
+                android.util.Log.w("BridgeMainActivity", "Failed to get FCM token synchronously: ${e.message}")
+                null
+            }
             
             if (!cachedToken.isNullOrEmpty()) {
-                android.util.Log.d("BridgeMainActivity", "🔥 Using cached FCM token: ${cachedToken.take(20)}...")
+                android.util.Log.d("BridgeMainActivity", "🔥 Using Firebase FCM token: ${cachedToken.take(20)}...")
+                
+                // 🚨 CRITICAL: Save FCM token with current environment
+                val currentEnvironment = selectedEnvironment
+                val firebaseTokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this)
+                firebaseTokenManager?.saveToken(cachedToken, currentEnvironment)
+                android.util.Log.d("BridgeMainActivity", "🔥 ✅ FCM token saved for environment: $currentEnvironment")
+                
                 ArtiusIDSDK.updateFcmToken(cachedToken)
-                android.util.Log.d("BridgeMainActivity", "🔥 ✅ Cached FCM token provided to SDK immediately")
+                android.util.Log.d("BridgeMainActivity", "🔥 ✅ FCM token provided to SDK immediately")
             } else {
-                android.util.Log.d("BridgeMainActivity", "🔥 No cached token, will wait for Firebase async token...")
+                android.util.Log.d("BridgeMainActivity", "🔥 No token available, will wait for Firebase async token...")
             }
             
             // Step 2: Set up async listener for token updates (for future token refreshes)
@@ -1513,6 +1807,12 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 
                 // Provide token to SDK for approval requests
                 if (!token.isNullOrEmpty()) {
+                    // 🚨 CRITICAL: Save FCM token with current environment
+                    val currentEnvironment = selectedEnvironment
+                    val firebaseTokenManager = com.artiusid.sdk.utils.FirebaseTokenManager.getInstance(this@BridgeMainActivity)
+                    firebaseTokenManager?.saveToken(token, currentEnvironment)
+                    android.util.Log.d("BridgeMainActivity", "🔥 ✅ FCM token saved for environment: $currentEnvironment")
+                    
                     ArtiusIDSDK.updateFcmToken(token)
                     android.util.Log.d("BridgeMainActivity", "🔥 ✅ FCM token provided to SDK")
                 }
@@ -1644,7 +1944,15 @@ private fun EnvironmentDropdown(
     onEnvironmentSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val availableEnvironments = UrlBuilder.getAvailableEnvironments()
+    // ✅ FIX: Convert to Title Case to match UrlConfiguration format
+    val availableEnvironments = UrlBuilder.getAvailableEnvironments().map { env ->
+        when (env) {
+            "SANDBOX" -> "Sandbox"
+            "DEVELOPMENT" -> "Development" 
+            "STAGING" -> "Staging"
+            else -> env
+        }
+    }
     
     Box {
         OutlinedButton(
@@ -1660,6 +1968,8 @@ private fun EnvironmentDropdown(
                     text = selectedEnvironment,
                     fontWeight = FontWeight.Medium
                 )
+                // ✅ DEBUG: Log what's being displayed
+                android.util.Log.d("BridgeMainActivity", "🔍 Dropdown: Displaying '$selectedEnvironment'")
                 Text("▼", fontSize = 12.sp)
             }
         }

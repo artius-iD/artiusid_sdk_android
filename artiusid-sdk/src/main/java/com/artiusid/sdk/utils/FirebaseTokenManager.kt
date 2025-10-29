@@ -24,6 +24,10 @@ class FirebaseTokenManager private constructor(private val context: Context) {
         private const val PREF_NAME = "fcm_prefs"
         private const val TOKEN_KEY = "FCMRegistrationToken"
         
+        // 🚨 CRITICAL: Environment-specific keys for FCM token isolation
+        private const val KEY_CURRENT_ENVIRONMENT = "currentEnvironment"
+        private const val KEY_ENVIRONMENT_PREFIX = "env_"
+        
         @Volatile
         private var INSTANCE: FirebaseTokenManager? = null
         
@@ -33,6 +37,75 @@ class FirebaseTokenManager private constructor(private val context: Context) {
                     INSTANCE ?: FirebaseTokenManager(it.applicationContext).also { INSTANCE = it }
                 }
             }
+        }
+    }
+    
+    /**
+     * 🚨 CRITICAL: Get environment-specific key for FCM token storage
+     */
+    private fun getEnvironmentKey(baseKey: String, environment: String? = null): String {
+        val env = environment ?: getCurrentEnvironmentFromTokens() ?: "Sandbox"
+        return "${KEY_ENVIRONMENT_PREFIX}${env}_${baseKey}"
+    }
+    
+    /**
+     * 🚨 CRITICAL: Get current environment from stored FCM tokens
+     */
+    fun getCurrentEnvironmentFromTokens(): String? {
+        return try {
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val prefs = EncryptedSharedPreferences.create(
+                PREF_NAME,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+            
+            // First check if there's a stored current environment
+            val storedEnv = prefs.getString(KEY_CURRENT_ENVIRONMENT, null)
+            if (!storedEnv.isNullOrEmpty()) {
+                android.util.Log.d(TAG, "🚨 Found stored FCM environment: $storedEnv")
+                return storedEnv
+            }
+            
+            // If no stored environment, check which environments have FCM tokens
+            val environments = listOf("Sandbox", "Development", "Staging")
+            for (env in environments) {
+                val envToken = prefs.getString("${KEY_ENVIRONMENT_PREFIX}${env}_${TOKEN_KEY}", null)
+                if (!envToken.isNullOrEmpty()) {
+                    android.util.Log.d(TAG, "🚨 Auto-detected FCM environment from tokens: $env")
+                    // Store this as current environment for future use
+                    prefs.edit().putString(KEY_CURRENT_ENVIRONMENT, env).apply()
+                    return env
+                }
+            }
+            
+            android.util.Log.d(TAG, "🚨 No FCM environment tokens found")
+            return null
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "❌ Failed to get current FCM environment", e)
+            null
+        }
+    }
+    
+    /**
+     * 🚨 CRITICAL: Set current environment for FCM token storage
+     */
+    fun setCurrentEnvironment(environment: String) {
+        try {
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            val prefs = EncryptedSharedPreferences.create(
+                PREF_NAME,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+            prefs.edit().putString(KEY_CURRENT_ENVIRONMENT, environment).apply()
+            android.util.Log.d(TAG, "🚨 Set current FCM environment: $environment")
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "❌ Failed to set current FCM environment", e)
         }
     }
     
@@ -91,7 +164,7 @@ class FirebaseTokenManager private constructor(private val context: Context) {
      * Save FCM token securely using EncryptedSharedPreferences
      * Equivalent to iOS keychain storage
      */
-    fun saveToken(token: String) {
+    fun saveToken(token: String, environment: String? = null) {
         try {
             val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
             val prefs = EncryptedSharedPreferences.create(
@@ -101,8 +174,23 @@ class FirebaseTokenManager private constructor(private val context: Context) {
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
-            prefs.edit().putString(TOKEN_KEY, token).apply()
-            Log.d(TAG, "✅ FCM token saved securely to keychain")
+            
+            // 🚨 CRITICAL: Store with environment-specific keys
+            val currentEnv = environment ?: getCurrentEnvironmentFromTokens() ?: "Sandbox"
+            
+            prefs.edit().apply {
+                // Store with environment-specific key
+                putString(getEnvironmentKey(TOKEN_KEY, currentEnv), token)
+                
+                // Also store legacy key for backward compatibility
+                putString(TOKEN_KEY, token)
+                
+                // Set current environment
+                putString(KEY_CURRENT_ENVIRONMENT, currentEnv)
+                apply()
+            }
+            
+            Log.d(TAG, "✅ FCM token saved securely to keychain for environment: $currentEnv")
         } catch (e: Exception) {
             Log.e(TAG, "❌ Failed to save FCM token to keychain: ${e.message}", e)
         }
@@ -111,7 +199,7 @@ class FirebaseTokenManager private constructor(private val context: Context) {
     /**
      * Get cached FCM token from secure storage
      */
-    private fun getCachedToken(): String? {
+    private fun getCachedToken(environment: String? = null): String? {
         return try {
             val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
             val prefs = EncryptedSharedPreferences.create(
@@ -121,7 +209,23 @@ class FirebaseTokenManager private constructor(private val context: Context) {
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
-            prefs.getString(TOKEN_KEY, null)
+            
+            // 🚨 CRITICAL: Get environment-specific token first
+            val currentEnv = environment ?: getCurrentEnvironmentFromTokens()
+            if (currentEnv != null) {
+                val envToken = prefs.getString(getEnvironmentKey(TOKEN_KEY, currentEnv), null)
+                if (!envToken.isNullOrEmpty()) {
+                    android.util.Log.d(TAG, "✅ Retrieved FCM token for environment $currentEnv")
+                    return envToken
+                }
+            }
+            
+            // Fallback to legacy key for backward compatibility
+            val legacyToken = prefs.getString(TOKEN_KEY, null)
+            if (!legacyToken.isNullOrEmpty()) {
+                android.util.Log.d(TAG, "✅ Retrieved FCM token (legacy storage)")
+            }
+            legacyToken
         } catch (e: Exception) {
             Log.e(TAG, "❌ Failed to get cached FCM token from keychain: ${e.message}", e)
             null

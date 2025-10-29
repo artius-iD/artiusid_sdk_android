@@ -23,7 +23,7 @@ object UrlBuilder {
     private var currentConfiguration: UrlConfiguration? = null
     
     enum class Environment {
-        SANDBOX, DEVELOPMENT, QA, STAGING, PRODUCTION
+        SANDBOX, DEVELOPMENT, STAGING
     }
     
     enum class ServiceType {
@@ -51,45 +51,89 @@ object UrlBuilder {
     }
     
     private fun getEnvironmentFromSettings(context: Context): Environment {
-        val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        // 🚨 CRITICAL FIX: Use host app context if available to ensure SharedPreferences consistency
+        val actualContext = try {
+            com.artiusid.sdk.ArtiusIDSDK.getHostAppContext() ?: context
+        } catch (e: Exception) {
+            android.util.Log.w("UrlBuilder", "Could not get host app context, using provided context: ${e.message}")
+            context
+        }
+        
+        val prefs: SharedPreferences = actualContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
         val envString = prefs.getString("environment", "Sandbox") ?: "Sandbox"
+        
+        android.util.Log.d("UrlBuilder", "🚨 CONTEXT DEBUG: Using context: ${actualContext.javaClass.simpleName}")
+        android.util.Log.d("UrlBuilder", "🚨 CONTEXT DEBUG: Package name: ${actualContext.packageName}")
+        android.util.Log.d("UrlBuilder", "🚨 CONTEXT DEBUG: Environment from SharedPreferences: $envString")
+        
         return when (envString) {
             "Sandbox" -> Environment.SANDBOX
             "Development" -> Environment.DEVELOPMENT
-            "QA" -> Environment.QA
             "Staging" -> Environment.STAGING
-            "Production" -> Environment.PRODUCTION
             else -> Environment.SANDBOX
         }
     }
     
     private fun getDomainFromSettings(context: Context): String {
-        val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        // 🚨 CRITICAL FIX: Use host app context if available to ensure SharedPreferences consistency
+        val actualContext = try {
+            com.artiusid.sdk.ArtiusIDSDK.getHostAppContext() ?: context
+        } catch (e: Exception) {
+            android.util.Log.w("UrlBuilder", "Could not get host app context, using provided context: ${e.message}")
+            context
+        }
+        
+        val prefs: SharedPreferences = actualContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
         return prefs.getString("domain", "artiusid.dev") ?: "artiusid.dev"
     }
     
     private fun getEnvironmentPrefix(environment: Environment): String {
         return when (environment) {
             Environment.SANDBOX -> "sandbox"
-            Environment.DEVELOPMENT -> "dev"
-            Environment.QA -> "qa"
-            Environment.STAGING -> "stage"
-            Environment.PRODUCTION -> "prod"
+            Environment.DEVELOPMENT -> "service"  // ✅ Updated to use "service" prefix for dev
+            Environment.STAGING -> "service"     // ✅ Updated to use "service" prefix for staging
         }
     }
     
-    private fun getBaseUrl(serviceType: ServiceType, @Suppress("UNUSED_PARAMETER") context: Context): String {
-        val config = getCurrentConfiguration()
-        val environment = stringToEnvironment(config.environment)
-        val domain = config.domain
+    private fun getEnvironmentSuffix(environment: Environment): String {
+        return when (environment) {
+            Environment.SANDBOX -> ""           // sandbox.mobile.artiusid.dev
+            Environment.DEVELOPMENT -> ".dev"   // service-mobile.dev.artiusid.dev
+            Environment.STAGING -> ".stage"     // service-mobile.stage.artiusid.dev
+        }
+    }
+    
+    private fun getBaseUrl(serviceType: ServiceType, context: Context): String {
+        // 🚨 CRITICAL FIX: Use dynamic settings from SharedPreferences, not static configuration
+        val environment = getEnvironmentFromSettings(context)
+        val domain = getDomainFromSettings(context)
         val envPrefix = getEnvironmentPrefix(environment)
+        val envSuffix = getEnvironmentSuffix(environment)
+        
+        // 🚨 DEBUG: Log what environment is actually being used for URL generation
+        android.util.Log.d("UrlBuilder", "🚨 CRITICAL DEBUG: getBaseUrl for $serviceType")
+        android.util.Log.d("UrlBuilder", "🚨 Environment from settings: $environment")
+        android.util.Log.d("UrlBuilder", "🚨 Domain from settings: $domain")
+        android.util.Log.d("UrlBuilder", "🚨 Prefix: $envPrefix, Suffix: $envSuffix")
         
         return when (serviceType) {
             ServiceType.VERIFICATION, 
             ServiceType.AUTHENTICATION, 
             ServiceType.APPROVAL_REQUEST, 
-            ServiceType.APPROVAL_RESPONSE -> "https://$envPrefix.mobile.$domain"
-            ServiceType.LOAD_CERTIFICATE -> "https://$envPrefix.registration.$domain"
+            ServiceType.APPROVAL_RESPONSE -> {
+                if (environment == Environment.SANDBOX) {
+                    "https://$envPrefix.mobile.$domain"  // sandbox.mobile.artiusid.dev
+                } else {
+                    "https://$envPrefix-mobile$envSuffix.$domain"  // service-mobile.dev.artiusid.dev or service-mobile.stage.artiusid.dev
+                }
+            }
+            ServiceType.LOAD_CERTIFICATE -> {
+                if (environment == Environment.SANDBOX) {
+                    "https://$envPrefix.registration.$domain"  // sandbox.registration.artiusid.dev
+                } else {
+                    "https://$envPrefix-registration$envSuffix.$domain"  // service-registration.dev.artiusid.dev or service-registration.stage.artiusid.dev
+                }
+            }
         }
     }
     
@@ -97,9 +141,7 @@ object UrlBuilder {
         return when (envString) {
             "Sandbox" -> Environment.SANDBOX
             "Development" -> Environment.DEVELOPMENT
-            "QA" -> Environment.QA
             "Staging" -> Environment.STAGING
-            "Production" -> Environment.PRODUCTION
             else -> Environment.SANDBOX
         }
     }
@@ -154,7 +196,16 @@ object UrlBuilder {
     fun setEnvironment(context: Context, environment: String) {
         val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
         prefs.edit().putString("environment", environment).apply()
+        
+        // ✅ FIX: Also update the currentConfiguration object
+        val currentDomain = getDomainFromSettings(context)
+        currentConfiguration = UrlConfiguration(
+            environment = environment,
+            domain = currentDomain
+        )
+        
         android.util.Log.d("UrlBuilder", "🔧 Environment set to: $environment")
+        android.util.Log.d("UrlBuilder", "🔧 Updated currentConfiguration: ${currentConfiguration?.getDescription()}")
     }
     
     fun setDomain(context: Context, domain: String) {

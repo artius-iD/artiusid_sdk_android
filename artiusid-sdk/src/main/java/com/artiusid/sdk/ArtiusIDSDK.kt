@@ -58,6 +58,9 @@ object ArtiusIDSDK {
     // Shared context management for mTLS and Firebase
     private var sharedContextManager: SharedContextManager? = null
     
+    // 🚨 CRITICAL FIX: Store host app context for SharedPreferences access
+    private var hostAppContext: Context? = null
+    
     // Guard flag to prevent duplicate approval requests
     private var isApprovalRequestInProgress = false
     private val approvalRequestLock = Any()
@@ -82,6 +85,9 @@ object ArtiusIDSDK {
                 throw SecurityException("SDK initialization blocked due to security violations")
             }
 
+            // 🚨 CRITICAL FIX: Store host app context for SharedPreferences access
+            hostAppContext = context.applicationContext
+            
             // Store configurations
             sdkConfiguration = configuration.copy(
                 hostAppPackageName = context.packageName
@@ -103,7 +109,6 @@ object ArtiusIDSDK {
                 com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                 com.artiusid.sdk.config.Environment.STAGING -> "Staging"
-                com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
             }
             prefs.edit().putString("environment", environmentName).apply()
             android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
@@ -113,22 +118,13 @@ object ArtiusIDSDK {
                 com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
                 com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
-                com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
             }
             com.artiusid.sdk.utils.UrlBuilder.setConfiguration(urlConfig)
             android.util.Log.i(TAG, "🌐 Backend URLs configured: ${urlConfig.getDescription()}")
-            android.util.Log.i(TAG, "   Verification: https://${when(configuration.environment) {
-                com.artiusid.sdk.config.Environment.SANDBOX -> "sandbox"
-                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "dev"
-                com.artiusid.sdk.config.Environment.STAGING -> "stage"
-                com.artiusid.sdk.config.Environment.PRODUCTION -> "prod"
-            }}.mobile.${urlConfig.domain}/verifi/api/verification")
-            android.util.Log.i(TAG, "   Certificate: https://${when(configuration.environment) {
-                com.artiusid.sdk.config.Environment.SANDBOX -> "sandbox"
-                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "dev"
-                com.artiusid.sdk.config.Environment.STAGING -> "stage"
-                com.artiusid.sdk.config.Environment.PRODUCTION -> "prod"
-            }}.registration.${urlConfig.domain}/LoadCertificateFunction")
+            // ✅ Log the actual URLs that will be generated
+            android.util.Log.i(TAG, "🌐 Verification URL: ${com.artiusid.sdk.utils.UrlBuilder.getVerificationUrl(context)}")
+            android.util.Log.i(TAG, "🌐 Certificate URL: ${com.artiusid.sdk.utils.UrlBuilder.getLoadCertificateUrl(context)}")
+            android.util.Log.i(TAG, "🌐 Approval URL: ${com.artiusid.sdk.utils.UrlBuilder.getApprovalRequestUrl(context)}")
 
             // Initialize shared context manager for mTLS and Firebase
             sharedContextManager = SharedContextManager(context, sdkConfiguration!!)
@@ -216,7 +212,6 @@ object ArtiusIDSDK {
                 com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                 com.artiusid.sdk.config.Environment.STAGING -> "Staging"
-                com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
             }
             android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
             
@@ -225,22 +220,13 @@ object ArtiusIDSDK {
                 com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
                 com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
-                com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
             }
             com.artiusid.sdk.utils.UrlBuilder.setConfiguration(urlConfig)
             android.util.Log.i(TAG, "🌐 Backend URLs configured: ${urlConfig.getDescription()}")
-            android.util.Log.i(TAG, "   Verification: https://${when(configuration.environment) {
-                com.artiusid.sdk.config.Environment.SANDBOX -> "sandbox"
-                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "dev"
-                com.artiusid.sdk.config.Environment.STAGING -> "stage"
-                com.artiusid.sdk.config.Environment.PRODUCTION -> "prod"
-            }}.mobile.${urlConfig.domain}/verifi/api/verification")
-            android.util.Log.i(TAG, "   Certificate: https://${when(configuration.environment) {
-                com.artiusid.sdk.config.Environment.SANDBOX -> "sandbox"
-                com.artiusid.sdk.config.Environment.DEVELOPMENT -> "dev"
-                com.artiusid.sdk.config.Environment.STAGING -> "stage"
-                com.artiusid.sdk.config.Environment.PRODUCTION -> "prod"
-            }}.registration.${urlConfig.domain}/LoadCertificateFunction")
+            // ✅ Log the actual URLs that will be generated
+            android.util.Log.i(TAG, "🌐 Verification URL: ${com.artiusid.sdk.utils.UrlBuilder.getVerificationUrl(context)}")
+            android.util.Log.i(TAG, "🌐 Certificate URL: ${com.artiusid.sdk.utils.UrlBuilder.getLoadCertificateUrl(context)}")
+            android.util.Log.i(TAG, "🌐 Approval URL: ${com.artiusid.sdk.utils.UrlBuilder.getApprovalRequestUrl(context)}")
 
             // Initialize shared context manager for mTLS and Firebase
             sharedContextManager = SharedContextManager(context, sdkConfiguration!!)
@@ -370,6 +356,76 @@ object ArtiusIDSDK {
     fun isCertificateRegistered(context: Context): Boolean {
         val certPrefs = context.getSharedPreferences("certificate_prefs", Context.MODE_PRIVATE)
         return certPrefs.contains("CERTIFICATE_PEM")
+    }
+    
+    /**
+     * Check if certificate exists and is valid (more thorough than isCertificateRegistered)
+     * 
+     * @param context Application or Activity context
+     * @return true if certificate exists and is valid, false otherwise
+     */
+    fun hasCertificate(context: Context): Boolean {
+        return try {
+            val certManager = CertificateManager(context)
+            val cert = certManager.loadCertificatePem()
+            cert != null && cert.isNotEmpty()
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "Error checking certificate status: ${e.message}")
+            false
+        }
+    }
+    
+    /**
+     * Get certificate status information for debugging
+     * 
+     * @param context Application or Activity context
+     * @return Map containing certificate status details
+     */
+    fun getCertificateStatus(context: Context): Map<String, Any> {
+        return try {
+            val certManager = CertificateManager(context)
+            val cert = certManager.loadCertificatePem()
+            val hasValidKey = if (cert != null) {
+                try {
+                    certManager.verifyCertificateKeyMatch()
+                } catch (e: Exception) {
+                    false
+                }
+            } else false
+            
+            mapOf(
+                "hasCertificate" to (cert != null),
+                "certificateLength" to (cert?.length ?: 0),
+                "hasValidKey" to hasValidKey,
+                "status" to if (cert != null && hasValidKey) "✅ Valid certificate with matching key" else "❌ Invalid or missing certificate"
+            )
+        } catch (e: Exception) {
+            mapOf(
+                "hasCertificate" to false,
+                "error" to (e.message ?: "Unknown error"),
+                "status" to "❌ Error checking certificate"
+            )
+        }
+    }
+    
+    /**
+     * Clear existing certificate (for testing/debugging)
+     * 
+     * @param context Application or Activity context
+     * @return true if certificate was cleared successfully
+     */
+    fun clearCertificate(context: Context): Boolean {
+        return try {
+            android.util.Log.d(TAG, "🧹 Clearing existing certificate...")
+            val certManager = CertificateManager(context)
+            certManager.removeCertificatePem()
+            certManager.removeKeyPair()
+            android.util.Log.d(TAG, "✅ Certificate cleared successfully")
+            true
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "❌ Failed to clear certificate: ${e.message}", e)
+            false
+        }
     }
     
     /**
@@ -736,4 +792,11 @@ object ArtiusIDSDK {
      * Internal use only - for SDK components that need shared context
      */
     internal fun getSharedContextManager(): SharedContextManager? = sharedContextManager
+    
+    /**
+     * 🚨 CRITICAL FIX: Get host app context for SharedPreferences access
+     * This ensures UrlBuilder uses the same SharedPreferences as the sample app
+     * Internal use only - for SDK components that need host app context
+     */
+    internal fun getHostAppContext(): Context? = hostAppContext
 }

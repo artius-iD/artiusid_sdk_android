@@ -22,6 +22,7 @@ import com.artiusid.sdk.standalone.StandaloneAppActivity
 import com.artiusid.sdk.utils.FirebaseTokenManager
 import com.artiusid.sdk.utils.NotificationStateManager
 import com.artiusid.sdk.data.model.AppNotificationState
+import com.artiusid.sdk.utils.UrlBuilder
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     companion object {
@@ -59,9 +60,19 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         // Save token using FirebaseTokenManager (similar to iOS MessagingDelegate)
         val tokenManager = FirebaseTokenManager.getInstance(applicationContext)
-        tokenManager?.saveToken(token)
         
-        Log.d(TAG, "✅ FCM token saved to secure storage")
+        // 🚨 CRITICAL: Get current environment for FCM token storage
+        val currentEnvironment = UrlBuilder.getCurrentEnvironment(applicationContext)
+        val environmentForStorage = when (currentEnvironment.uppercase()) {
+            "SANDBOX" -> "Sandbox"
+            "DEVELOPMENT" -> "Development"
+            "STAGING" -> "Staging"
+            else -> "Sandbox"
+        }
+        
+        tokenManager?.saveToken(token, environmentForStorage)
+        
+        Log.d(TAG, "✅ FCM token saved to secure storage for environment: $environmentForStorage")
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -150,12 +161,23 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         // Create channel if needed
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 🔧 CRITICAL FIX: Use HIGH importance for approval notifications
+            // This ensures notifications are audible, visible, and appear as heads-up notifications
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "artius.iD Notifications",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
+                NotificationManager.IMPORTANCE_HIGH // Changed from DEFAULT to HIGH
+            ).apply {
+                description = "Approval requests and authentication notifications"
+                enableLights(true) // Enable LED light
+                enableVibration(true) // Enable vibration
+                setShowBadge(true) // Show badge on app icon
+                // Set vibration pattern (0ms delay, 500ms vibrate, 200ms pause, 500ms vibrate)
+                vibrationPattern = longArrayOf(0, 500, 200, 500)
+                Log.d(TAG, "🔔 Created HIGH importance notification channel: $CHANNEL_ID")
+            }
             notificationManager.createNotificationChannel(channel)
+            Log.d(TAG, "🔔 Notification channel registered with NotificationManager")
         }
         
         // Check if this is an approval notification
@@ -181,12 +203,24 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val currentTheme = EnhancedThemeManager.getCurrentThemeConfig()
         val brandName = currentTheme.brandName
         
+        // 🔧 CRITICAL FIX: Enhanced notification with sound, vibration, and high priority
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(remoteMessage.notification?.title ?: brandName)
             .setContentText(remoteMessage.notification?.body ?: "You have a new notification.")
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
-        NotificationManagerCompat.from(this).notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
+            .setPriority(NotificationCompat.PRIORITY_HIGH) // High priority for heads-up notification
+            .setDefaults(NotificationCompat.DEFAULT_ALL) // Enable sound, vibration, lights
+            .setVibrate(longArrayOf(0, 500, 200, 500)) // Vibration pattern
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE) // Message category for approval requests
+        
+        val notificationId = System.currentTimeMillis().toInt()
+        Log.d(TAG, "🔔 Displaying notification with ID: $notificationId")
+        Log.d(TAG, "🔔 Title: ${remoteMessage.notification?.title ?: brandName}")
+        Log.d(TAG, "🔔 Body: ${remoteMessage.notification?.body ?: "You have a new notification."}")
+        Log.d(TAG, "🔔 Priority: HIGH, Sound: ENABLED, Vibration: ENABLED")
+        
+        NotificationManagerCompat.from(this).notify(notificationId, notificationBuilder.build())
     }
 } 

@@ -17,7 +17,7 @@ import com.artiusid.sdk.models.SDKImageOverrides
 data class SDKConfiguration(
     val apiKey: String,
     val baseUrl: String = "https://api.artiusid.com",
-    val environment: Environment = Environment.PRODUCTION,
+    val environment: Environment = Environment.SANDBOX,
     
     // Client identification (matches iOS AppConstants)
     val clientId: Int = 1,
@@ -45,7 +45,6 @@ data class SDKConfiguration(
 
 enum class Environment {
     SANDBOX,      // Sandbox environment (sandbox.mobile.artiusid.dev)
-    DEVELOPMENT,  // Development environment (dev.mobile.artiusid.dev)
-    STAGING,      // Staging environment (stage.mobile.artiusid.dev)
-    PRODUCTION    // Production environment (prod.mobile.artiusid.com)
+    DEVELOPMENT,  // Development environment (service-mobile.dev.artiusid.dev)
+    STAGING       // Staging environment (service-mobile.stage.artiusid.dev)
 }

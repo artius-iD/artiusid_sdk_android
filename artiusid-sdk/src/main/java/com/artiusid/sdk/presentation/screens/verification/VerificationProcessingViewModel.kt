@@ -22,6 +22,7 @@ import com.artiusid.sdk.services.VerificationService
 import com.artiusid.sdk.utils.ImageUtils
 import com.artiusid.sdk.utils.ImageStorage
 import com.artiusid.sdk.data.repository.LogManager
+import com.artiusid.sdk.utils.UrlBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -87,6 +88,20 @@ object VerificationGuard {
     private val lock = Any()
     private const val VERIFICATION_TIMEOUT_MS = 120_000L // 2 minutes timeout
     private const val STUCK_STATE_TIMEOUT_MS = 30_000L // 30 seconds for stuck state recovery
+    
+    // SDK v1.2.45 CRITICAL FIX: Add global verification API call counter
+    @Volatile
+    private var totalApiCallCount = 0
+    @Volatile
+    private var currentSessionApiCalls = 0
+    
+    // SDK v1.2.45 CRITICAL FIX: Add global UI guard to prevent duplicate LaunchedEffect triggers
+    @Volatile
+    private var hasUIStartedVerification = false
+    
+    // ARCHITECTURAL FIX: Add global trigger guard to prevent duplicate triggerVerificationStart calls
+    @Volatile
+    private var hasTriggeredVerification = false
     
     init {
         // CRITICAL FIX: Always ensure clean state on initialization
@@ -186,6 +201,10 @@ object VerificationGuard {
             // Start verification
             isVerificationInProgress = true
             lastVerificationStartTime = currentTime
+            
+            // SDK v1.2.45: Reset session API call counter when starting new verification
+            currentSessionApiCalls = 0
+            
             val currentClientId = com.artiusid.sdk.config.ClientConfiguration.getClientId()
             val currentClientGroupId = com.artiusid.sdk.config.ClientConfiguration.getClientGroupId()
             
@@ -193,6 +212,7 @@ object VerificationGuard {
             android.util.Log.i("VerificationGuard", "✅ SINGLETON: Verification started at $currentTime")
             android.util.Log.i("VerificationGuard", "✅ 🎯 ClientId=$currentClientId, ClientGroupId=$currentClientGroupId")
             android.util.Log.i("VerificationGuard", "✅ State: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
+            android.util.Log.i("VerificationGuard", "✅ Session API call counter RESET to 0")
             android.util.Log.i("VerificationGuard", "✅ Guard flag set - no duplicates allowed")
             android.util.Log.i("VerificationGuard", "✅ Call originated from stack trace above")
             android.util.Log.i("VerificationGuard", "✅ ========================================")
@@ -207,12 +227,70 @@ object VerificationGuard {
             
             isVerificationInProgress = false
             lastVerificationStartTime = 0L
+            currentSessionApiCalls = 0 // Reset session counter
+            hasUIStartedVerification = false // Reset UI guard
+            hasTriggeredVerification = false // Reset trigger guard
             
             android.util.Log.d("VerificationGuard", "🔄 ========================================")
             android.util.Log.d("VerificationGuard", "🔄 SINGLETON: Verification guard reset")
             android.util.Log.d("VerificationGuard", "🔄 Previous state: isInProgress=$wasInProgress, startTime=$previousStartTime")
             android.util.Log.d("VerificationGuard", "🔄 New state: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
+            android.util.Log.d("VerificationGuard", "🔄 UI guard reset: hasUIStartedVerification=$hasUIStartedVerification")
+            android.util.Log.d("VerificationGuard", "🔄 TRIGGER guard reset: hasTriggeredVerification=$hasTriggeredVerification")
             android.util.Log.d("VerificationGuard", "🔄 ========================================")
+        }
+    }
+    
+    // SDK v1.2.45: UI guard methods to prevent duplicate LaunchedEffect triggers
+    fun tryStartUI(): Boolean {
+        synchronized(lock) {
+            if (hasUIStartedVerification) {
+                android.util.Log.w("VerificationGuard", "⚠️ ========================================")
+                android.util.Log.w("VerificationGuard", "⚠️ UI: DUPLICATE LaunchedEffect DETECTED!")
+                android.util.Log.w("VerificationGuard", "⚠️ UI verification already started, BLOCKING this duplicate")
+                android.util.Log.w("VerificationGuard", "⚠️ ========================================")
+                return false
+            }
+            hasUIStartedVerification = true
+            android.util.Log.d("VerificationGuard", "✅ ========================================")
+            android.util.Log.d("VerificationGuard", "✅ UI: FIRST AND ONLY verification start - proceeding")
+            android.util.Log.d("VerificationGuard", "✅ UI guard set: hasUIStartedVerification=$hasUIStartedVerification")
+            android.util.Log.d("VerificationGuard", "✅ ========================================")
+            return true
+        }
+    }
+    
+    /**
+     * ARCHITECTURAL FIX: Global guard for triggerVerificationStart calls
+     * Prevents duplicate verification triggers across all ViewModel instances
+     */
+    fun tryStartTrigger(): Boolean {
+        synchronized(lock) {
+            val currentTime = System.currentTimeMillis()
+            if (hasTriggeredVerification) {
+                android.util.Log.w("VerificationGuard", "🎯 ========================================")
+                android.util.Log.w("VerificationGuard", "🎯 TRIGGER: DUPLICATE triggerVerificationStart DETECTED!")
+                android.util.Log.w("VerificationGuard", "🎯 Verification trigger already called, BLOCKING this duplicate")
+                android.util.Log.w("VerificationGuard", "🎯 Current state: isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime")
+                android.util.Log.w("VerificationGuard", "🎯 Time since last start: ${if (lastVerificationStartTime > 0) currentTime - lastVerificationStartTime else 0}ms")
+                android.util.Log.w("VerificationGuard", "🎯 ========================================")
+                
+                // UI FIX: If no verification is actually in progress, reset the trigger guard
+                if (!isVerificationInProgress && lastVerificationStartTime == 0L) {
+                    android.util.Log.e("VerificationGuard", "🚨 TRIGGER GUARD STUCK: No verification in progress but trigger blocked!")
+                    android.util.Log.e("VerificationGuard", "🚨 Resetting trigger guard to allow new verification")
+                    hasTriggeredVerification = false
+                    return tryStartTrigger() // Retry after reset
+                }
+                
+                return false
+            }
+            hasTriggeredVerification = true
+            android.util.Log.d("VerificationGuard", "🎯 ========================================")
+            android.util.Log.d("VerificationGuard", "🎯 TRIGGER: FIRST AND ONLY verification trigger - proceeding")
+            android.util.Log.d("VerificationGuard", "🎯 Trigger guard set: hasTriggeredVerification=$hasTriggeredVerification")
+            android.util.Log.d("VerificationGuard", "🎯 ========================================")
+            return true
         }
     }
     
@@ -224,7 +302,9 @@ object VerificationGuard {
             android.util.Log.w("VerificationGuard", "🚨 FORCE RESET: Clearing all guard state")
             isVerificationInProgress = false
             lastVerificationStartTime = 0L
-            android.util.Log.w("VerificationGuard", "🚨 FORCE RESET: Complete")
+            hasUIStartedVerification = false
+            hasTriggeredVerification = false // Reset trigger guard too
+            android.util.Log.w("VerificationGuard", "🚨 FORCE RESET: All guards reset - ready for new verification")
         }
     }
     
@@ -235,7 +315,28 @@ object VerificationGuard {
         synchronized(lock) {
             val currentTime = System.currentTimeMillis()
             val elapsedMs = if (lastVerificationStartTime > 0L) currentTime - lastVerificationStartTime else 0L
-            return "VerificationGuard[isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime, elapsed=${elapsedMs}ms]"
+            return "VerificationGuard[isInProgress=$isVerificationInProgress, startTime=$lastVerificationStartTime, elapsed=${elapsedMs}ms, totalApiCalls=$totalApiCallCount, sessionApiCalls=$currentSessionApiCalls]"
+        }
+    }
+    
+    // SDK v1.2.45: Track API calls to detect duplicates
+    fun incrementApiCallCount(): Int {
+        synchronized(lock) {
+            totalApiCallCount++
+            currentSessionApiCalls++
+            android.util.Log.w("VerificationGuard", "🚨 ========================================")
+            android.util.Log.w("VerificationGuard", "🚨 API CALL COUNTER INCREMENTED")
+            android.util.Log.w("VerificationGuard", "🚨 Total API calls (all time): $totalApiCallCount")
+            android.util.Log.w("VerificationGuard", "🚨 Session API calls: $currentSessionApiCalls")
+            android.util.Log.w("VerificationGuard", "🚨 ========================================")
+            return currentSessionApiCalls
+        }
+    }
+    
+    fun resetSessionApiCalls() {
+        synchronized(lock) {
+            currentSessionApiCalls = 0
+            android.util.Log.d("VerificationGuard", "✅ Session API call counter reset")
         }
     }
 }
@@ -268,6 +369,107 @@ class VerificationProcessingViewModel @Inject constructor(
     
     // Track the active verification job to prevent concurrent executions
     private var activeVerificationJob: Job? = null
+    
+    // Flag to auto-trigger verification when context becomes available
+    private var shouldAutoTrigger = false
+
+    init {
+        // ✅ CRITICAL FIX v1.2.47: Auto-trigger verification on ViewModel initialization
+        // This eliminates duplicate triggers from multiple ViewModel instances
+        Log.d(TAG, "🎯 ========================================")
+        Log.d(TAG, "🎯 ViewModel INITIALIZED: ${this.hashCode()}")
+        Log.d(TAG, "🎯 Auto-triggering verification on ViewModel creation")
+        Log.d(TAG, "🎯 This ensures verification happens once per ViewModel instance")
+        Log.d(TAG, "🎯 ========================================")
+        
+        // Auto-trigger verification when context becomes available
+        // The UI will provide context via the first triggerVerificationStart call
+        Log.d(TAG, "🎯 ViewModel ready - waiting for UI to provide context")
+        
+        // Set a flag to auto-trigger when context is available
+        shouldAutoTrigger = true
+    }
+
+    /**
+     * ARCHITECTURAL FIX: Trigger verification start as a one-time event
+     * This method validates images and starts verification without being tied to UI recomposition
+     */
+    fun triggerVerificationStart(context: Context) {
+        // ✅ CRITICAL FIX v1.2.47: Only trigger if this ViewModel should auto-trigger
+        if (!shouldAutoTrigger) {
+            Log.d(TAG, "🎯 TRIGGER: ViewModel already triggered, ignoring duplicate UI call")
+            return
+        }
+        
+        // Mark as triggered for this ViewModel instance
+        shouldAutoTrigger = false
+        
+        // Use global singleton guard to prevent duplicate triggers across all ViewModel instances
+        if (!VerificationGuard.tryStartTrigger()) {
+            Log.d(TAG, "🎯 TRIGGER: Already triggered globally, ignoring duplicate call")
+            return
+        }
+        
+        viewModelScope.launch {
+            Log.d(TAG, "🎯 ========================================")
+            Log.d(TAG, "🎯 TRIGGER: Verification start requested (FIRST TIME)")
+            Log.d(TAG, "🎯 Thread: ${Thread.currentThread().name}")
+            Log.d(TAG, "🎯 Current guard state: ${VerificationGuard.getDebugState()}")
+            Log.d(TAG, "🎯 ========================================")
+            
+            // CRITICAL FIX: Set UI state to Processing when verification starts
+            _uiState.value = VerificationProcessingUiState.Processing
+            _currentStep.value = "Initializing verification..."
+            _progress.value = 0.0f
+            Log.d(TAG, "🎯 UI State set to Processing - Initializing verification...")
+            
+            // UI FIX: Add a small delay to ensure UI updates are visible
+            delay(100)
+            
+            val capturedImages = ImageStorage.getCapturedImages()
+            val missing = mutableListOf<String>()
+            
+            // Validate based on document type (passport vs ID) - matching iOS logic
+            if (capturedImages.passportImage != null) {
+                // Passport flow: only requires passport + face
+                if (capturedImages.faceImage == null) missing.add("face")
+                Log.d(TAG, "PASSPORT validation - Image presence: passport=${capturedImages.passportImage != null}, face=${capturedImages.faceImage != null}")
+            } else {
+                // ID flow: requires front + back + face
+                if (capturedImages.frontImage == null) missing.add("front")
+                if (capturedImages.backImage == null) missing.add("back")
+                if (capturedImages.faceImage == null) missing.add("face")
+                Log.d(TAG, "ID validation - Image presence: front=${capturedImages.frontImage != null}, back=${capturedImages.backImage != null}, face=${capturedImages.faceImage != null}")
+            }
+            
+            if (missing.isEmpty()) {
+                // All required images are present, start verification
+                _currentStep.value = "Preparing images..."
+                _progress.value = 0.1f
+                Log.d(TAG, "🎯 UI State updated: Preparing images...")
+                
+                if (capturedImages.passportImage != null) {
+                    startVerification(
+                        frontImageBitmap = null,
+                        backImageBitmap = null,
+                        faceImageBitmap = capturedImages.faceImage,
+                        passportImageBitmap = capturedImages.passportImage,
+                        context = context
+                    )
+                } else {
+                    startVerification(
+                        frontImageBitmap = capturedImages.frontImage,
+                        backImageBitmap = capturedImages.backImage,
+                        faceImageBitmap = capturedImages.faceImage,
+                        context = context
+                    )
+                }
+            } else {
+                Log.e(TAG, "Cannot start verification, missing images: ${missing.joinToString()}")
+                _uiState.value = VerificationProcessingUiState.Error("Missing required images: ${missing.joinToString()}. Please complete all steps.")
+            }
+        }
+    }
 
     fun startVerification(
         frontImageBitmap: Bitmap?,
@@ -299,13 +501,38 @@ class VerificationProcessingViewModel @Inject constructor(
         if (!VerificationGuard.tryStartVerification()) {
             val currentClientId = ClientConfiguration.getClientId()
             val currentClientGroupId = ClientConfiguration.getClientGroupId()
+            val guardState = VerificationGuard.getDebugState()
             
             Log.w(TAG, "⚠️ ========================================")
-            Log.w(TAG, "⚠️ Singleton guard blocked duplicate verification")
+            Log.w(TAG, "⚠️ Singleton guard blocked verification")
             Log.w(TAG, "⚠️ 🎯 ClientId=$currentClientId, ClientGroupId=$currentClientGroupId")
-            Log.w(TAG, "⚠️ This call was from the stack trace above")
+            Log.w(TAG, "⚠️ Guard state: $guardState")
             Log.w(TAG, "⚠️ ========================================")
-            return
+            
+            // UI FIX: Check if guard might be stuck and force reset if needed
+            if (guardState.contains("elapsed=") && guardState.contains("ms")) {
+                val elapsedMatch = Regex("elapsed=(\\d+)ms").find(guardState)
+                val elapsedMs = elapsedMatch?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+                
+                if (elapsedMs > 30000L) { // If stuck for more than 30 seconds
+                    Log.e(TAG, "🚨 GUARD APPEARS STUCK (${elapsedMs}ms) - FORCING RESET")
+                    VerificationGuard.forceReset()
+                    
+                    // Try again after reset
+                    if (VerificationGuard.tryStartVerification()) {
+                        Log.i(TAG, "✅ Verification started after force reset")
+                    } else {
+                        Log.e(TAG, "❌ Still blocked after force reset")
+                        _uiState.value = VerificationProcessingUiState.Error("Verification system is busy. Please try again.")
+                        return
+                    }
+                } else {
+                    // Normal duplicate - silently block
+                    return
+                }
+            } else {
+                return
+            }
         }
         
         // Prevent duplicate verification calls at ViewModel level
@@ -503,13 +730,57 @@ class VerificationProcessingViewModel @Inject constructor(
                 val requestJson = gson.toJson(orderedMap)
                 Log.d(TAG, "[DEBUG] Actual JSON being sent (LinkedHashMap): $requestJson")
                 
-                Log.d(TAG, "[API_CALL] About to call apiService.verify() - hasProcessedResponse=$hasProcessedResponse")
+                // SDK v1.2.45 CRITICAL FIX: Add global API call tracking to detect duplicates
+                val apiCallId = java.util.UUID.randomUUID().toString().substring(0, 8)
+                val apiCallStartTime = System.currentTimeMillis()
+                val sessionCallCount = VerificationGuard.incrementApiCallCount()
+                
+                Log.d(TAG, "🌐 ========================================")
+                Log.d(TAG, "🌐 [API $apiCallId] VERIFICATION API CALL STARTING")
+                Log.d(TAG, "🌐 [API $apiCallId] Time: $apiCallStartTime")
+                Log.d(TAG, "🌐 [API $apiCallId] Thread: ${Thread.currentThread().name}")
+                Log.d(TAG, "🌐 [API $apiCallId] ClientId: ${ClientConfiguration.getClientId()}")
+                Log.d(TAG, "🌐 [API $apiCallId] ClientGroupId: ${ClientConfiguration.getClientGroupId()}")
+                Log.d(TAG, "🌐 [API $apiCallId] hasProcessedResponse: $hasProcessedResponse")
+                Log.d(TAG, "🌐 [API $apiCallId] Session call count: $sessionCallCount")
+                
+                if (sessionCallCount > 1) {
+                    Log.w(TAG, "🚨 ========================================")
+                    Log.w(TAG, "🚨 [API $apiCallId] DUPLICATE API CALL DETECTED!")
+                    Log.w(TAG, "🚨 [API $apiCallId] This is call #$sessionCallCount in this session")
+                    Log.w(TAG, "🚨 [API $apiCallId] SDK should only make 1 verification API call per session")
+                    Log.w(TAG, "🚨 [API $apiCallId] SILENTLY BLOCKING duplicate call - no error shown to user")
+                    Log.w(TAG, "🚨 [API $apiCallId] The first API call will continue processing normally")
+                    Log.w(TAG, "🚨 ========================================")
+                    
+                    // CRITICAL: Silently block duplicate API calls - let the first call continue
+                    return@launch
+                }
+                
+                Log.d(TAG, "🌐 [API $apiCallId] ========================================")
+                
+                // Update UI state to show we're submitting to server
+                _currentStep.value = "Submitting verification..."
+                _progress.value = 0.3f
+                Log.d(TAG, "🌐 [API $apiCallId] UI State updated: Submitting verification...")
                 
                 val response = apiService.verify(
                     clientId = ClientConfiguration.getClientId(), // Configurable client ID
                     clientGroupId = ClientConfiguration.getClientGroupId(), // Configurable client group ID
                     request = request.toOrderedMap()
                 )
+                
+                val apiCallDuration = System.currentTimeMillis() - apiCallStartTime
+                Log.d(TAG, "🌐 ========================================")
+                Log.d(TAG, "🌐 [API $apiCallId] VERIFICATION API CALL COMPLETED")
+                Log.d(TAG, "🌐 [API $apiCallId] Duration: ${apiCallDuration}ms")
+                Log.d(TAG, "🌐 [API $apiCallId] Response received")
+                Log.d(TAG, "🌐 [API $apiCallId] ========================================")
+                
+                // Update UI state to show we're processing the response
+                _currentStep.value = "Processing response..."
+                _progress.value = 0.7f
+                Log.d(TAG, "🌐 [API $apiCallId] UI State updated: Processing response...")
                 
                 Log.d(TAG, "[RETROFIT] Verification response received - hasProcessedResponse=$hasProcessedResponse")
                 Log.d(TAG, "[RETROFIT] Response data: $response")
@@ -559,6 +830,9 @@ class VerificationProcessingViewModel @Inject constructor(
                 
                 // Process response exactly like iOS
                 val verificationResult = processVerificationResponse(response)
+                Log.d(TAG, "🔍 VERIFICATION RESULT: $verificationResult")
+                Log.d(TAG, "🔍 Expected SUCCESS: ${VerificationResults.SUCCESS}")
+                Log.d(TAG, "🔍 Result matches SUCCESS: ${verificationResult == VerificationResults.SUCCESS}")
                 
                                  when (verificationResult) {
                     VerificationResults.SUCCESS -> {
@@ -577,18 +851,35 @@ class VerificationProcessingViewModel @Inject constructor(
                          if (!resultData.accountNumber.isNullOrEmpty()) {
                              val verificationStateManager = com.artiusid.sdk.utils.VerificationStateManager(context)
                              val fullName = "${resultData.firstName ?: ""} ${resultData.lastName ?: ""}".trim()
+                             
+                             // 🚨 CRITICAL: Get current environment for verification storage
+                             val currentEnvironment = UrlBuilder.getCurrentEnvironment(context)
+                             val environmentForStorage = when (currentEnvironment.uppercase()) {
+                                 "SANDBOX" -> "Sandbox"
+                                 "DEVELOPMENT" -> "Development"
+                                 "STAGING" -> "Staging"
+                                 else -> "Sandbox"
+                             }
+                             
                              verificationStateManager.storeVerificationSuccess(
                                 accountNumber = resultData.accountNumber ?: "",
                                 accountFullName = fullName.takeIf { !it.isNullOrEmpty() },
-                                 isAccountActive = true
+                                isAccountActive = true,
+                                environment = environmentForStorage // 🚨 CRITICAL: Tag with environment
                              )
-                             Log.d(TAG, "Stored verification success with account: ${resultData.accountNumber}")
+                             Log.d(TAG, "🚨 Stored verification success with account: ${resultData.accountNumber} for environment: $environmentForStorage")
                          }
                          
+                         Log.d(TAG, "🎉 Setting final UI states...")
                          _currentStep.value = "Verification complete!"
                          _progress.value = 1.0f
+                         Log.d(TAG, "🎉 UI State: Verification complete! (progress: 1.0)")
                          delay(500)
+                         Log.d(TAG, "🎉 Setting UI state to SUCCESS")
+                         Log.d(TAG, "🎉 Current UI state before: ${_uiState.value}")
                          _uiState.value = VerificationProcessingUiState.Success
+                         Log.d(TAG, "🎉 Current UI state after: ${_uiState.value}")
+                         Log.d(TAG, "🎉 UI STATE SET TO SUCCESS - should navigate now")
                      }
                     else -> {
                         Log.w(TAG, "Verification failed: ${verificationResult.localizedDescription}")

@@ -31,6 +31,28 @@ import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.presentation.components.DocumentRecaptureNotificationView
 
 @OptIn(ExperimentalMaterial3Api::class)
+// ✅ CRITICAL FIX v1.2.47: Global screen guard to prevent multiple screen instances
+private object ScreenGuard {
+    @Volatile
+    private var hasScreenTriggered = false
+    
+    fun tryTrigger(): Boolean {
+        synchronized(this) {
+            if (hasScreenTriggered) {
+                return false
+            }
+            hasScreenTriggered = true
+            return true
+        }
+    }
+    
+    fun reset() {
+        synchronized(this) {
+            hasScreenTriggered = false
+        }
+    }
+}
+
 @Composable
 fun VerificationProcessingScreen(
     onNavigateToResults: () -> Unit,
@@ -44,13 +66,21 @@ fun VerificationProcessingScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val progress by viewModel.progress.collectAsState()
-    val verificationResultData by viewModel.verificationResultData.collectAsState()
-    val currentStep by viewModel.currentStep.collectAsState()
     var localError by remember { mutableStateOf<String?>(null) }
     
-    // Guard flag to prevent LaunchedEffect from triggering multiple times during recomposition
-    var hasTriggeredVerification by remember { mutableStateOf(false) }
+    // 🚨 CRITICAL FIX: Enhanced state change logging to debug UI stuck issue
+    LaunchedEffect(uiState) {
+        Log.d("VerifProcessVM", "🔄 ========================================")
+        Log.d("VerifProcessVM", "🔄 UI: STATE CHANGE DETECTED")
+        Log.d("VerifProcessVM", "🔄 UI: New state: $uiState")
+        Log.d("VerifProcessVM", "🔄 UI: State type: ${uiState.javaClass.simpleName}")
+        Log.d("VerifProcessVM", "🔄 UI: Is Success? ${uiState is VerificationProcessingUiState.Success}")
+        Log.d("VerifProcessVM", "🔄 UI: Is Processing? ${uiState is VerificationProcessingUiState.Processing}")
+        Log.d("VerifProcessVM", "🔄 UI: Timestamp: ${System.currentTimeMillis()}")
+        Log.d("VerifProcessVM", "🔄 ========================================")
+    }
+    
+    // ARCHITECTURAL FIX: No more guards needed - verification is triggered once by ViewModel
     
     // SDK v1.2.39 CRITICAL FIX: Enhanced cleanup on screen disposal
     DisposableEffect(Unit) {
@@ -63,9 +93,8 @@ fun VerificationProcessingScreen(
             Log.d("VerifProcessVM", "🔵 UI: Screen disposed - performing cleanup")
             Log.d("VerifProcessVM", "🔵 UI: Previous guard state: ${VerificationGuard.getDebugState()}")
             
-            // Reset UI-level guard flag
-            hasTriggeredVerification = false
-            Log.d("VerifProcessVM", "🔵 UI: hasTriggeredVerification reset to false")
+            // Note: UI guard is now managed globally by VerificationGuard
+            Log.d("VerifProcessVM", "🔵 UI: Screen disposed - VerificationGuard will handle cleanup")
             
             // CRITICAL: Reset singleton guard to prevent stuck states
             VerificationGuard.resetVerification()
@@ -75,79 +104,23 @@ fun VerificationProcessingScreen(
         }
     }
 
-    // Start verification when the screen is first displayed
-    // CRITICAL FIX v1.2.44: Use viewModel as key to prevent duplicate calls across recompositions
-    LaunchedEffect(viewModel) {
-        // SDK v1.2.40 CRITICAL FIX: Add comprehensive debugging for duplicate call investigation
-        val currentThread = Thread.currentThread()
-        val stackTrace = currentThread.stackTrace
+    // ✅ CRITICAL FIX v1.2.47: Use global screen guard to prevent multiple screen instances
+    // This ensures verification is triggered only once across ALL screen/ViewModel instances
+    LaunchedEffect(Unit) {
+        Log.d("VerifProcessVM", "🎯 ========================================")
+        Log.d("VerifProcessVM", "🎯 UI: Screen instance created - ViewModel ${viewModel.hashCode()}")
         
-        Log.d("VerifProcessVM", "🔵 ========================================")
-        Log.d("VerifProcessVM", "🔵 UI: LaunchedEffect TRIGGERED")
-        Log.d("VerifProcessVM", "🔵 Thread: ${currentThread.name} (ID: ${currentThread.id})")
-        Log.d("VerifProcessVM", "🔵 hasTriggeredVerification = $hasTriggeredVerification")
-        Log.d("VerifProcessVM", "🔵 ViewModel instance: ${viewModel.hashCode()}")
-        Log.d("VerifProcessVM", "🔵 LaunchedEffect called from:")
-        stackTrace.take(6).forEachIndexed { index, element ->
-            if (index > 0) { // Skip the current method
-                Log.d("VerifProcessVM", "🔵   at ${element.className}.${element.methodName}(${element.fileName}:${element.lineNumber})")
-            }
-        }
-        Log.d("VerifProcessVM", "🔵 ========================================")
-        
-        // Check guard flag at UI level to prevent duplicate calls during recomposition
-        if (hasTriggeredVerification) {
-            Log.w("VerifProcessVM", "⚠️ ========================================")
-            Log.w("VerifProcessVM", "⚠️ UI: LaunchedEffect DUPLICATE DETECTED")
-            Log.w("VerifProcessVM", "⚠️ Recomposition triggered LaunchedEffect again")
-            Log.w("VerifProcessVM", "⚠️ BLOCKING duplicate startVerification() call")
-            Log.w("VerifProcessVM", "⚠️ Same ViewModel instance: ${viewModel.hashCode()}")
-            Log.w("VerifProcessVM", "⚠️ ========================================")
-            return@LaunchedEffect
-        }
-        hasTriggeredVerification = true
-        Log.d("VerifProcessVM", "✅ ========================================")
-        Log.d("VerifProcessVM", "✅ UI: Guard flag SET - proceeding with verification")
-        Log.d("VerifProcessVM", "✅ About to call viewModel.startVerification()")
-        Log.d("VerifProcessVM", "✅ ========================================")
-        val capturedImages = ImageStorage.getCapturedImages()
-        val missing = mutableListOf<String>()
-        
-        // Validate based on document type (passport vs ID) - matching iOS logic
-        if (capturedImages.passportImage != null) {
-            // Passport flow: only requires passport + face
-            if (capturedImages.faceImage == null) missing.add("face")
-            Log.d("VerificationProcessingScreen", "PASSPORT validation - Image presence: passport=${capturedImages.passportImage != null}, face=${capturedImages.faceImage != null}")
-            Log.d("VerificationProcessingScreen", "PASSPORT validation - Image sizes: passport=${capturedImages.passportImage?.width}x${capturedImages.passportImage?.height}, face=${capturedImages.faceImage?.width}x${capturedImages.faceImage?.height}")
+        if (ScreenGuard.tryTrigger()) {
+            Log.d("VerifProcessVM", "🎯 UI: FIRST SCREEN INSTANCE - triggering verification")
+            Log.d("VerifProcessVM", "🎯 UI: All subsequent screen instances will be ignored")
+            Log.d("VerifProcessVM", "🎯 ========================================")
+            
+            // Only the first screen instance triggers verification
+            viewModel.triggerVerificationStart(context)
         } else {
-            // ID flow: requires front + back + face
-            if (capturedImages.frontImage == null) missing.add("front")
-            if (capturedImages.backImage == null) missing.add("back")
-            if (capturedImages.faceImage == null) missing.add("face")
-            Log.d("VerificationProcessingScreen", "ID validation - Image presence: front=${capturedImages.frontImage != null}, back=${capturedImages.backImage != null}, face=${capturedImages.faceImage != null}")
-            Log.d("VerificationProcessingScreen", "ID validation - Image sizes: front=${capturedImages.frontImage?.width}x${capturedImages.frontImage?.height}, back=${capturedImages.backImage?.width}x${capturedImages.backImage?.height}, face=${capturedImages.faceImage?.width}x${capturedImages.faceImage?.height}")
-        }
-        
-        if (missing.isNotEmpty()) {
-            Log.e("VerificationProcessingScreen", "Cannot start verification, missing images: ${missing.joinToString()}")
-            localError = "Missing required images: ${missing.joinToString()}. Please complete all steps."
-            return@LaunchedEffect
-        }
-        if (capturedImages.passportImage != null) {
-            viewModel.startVerification(
-                frontImageBitmap = null,
-                backImageBitmap = null,
-                faceImageBitmap = capturedImages.faceImage,
-                passportImageBitmap = capturedImages.passportImage,
-                context = context
-            )
-        } else {
-            viewModel.startVerification(
-                frontImageBitmap = capturedImages.frontImage,
-                backImageBitmap = capturedImages.backImage,
-                faceImageBitmap = capturedImages.faceImage,
-                context = context
-            )
+            Log.d("VerifProcessVM", "🎯 UI: DUPLICATE SCREEN INSTANCE - ignoring trigger")
+            Log.d("VerifProcessVM", "🎯 UI: Verification already triggered by another screen instance")
+            Log.d("VerifProcessVM", "🎯 ========================================")
         }
     }
 
@@ -194,18 +167,22 @@ fun VerificationProcessingScreen(
             ) {
                 when (uiState) {
                     VerificationProcessingUiState.Processing -> {
-                        // Processing animation placeholder
-                        ThemedImage(
-                            defaultResourceId = R.drawable.img_crossplatform,
-                            overrideKey = "cross_platform_image",
-                            contentDescription = "Processing",
+                        Log.d("VerifProcessVM", "🔄 UI: Rendering PROCESSING state - SIMPLIFIED")
+                        
+                        // Add spacer to push content down from top
+                        Spacer(modifier = Modifier.height(80.dp))
+                        
+                        // Simple spinning wheel
+                        CircularProgressIndicator(
                             modifier = Modifier
-                                .size(200.dp)
-                                .padding(vertical = 40.dp)
+                                .size(120.dp)
+                                .padding(bottom = 40.dp), // Space between circle and text
+                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
+                            strokeWidth = 8.dp
                         )
 
                         Text(
-                            text = "Verification in Progress",
+                            text = "Processing...",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground,
@@ -214,66 +191,53 @@ fun VerificationProcessingScreen(
                         )
 
                         Text(
-                            text = currentStep,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(bottom = 20.dp)
-                        )
-
-                        LinearProgressIndicator(
-                            progress = progress,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp),
-                            color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
-                        )
-
-                        Text(
-                            text = "Please do not close the application while we process your request. This can take up to a minute to process.",
+                            text = "Please wait, this could take up to a minute.",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 20.dp)
+                            modifier = Modifier.padding(horizontal = 40.dp)
                         )
                     }
                     
                     VerificationProcessingUiState.Success -> {
-                        // Processing complete
+                        Log.d("VerifProcessVM", "🔄 UI: Rendering SUCCESS state - SIMPLIFIED")
+                        
+                        // Simple success icon
                         ThemedImage(
                             defaultResourceId = R.drawable.img_success,
                             overrideKey = "success_icon",
-                            contentDescription = "Processing Complete",
+                            contentDescription = "Success",
                             modifier = Modifier
-                                .size(200.dp)
-                                .padding(vertical = 40.dp)
+                                .size(120.dp)
+                                .padding(vertical = 60.dp)
                         )
 
                         Text(
-                            text = "Processing Complete",
+                            text = "Verification Complete!",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(vertical = 20.dp)
                         )
-
-                        Text(
-                            text = "Redirecting to results...",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center
-                        )
                         
-                        // Navigate to results after a short delay
-                        val context = LocalContext.current
+                        // Navigate to results immediately when success state is reached
                         LaunchedEffect(Unit) {
+                            Log.d("VerifProcessVM", "🔄 UI: SUCCESS - navigating to results immediately")
+                            
                             // Play success sound
                             val soundManager = com.artiusid.sdk.utils.CameraSoundManager(context)
                             soundManager.playSuccessSound()
                             
-                            kotlinx.coroutines.delay(1000)
+                            // Small delay to show success message
+                            kotlinx.coroutines.delay(500)
+                            
+                            Log.d("VerifProcessVM", "🔄 UI: Calling onNavigateToResults()")
                             onNavigateToResults()
+                            
+                            // Reset screen guard AFTER navigation
+                            ScreenGuard.reset()
+                            Log.d("VerifProcessVM", "🔄 UI: Screen guard reset - ready for next verification")
                             
                             // Cleanup sound manager
                             soundManager.cleanup()

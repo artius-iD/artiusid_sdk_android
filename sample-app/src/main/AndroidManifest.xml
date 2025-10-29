@@ -33,9 +33,11 @@
             </intent-filter>
         </activity>
         
-        <!-- Firebase Messaging Service for FCM tokens -->
+        <!-- Sample App's Firebase Messaging Service -->
+        <!-- ARCHITECTURAL DECISION: Sample app manages its own Firebase tokens AND notifications -->
+        <!-- SDK receives FCM token from sample app via customFcmToken parameter -->
         <service
-            android:name="com.artiusid.sdk.services.MyFirebaseMessagingService"
+            android:name=".SampleFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

@@ -11,6 +11,7 @@ import com.google.gson.annotations.SerializedName
 /**
  * Matches iOS ApprovalRequestTestingRequest.swift EXACTLY
  * CRITICAL: iOS includes timeout field with default value 30
+ * CRITICAL FIX: Removed fcmToken field - iOS doesn't include it!
  */
 data class ApprovalRequestTestingRequest(
     @SerializedName("clientId")

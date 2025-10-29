@@ -128,15 +128,15 @@ class APIManager(private val context: Context) {
                 }.toString()
                 val body = jsonBody.toRequestBody("application/json".toMediaTypeOrNull())
 
-                // Use proper Android User-Agent string
-                val androidUserAgent = "ArtiusID-Android"
-                Log.d(TAG, "Using User-Agent: $androidUserAgent")
+                // ✅ CRITICAL FIX: Match iOS exactly - NO custom User-Agent header
+                // iOS only sets Content-Type, uses system default User-Agent
+                Log.d(TAG, "Using system default User-Agent (matching iOS behavior)")
 
                 val req = Request.Builder()
                     .url(fullUrl)
                     .post(body)
                     .addHeader("Content-Type", "application/json")
-                    .addHeader("User-Agent", androidUserAgent)
+                    // ✅ REMOVED: .addHeader("User-Agent", androidUserAgent) - iOS doesn't set this
                     .build()
 
                 Log.d(TAG, "Certificate registration REQUEST:")

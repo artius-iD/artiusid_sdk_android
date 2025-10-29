@@ -21,7 +21,13 @@ object AppUrlConfig {
      */
     
     // Set your desired environment
-    // Options: "Sandbox", "Development", "QA", "Staging", "Production"
+    // Options: "Sandbox", "Development", "Staging", "Production"
+    // IMPORTANT: Must match certificate domains in api-cert-chain.pem
+    // Available certificates:
+    // - Sandbox: sandbox.mobile.artiusid.dev, sandbox.registration.artiusid.dev, sandbox.services.artiusid.dev
+    // - Development: *.dev.artiusid.dev
+    // - Staging: *.stage.artiusid.dev  
+    // - Production: *.prod.artiusid.dev
     private const val ENVIRONMENT = "Sandbox"
     
     // Set your desired domain  
@@ -30,9 +36,16 @@ object AppUrlConfig {
     
     /**
      * Get the configuration to pass to the SDK
-     * This will generate URLs like:
+     * 
+     * For Sandbox environment, this will generate URLs like:
      * - https://sandbox.mobile.artiusid.dev/verifi/api/verification
      * - https://sandbox.registration.artiusid.dev/LoadCertificateFunction
+     * - https://sandbox.services.artiusid.dev/ApprovalRequestTestingFunction
+     * 
+     * For other environments:
+     * - Development: https://dev.mobile.artiusid.dev/...
+     * - Staging: https://stage.mobile.artiusid.dev/...
+     * - Production: https://prod.mobile.artiusid.dev/...
      */
     fun getConfiguration(): UrlConfiguration {
         return UrlConfiguration(

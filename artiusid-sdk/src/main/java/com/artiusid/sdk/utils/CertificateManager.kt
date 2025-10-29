@@ -211,6 +211,31 @@ class CertificateManager(private val context: Context) {
         private const val ENCRYPTED_PREFS_NAME = "certificate_prefs"
         private const val CERT_PEM_KEY = "certificate_pem"
         private const val PRIVATE_KEY_KEY = "private_key_pem"
+        
+        // 🚨 CRITICAL FIX: Environment-specific certificate storage keys
+        private const val KEY_ENVIRONMENT_PREFIX = "env_"
+    }
+    
+    /**
+     * 🚨 CRITICAL FIX: Get current environment for certificate storage
+     */
+    private fun getCurrentEnvironment(): String {
+        return try {
+            UrlBuilder.getCurrentEnvironment(context)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to get current environment, defaulting to Sandbox: ${e.message}")
+            "Sandbox"
+        }
+    }
+    
+    /**
+     * 🚨 CRITICAL FIX: Get environment-specific key for certificate storage
+     */
+    private fun getEnvironmentKey(baseKey: String, environment: String? = null): String {
+        val env = environment ?: getCurrentEnvironment()
+        val envKey = "${KEY_ENVIRONMENT_PREFIX}${env}_$baseKey"
+        Log.d(TAG, "🔑 Using environment-specific key: $envKey (environment: $env)")
+        return envKey
     }
 
     /**
@@ -304,18 +329,24 @@ class CertificateManager(private val context: Context) {
      */
     fun storeCertificatePem(certPem: String) {
         try {
+            val currentEnv = getCurrentEnvironment()
+            val environmentKey = getEnvironmentKey(CERT_PEM_KEY)
+            
+            Log.d(TAG, "🔐 Storing certificate PEM for environment: $currentEnv")
+            Log.d(TAG, "🔑 Using storage key: $environmentKey")
+            
             // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
             val success = EncryptedPreferencesManager.safePutString(
                 context, 
                 ENCRYPTED_PREFS_NAME, 
-                CERT_PEM_KEY, 
+                environmentKey, // 🚨 CRITICAL: Use environment-specific key
                 certPem
             )
             
             if (success) {
-                Log.d(TAG, "✅ Certificate PEM stored securely in encrypted storage (iOS Keychain equivalent)")
+                Log.d(TAG, "✅ Certificate PEM stored securely for environment '$currentEnv' (iOS Keychain equivalent)")
             } else {
-                Log.w(TAG, "⚠️ Failed to store certificate PEM in encrypted storage, using fallback")
+                Log.w(TAG, "⚠️ Failed to store certificate PEM for environment '$currentEnv', using fallback")
                 throw Exception("EncryptedPreferencesManager.safePutString failed")
             }
             
@@ -343,20 +374,26 @@ class CertificateManager(private val context: Context) {
      */
     fun loadCertificatePem(): String? {
         try {
+            val currentEnv = getCurrentEnvironment()
+            val environmentKey = getEnvironmentKey(CERT_PEM_KEY)
+            
+            Log.d(TAG, "🔐 Loading certificate PEM for environment: $currentEnv")
+            Log.d(TAG, "🔑 Using storage key: $environmentKey")
+            
             // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
             val encryptedCertPem = EncryptedPreferencesManager.safeGetString(
                 context, 
                 ENCRYPTED_PREFS_NAME, 
-                CERT_PEM_KEY, 
+                environmentKey, // 🚨 CRITICAL: Use environment-specific key
                 null
             )
             
             if (encryptedCertPem != null) {
-                Log.d(TAG, "✅ Certificate PEM loaded from encrypted storage (iOS Keychain equivalent)")
+                Log.d(TAG, "✅ Certificate PEM loaded for environment '$currentEnv' (iOS Keychain equivalent)")
                 return encryptedCertPem
             }
             
-            Log.d(TAG, "🔍 No certificate found in encrypted storage, checking file storage...")
+            Log.d(TAG, "🔍 No certificate found for environment '$currentEnv', checking file storage...")
             
         } catch (e: Exception) {
             Log.w(TAG, "⚠️ Failed to load certificate PEM from encrypted storage, falling back to file", e)
@@ -391,16 +428,22 @@ class CertificateManager(private val context: Context) {
      */
     fun storePrivateKeyPem(privateKeyPem: String) {
         try {
+            val currentEnv = getCurrentEnvironment()
+            val environmentKey = getEnvironmentKey(PRIVATE_KEY_KEY)
+            
+            Log.d(TAG, "🔐 Storing private key PEM for environment: $currentEnv")
+            Log.d(TAG, "🔑 Using storage key: $environmentKey")
+            
             // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
             val success = EncryptedPreferencesManager.safePutString(
                 context, 
                 ENCRYPTED_PREFS_NAME, 
-                PRIVATE_KEY_KEY, 
+                environmentKey, // 🚨 CRITICAL: Use environment-specific key
                 privateKeyPem
             )
             
             if (success) {
-                Log.d(TAG, "✅ Private Key PEM stored securely in encrypted storage (iOS Keychain equivalent)")
+                Log.d(TAG, "✅ Private Key PEM stored securely for environment '$currentEnv' (iOS Keychain equivalent)")
             } else {
                 throw Exception("EncryptedPreferencesManager.safePutString failed for private key")
             }
@@ -420,20 +463,26 @@ class CertificateManager(private val context: Context) {
      */
     fun loadPrivateKeyPem(): String? {
         try {
+            val currentEnv = getCurrentEnvironment()
+            val environmentKey = getEnvironmentKey(PRIVATE_KEY_KEY)
+            
+            Log.d(TAG, "🔐 Loading private key PEM for environment: $currentEnv")
+            Log.d(TAG, "🔑 Using storage key: $environmentKey")
+            
             // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
             val encryptedPrivateKeyPem = EncryptedPreferencesManager.safeGetString(
                 context, 
                 ENCRYPTED_PREFS_NAME, 
-                PRIVATE_KEY_KEY, 
+                environmentKey, // 🚨 CRITICAL: Use environment-specific key
                 null
             )
             
             if (encryptedPrivateKeyPem != null) {
-                Log.d(TAG, "✅ Private Key PEM loaded from encrypted storage (iOS Keychain equivalent)")
+                Log.d(TAG, "✅ Private Key PEM loaded for environment '$currentEnv' (iOS Keychain equivalent)")
                 return encryptedPrivateKeyPem
             }
             
-            Log.d(TAG, "❌ No private key found in encrypted storage")
+            Log.d(TAG, "❌ No private key found for environment '$currentEnv'")
             return null
             
         } catch (e: Exception) {
