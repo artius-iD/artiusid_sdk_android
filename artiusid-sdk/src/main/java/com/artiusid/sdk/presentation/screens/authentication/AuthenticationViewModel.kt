@@ -47,8 +47,12 @@ class AuthenticationViewModel @Inject constructor(
 
     private val _currentStep = MutableStateFlow("Initializing...")
     val currentStep: StateFlow<String> = _currentStep.asStateFlow()
+    
+    // Track if API authentication succeeded (for biometric fallback validation)
+    private var apiAuthenticationSucceeded = false
 
     fun startAuthentication(context: Context) {
+        apiAuthenticationSucceeded = false // Reset on each attempt
         viewModelScope.launch {
             try {
                 Log.d(TAG, "=== AUTHENTICATION FLOW STARTED ===")
@@ -150,23 +154,30 @@ class AuthenticationViewModel @Inject constructor(
                                 _currentStep.value = "Account verified - requesting biometric authentication..."
                                 delay(500)
                                 
-                                Log.d(TAG, "Account verified - requesting biometric authentication (like iOS)")
+                                // Mark API authentication as successful
+                                apiAuthenticationSucceeded = true
+                                
+                                Log.d(TAG, "✅ API authentication successful - requesting biometric authentication (like iOS)")
                                 _uiState.value = AuthenticationUiState.BiometricRequired
                             } else {
-                                Log.w(TAG, "Authentication failed - account not active")
+                                Log.w(TAG, "❌ Authentication failed - account not active")
+                                apiAuthenticationSucceeded = false
                                 verificationStateManager.clearVerificationData()
                                 _uiState.value = AuthenticationUiState.Error("Account is not active")
                             }
                         } catch (e: Exception) {
-                            Log.e(TAG, "Error parsing authentication payload", e)
+                            Log.e(TAG, "❌ Error parsing authentication payload", e)
+                            apiAuthenticationSucceeded = false
                             _uiState.value = AuthenticationUiState.Error("Failed to parse authentication response")
                         }
                     } else {
-                        Log.e(TAG, "Empty authentication payload")
+                        Log.e(TAG, "❌ Empty authentication payload")
+                        apiAuthenticationSucceeded = false
                         _uiState.value = AuthenticationUiState.Error("Invalid authentication response")
                     }
                 } else {
-                    Log.w(TAG, "Authentication failed with status: ${response.authenticationData.statusCode}")
+                    Log.w(TAG, "❌ Authentication failed with status: ${response.authenticationData.statusCode}")
+                    apiAuthenticationSucceeded = false
                     verificationStateManager.clearVerificationData()
                     _uiState.value = AuthenticationUiState.Error("Authentication failed: ${response.authenticationData.message}")
                 }
@@ -174,7 +185,8 @@ class AuthenticationViewModel @Inject constructor(
                 Log.d(TAG, "=== AUTHENTICATION FLOW ENDED ===")
                 
             } catch (e: Exception) {
-                Log.e(TAG, "Authentication error", e)
+                Log.e(TAG, "❌ Authentication error", e)
+                apiAuthenticationSucceeded = false
                 _uiState.value = AuthenticationUiState.Error("Authentication failed: ${e.message}")
             }
         }

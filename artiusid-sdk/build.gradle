@@ -15,9 +15,7 @@ android {
     defaultConfig {
         minSdk Integer.parseInt(project.SDK_MIN_SDK_VERSION)
         targetSdk Integer.parseInt(project.SDK_TARGET_SDK_VERSION)
-        versionCode Integer.parseInt(project.SDK_VERSION_CODE)
-        versionName project.SDK_VERSION_NAME
-        
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -50,7 +48,6 @@ android {
         
         debug {
             minifyEnabled false
-            debuggable true
             buildConfigField "boolean", "DEBUG_MODE", "true"
             buildConfigField "boolean", "ENABLE_LOGGING", "true"
         }

@@ -16,13 +16,15 @@ import com.artiusid.sdk.ArtiusIDSDK
 import com.artiusid.sdk.models.AuthenticationResult
 import com.artiusid.sdk.models.SDKError
 import com.artiusid.sdk.models.SDKErrorCode
-import com.artiusid.sdk.ui.screens.auth.AuthenticationProgressScreen
+import com.artiusid.sdk.presentation.screens.authentication.AuthenticationScreen
 import com.artiusid.sdk.ui.theme.EnhancedSDKTheme
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Authentication Activity that matches iOS AuthenticationProgressView exactly
  * Shows biometric prompt + progress + API authentication
  */
+@AndroidEntryPoint
 class AuthenticationActivity : FragmentActivity() {
     
     companion object {
@@ -42,8 +44,8 @@ class AuthenticationActivity : FragmentActivity() {
                 EnhancedSDKTheme(
                     themeConfig = themeConfig
                 ) {
-                AuthenticationProgressScreen(
-                    onAuthenticationSuccess = {
+                AuthenticationScreen(
+                    onNavigateToApproval = {
                         // Match iOS: successful authentication
                         ArtiusIDSDK.authenticationCallback?.onAuthenticationSuccess(
                             AuthenticationResult(
@@ -56,17 +58,7 @@ class AuthenticationActivity : FragmentActivity() {
                         )
                         finish()
                     },
-                    onAuthenticationFailure = {
-                        // Match iOS: failed authentication
-                        ArtiusIDSDK.authenticationCallback?.onAuthenticationError(
-                            SDKError(
-                                code = SDKErrorCode.AUTHENTICATION_FAILED,
-                                message = "Authentication failed"
-                            )
-                        )
-                        finish()
-                    },
-                    onBack = {
+                    onNavigateBack = {
                         // Match iOS: back to home (cancelled)
                         ArtiusIDSDK.authenticationCallback?.onAuthenticationCancelled()
                         finish()
