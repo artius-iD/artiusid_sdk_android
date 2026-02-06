@@ -22,7 +22,9 @@ data class VerificationRequest(
     @SerializedName("deviceModel")
     val deviceModel: String,
     @SerializedName("fcmToken")
-    val fcmToken: String
+    val fcmToken: String,
+    @SerializedName("oktaId")
+    val oktaId: String? = null // Optional Okta ID (NEW - matches iOS v2.0.12)
 ) {
     /**
      * Convert to LinkedHashMap to preserve field order during JSON serialization
@@ -30,7 +32,7 @@ data class VerificationRequest(
      * For passport documents (documentType=2), backImageBase64 will be empty string
      */
     fun toOrderedMap(): LinkedHashMap<String, Any> {
-        return linkedMapOf(
+        val map = linkedMapOf<String, Any>(
             "frontImageBase64" to frontImageBase64,
             "backImageBase64" to backImageBase64, // Always include, even if empty for passports
             "faceImageBase64" to faceImageBase64,
@@ -39,5 +41,14 @@ data class VerificationRequest(
             "deviceModel" to deviceModel,
             "fcmToken" to fcmToken
         )
+        
+        // Add oktaId if present (matches iOS conditional inclusion)
+        oktaId?.let {
+            if (it.isNotBlank()) {
+                map["oktaId"] = it
+            }
+        }
+        
+        return map
     }
 } 

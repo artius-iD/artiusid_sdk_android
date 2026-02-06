@@ -37,6 +37,10 @@ data class SDKConfiguration(
     val hostAppPackageName: String? = null,
     val sharedCertificateContext: Boolean = true,
     val sharedFirebaseContext: Boolean = true,
+    
+    // Okta ID Integration (NEW - matches iOS v2.0.12)
+    val includeOktaIDInVerificationPayload: Boolean = true, // Default to true like iOS
+    
     // Localization support
     val localizationOverrides: Map<String, String> = emptyMap(),
     // Image and GIF override support

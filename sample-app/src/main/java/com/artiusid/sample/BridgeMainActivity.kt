@@ -122,6 +122,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     private var selectedImageOverride by mutableStateOf(ImageOverrideOption.DEFAULT)
     private var selectedEnvironment by mutableStateOf("Sandbox")
     private var selectedDomain by mutableStateOf("artiusid.dev")
+    private var includeOktaID by mutableStateOf(true) // Okta ID enabled by default (matches iOS)
     private var verificationResultData by mutableStateOf<VerificationResultData?>(null)
     private var showResultsScreen by mutableStateOf(false)
     private var fcmTokenStatus by mutableStateOf("❌ Not available")
@@ -510,6 +511,67 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         text = "📍 Current: ${UrlBuilder.getCurrentConfiguration(this@BridgeMainActivity)}",
                         fontSize = 12.sp,
                         color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+            
+            // Okta ID Configuration (NEW - matches iOS v2.0.12)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "🔐 Okta ID Configuration",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "Include Okta ID in Verification",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "Collect Okta ID during verification flow",
+                                fontSize = 12.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                        
+                        Switch(
+                            checked = includeOktaID,
+                            onCheckedChange = { 
+                                includeOktaID = it
+                                android.util.Log.d("BridgeMainActivity", "🔐 Okta ID setting changed: $it")
+                                // Re-initialize SDK with new configuration
+                                initializeSDK()
+                            }
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Show current status
+                    Text(
+                        text = if (includeOktaID) "✅ Okta ID collection enabled" else "❌ Okta ID collection disabled",
+                        fontSize = 12.sp,
+                        color = if (includeOktaID) Color(0xFF4CAF50) else Color.Gray,
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
@@ -1036,7 +1098,10 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 // ✅ ARCHITECTURAL FIX: Sample app manages its own Firebase tokens AND notifications
                 // SDK should NOT handle Firebase notifications - sample app controls everything
                 handleFirebaseNotifications = false, // Disable SDK Firebase handling - sample app controls it
-                customFcmToken = null // Will be provided later via ArtiusIDSDK.updateFcmToken()
+                customFcmToken = null, // Will be provided later via ArtiusIDSDK.updateFcmToken()
+                
+                // ✅ Okta ID Integration (NEW - matches iOS v2.0.12)
+                includeOktaIDInVerificationPayload = includeOktaID
             )
             
             // Initialize SDK with enhanced theme

@@ -121,7 +121,23 @@ class SendApprovalRequest(
             
         } catch (e: Exception) {
             val totalDuration = System.currentTimeMillis() - startTime
-            Log.e(TAG, "📞 [Call $callId] ❌ Approval request failed after ${totalDuration}ms: ${e.localizedMessage}", e)
+            
+            // Enhanced error logging for HTTP exceptions
+            if (e is retrofit2.HttpException) {
+                val statusCode = e.code()
+                val errorBody = try {
+                    e.response()?.errorBody()?.string() ?: "No error body"
+                } catch (ex: Exception) {
+                    "Could not read error body: ${ex.message}"
+                }
+                
+                Log.e(TAG, "📞 [Call $callId] ❌ Approval request failed after ${totalDuration}ms: HTTP $statusCode")
+                Log.e(TAG, "📞 [Call $callId] ❌ Error response body: $errorBody")
+                Log.e(TAG, "📞 [Call $callId] ❌ Exception: ${e.message}", e)
+            } else {
+                Log.e(TAG, "📞 [Call $callId] ❌ Approval request failed after ${totalDuration}ms: ${e.localizedMessage}", e)
+            }
+            
             Log.d(TAG, "📞 [Call $callId] ========================================")
             Pair(false, null)
         }

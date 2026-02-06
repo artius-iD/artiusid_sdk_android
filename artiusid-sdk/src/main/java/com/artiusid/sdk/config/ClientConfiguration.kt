@@ -88,6 +88,16 @@ object ClientConfiguration {
     fun isInitialized(): Boolean = currentConfig != null
     
     /**
+     * Get whether Okta ID should be included in verification payload (NEW - matches iOS v2.0.12)
+     * Defaults to true if not configured
+     */
+    fun shouldIncludeOktaID(): Boolean {
+        val includeOktaID = currentConfig?.includeOktaIDInVerificationPayload ?: true
+        Log.d(TAG, "✅ Okta ID inclusion: $includeOktaID")
+        return includeOktaID
+    }
+    
+    /**
      * Get a readable description of the current client configuration
      */
     fun getConfigDescription(): String {

@@ -118,11 +118,17 @@ object UrlBuilder {
         
         return when (serviceType) {
             ServiceType.VERIFICATION, 
-            ServiceType.AUTHENTICATION, 
+            ServiceType.AUTHENTICATION -> {
+                if (environment == Environment.SANDBOX) {
+                    "https://$envPrefix.mobile.$domain"  // sandbox.mobile.artiusid.dev
+                } else {
+                    "https://$envPrefix-mobile$envSuffix.$domain"  // service-mobile.dev.artiusid.dev or service-mobile.stage.artiusid.dev
+                }
+            }
             ServiceType.APPROVAL_REQUEST, 
             ServiceType.APPROVAL_RESPONSE -> {
                 if (environment == Environment.SANDBOX) {
-                    "https://$envPrefix.mobile.$domain"  // sandbox.mobile.artiusid.dev
+                    "https://$envPrefix.services.$domain"  // sandbox.services.artiusid.dev (CRITICAL: Different domain for approval in sandbox)
                 } else {
                     "https://$envPrefix-mobile$envSuffix.$domain"  // service-mobile.dev.artiusid.dev or service-mobile.stage.artiusid.dev
                 }

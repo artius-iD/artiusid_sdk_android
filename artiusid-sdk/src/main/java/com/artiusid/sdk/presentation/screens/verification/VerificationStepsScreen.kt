@@ -132,8 +132,44 @@ fun VerificationStepsScreen(
                         )
                     }
                 }
+                
+                // Step 3: Okta ID (conditional - NEW matches iOS v2.0.12)
+                if (com.artiusid.sdk.config.ClientConfiguration.shouldIncludeOktaID()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ThemedIcon(
+                            iconRes = R.drawable.informational_icon,
+                            contentDescription = "Okta ID",
+                            overrideKey = "informational_icon",
+                            modifier = Modifier
+                                .size(64.dp)
+                                .padding(8.dp)
+                        )
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 16.dp)
+                        ) {
+                            Text(
+                                text = LocalizationManager.getString(context, "step_okta_id", "Okta ID"),
+                                fontSize = getRelativeFontSize(18f).sp,
+                                fontWeight = FontWeight.Bold,
+                                color = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor()
+                            )
+                            Text(
+                                text = LocalizationManager.getString(context, "step_okta_id_description", "Provide your Okta ID"),
+                                fontSize = getRelativeFontSize(14f).sp,
+                                color = com.artiusid.sdk.ui.theme.ThemedTextColors.getPrimaryTextColor()
+                            )
+                        }
+                    }
+                }
 
-                // Step 3: Completion - responsive layout
+                // Step 4: Completion - responsive layout
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

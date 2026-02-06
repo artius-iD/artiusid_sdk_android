@@ -47,6 +47,7 @@ import com.artiusid.sdk.presentation.screens.document.PassportScanIntroScreen
 import com.artiusid.sdk.presentation.screens.document.PassportScanScreen
 import com.artiusid.sdk.presentation.screens.document.PassportChipIntroScreen
 import com.artiusid.sdk.presentation.screens.document.PassportChipScanScreen
+import com.artiusid.sdk.presentation.screens.verification.CollectOktaIDScreen
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -74,6 +75,10 @@ sealed class Screen(val route: String) {
     object DocumentPreview : Screen("document_preview/{documentPath}") {
         fun createRoute(documentPath: String) = "document_preview/$documentPath"
     }
+    
+    // Okta ID collection (NEW - matches iOS v2.0.12)
+    object CollectOktaID : Screen("collect_okta_id")
+    
     object VerificationProcessing : Screen("verification_processing")
     object VerificationResults : Screen("verification_results")
     object VerificationFailure : Screen("verification_failure/{failureType}/{errorReason}") {
@@ -235,8 +240,15 @@ fun AppNavigation(
             DocumentScanScreen(
                 documentSide = com.artiusid.sdk.utils.DocumentSide.BACK,
                 onDocumentScanComplete = {
-                    android.util.Log.d("AppNavigation", "=== Navigating to VerificationProcessing from DocumentScanBack ===")
-                    navController.navigate(Screen.VerificationProcessing.route)
+                    // Check if Okta ID collection is enabled (matches iOS v2.0.12 flow)
+                    val includeOktaID = com.artiusid.sdk.config.ClientConfiguration.shouldIncludeOktaID()
+                    if (includeOktaID) {
+                        android.util.Log.d("AppNavigation", "=== Navigating to CollectOktaID from DocumentScanBack ===")
+                        navController.navigate(Screen.CollectOktaID.route)
+                    } else {
+                        android.util.Log.d("AppNavigation", "=== Okta ID disabled, navigating directly to VerificationProcessing ===")
+                        navController.navigate(Screen.VerificationProcessing.route)
+                    }
                 },
                 onNavigateBack = {
                     navController.popBackStack()
@@ -307,7 +319,34 @@ fun AppNavigation(
                         android.util.Log.w("AppNavigation", "⚠️ No passport data received from NFC scan")
                     }
                     
-                    android.util.Log.d("AppNavigation", "=== Navigating to VerificationProcessing from PassportChipScan ===")
+                    // Check if Okta ID collection is enabled (matches iOS v2.0.12 flow)
+                    val includeOktaID = com.artiusid.sdk.config.ClientConfiguration.shouldIncludeOktaID()
+                    if (includeOktaID) {
+                        android.util.Log.d("AppNavigation", "=== Navigating to CollectOktaID from PassportChipScan ===")
+                        navController.navigate(Screen.CollectOktaID.route)
+                    } else {
+                        android.util.Log.d("AppNavigation", "=== Okta ID disabled, navigating directly to VerificationProcessing ===")
+                        navController.navigate(Screen.VerificationProcessing.route)
+                    }
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+        
+        // Okta ID collection screen (NEW - matches iOS v2.0.12)
+        composable(Screen.CollectOktaID.route) {
+            android.util.Log.d("AppNavigation", "🔍 Entering CollectOktaID screen")
+            CollectOktaIDScreen(
+                onOktaIDCollected = { oktaId ->
+                    android.util.Log.d("AppNavigation", "✅ Okta ID collected: $oktaId")
+                    com.artiusid.sdk.utils.OktaIDHolder.setOktaID(oktaId)
+                    navController.navigate(Screen.VerificationProcessing.route)
+                },
+                onSkip = {
+                    android.util.Log.d("AppNavigation", "⏭️ Okta ID collection skipped")
+                    com.artiusid.sdk.utils.OktaIDHolder.setOktaID(null)
                     navController.navigate(Screen.VerificationProcessing.route)
                 },
                 onNavigateBack = {

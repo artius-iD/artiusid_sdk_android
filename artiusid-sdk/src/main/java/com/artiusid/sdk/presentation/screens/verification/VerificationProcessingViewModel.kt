@@ -26,6 +26,8 @@ import com.artiusid.sdk.utils.UrlBuilder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -698,6 +700,16 @@ class VerificationProcessingViewModel @Inject constructor(
                 Log.d(TAG, "  deviceId: $deviceId")
                 Log.d(TAG, "  deviceModel: $deviceModel")
                 Log.d(TAG, "  fcmToken: '$fcmToken'")
+                
+                // Get Okta ID if enabled (NEW - matches iOS v2.0.12)
+                val oktaId = if (com.artiusid.sdk.config.ClientConfiguration.shouldIncludeOktaID()) {
+                    val id = com.artiusid.sdk.utils.OktaIDHolder.getOktaID()
+                    Log.d(TAG, "  oktaId: '${id ?: "<not provided>"}'")
+                    id
+                } else {
+                    Log.d(TAG, "  oktaId: <disabled by configuration>")
+                    null
+                }
 
                 // Build request matching iOS format exactly - all fields required (non-nullable)
                 val request = VerificationRequest(
@@ -707,7 +719,8 @@ class VerificationProcessingViewModel @Inject constructor(
                     documentType = documentType,
                     deviceId = deviceId,
                     deviceModel = deviceModel ?: "", // Default to empty string if null
-                    fcmToken = fcmToken
+                    fcmToken = fcmToken,
+                    oktaId = oktaId // NEW - matches iOS v2.0.12
                 )
 
                 Log.d(TAG, "[RETROFIT] Outgoing VerificationRequest payload (iOS format):")
@@ -718,6 +731,7 @@ class VerificationProcessingViewModel @Inject constructor(
                 Log.d(TAG, "  deviceId: ${request.deviceId}")
                 Log.d(TAG, "  deviceModel: ${request.deviceModel}")
                 Log.d(TAG, "  fcmToken: '${request.fcmToken}'")
+                Log.d(TAG, "  oktaId: '${request.oktaId ?: "<not included>"}'")
                 Log.d(TAG, "  clientId=${ClientConfiguration.getClientId()} & clientGroupId=${ClientConfiguration.getClientGroupId()} will be added as URL query parameters (matching iOS)")
 
                 // Use Retrofit ApiService for verification submission (back to original working approach)
@@ -877,8 +891,16 @@ class VerificationProcessingViewModel @Inject constructor(
                          delay(500)
                          Log.d(TAG, "🎉 Setting UI state to SUCCESS")
                          Log.d(TAG, "🎉 Current UI state before: ${_uiState.value}")
-                         _uiState.value = VerificationProcessingUiState.Success
-                         Log.d(TAG, "🎉 Current UI state after: ${_uiState.value}")
+                         Log.d(TAG, "🎉 Current thread: ${Thread.currentThread().name}")
+                         
+                         // Ensure state update happens on main thread to trigger recomposition
+                         withContext(Dispatchers.Main) {
+                             _uiState.value = VerificationProcessingUiState.Success
+                             Log.d(TAG, "🎉 UI state set to SUCCESS on Main thread")
+                             Log.d(TAG, "🎉 Current UI state after: ${_uiState.value}")
+                             Log.d(TAG, "🎉 State flow value: ${_uiState.value}")
+                         }
+                         
                          Log.d(TAG, "🎉 UI STATE SET TO SUCCESS - should navigate now")
                      }
                     else -> {
@@ -931,7 +953,43 @@ class VerificationProcessingViewModel @Inject constructor(
                     
                     // Handle HTTP error codes exactly like iOS
                     when (e.code()) {
-                        600, 601, 602, 603, 604, 605 -> {
+                        601 -> {
+                            // HTTP 601: MRZ_OCR_ERROR - Navigate back to Passport capture for passport flows
+                            if (isPassportFlow) {
+                                Log.w(TAG, "HTTP 601: MRZ_OCR_ERROR - navigating back to Passport capture")
+                                LogManager.addLog("MRZ capture failed - returning to passport capture")
+                                
+                                // Navigate back to passport capture for retry
+                                withContext(Dispatchers.Main) {
+                                    _uiState.value = VerificationProcessingUiState.PassportRecaptureRequired(
+                                        recaptureType = DocumentRecaptureType.PASSPORT_MRZ_ERROR
+                                    )
+                                    Log.d(TAG, "🔄 UI state set to PassportRecaptureRequired for MRZ error")
+                                }
+                                
+                                Log.d(TAG, "=== VERIFICATION FLOW ENDED: PASSPORT RECAPTURE (HTTP 601) ===")
+                                return@launch
+                            } else {
+                                // For non-passport flows, show failure screen
+                                val verificationResult = VerificationResults.fromHttpStatusCode(e.code())
+                                val failureType = getFailureTypeFromResult(verificationResult)
+                                val errorReason = verificationResult.localizedDescription
+                                
+                                Log.w(TAG, "HTTP 601: ${verificationResult.name} - navigating to failure screen (non-passport)")
+                                LogManager.addLog("Verification failed: $errorReason")
+                                
+                                withContext(Dispatchers.Main) {
+                                    _uiState.value = VerificationProcessingUiState.Failure(
+                                        failureType = failureType,
+                                        errorReason = errorReason
+                                    )
+                                }
+                                
+                                Log.d(TAG, "=== VERIFICATION FLOW ENDED: FAILURE SCREEN (HTTP 601) ===")
+                                return@launch
+                            }
+                        }
+                        600, 602, 603, 604, 605 -> {
                             // Convert HTTP status code to VerificationResults like iOS
                             val verificationResult = VerificationResults.fromHttpStatusCode(e.code())
                             val failureType = getFailureTypeFromResult(verificationResult)
@@ -941,10 +999,20 @@ class VerificationProcessingViewModel @Inject constructor(
                             LogManager.addLog("Verification failed: $errorReason")
                             
                             // Navigate to failure screen like iOS
-                            _uiState.value = VerificationProcessingUiState.Failure(
-                                failureType = failureType,
-                                errorReason = errorReason
-                            )
+                            Log.d(TAG, "🔴 Setting UI state to FAILURE")
+                            Log.d(TAG, "🔴 Current UI state before: ${_uiState.value}")
+                            Log.d(TAG, "🔴 Failure type: $failureType, Error reason: $errorReason")
+                            
+                            // Ensure state update happens on main thread
+                            withContext(Dispatchers.Main) {
+                                _uiState.value = VerificationProcessingUiState.Failure(
+                                    failureType = failureType,
+                                    errorReason = errorReason
+                                )
+                                Log.d(TAG, "🔴 UI state set to FAILURE: ${_uiState.value}")
+                                Log.d(TAG, "🔴 UI state type: ${_uiState.value.javaClass.simpleName}")
+                            }
+                            
                             Log.d(TAG, "=== VERIFICATION FLOW ENDED: FAILURE SCREEN (HTTP ${e.code()}) ===")
                             return@launch
                         }
