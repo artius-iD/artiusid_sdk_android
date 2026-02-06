@@ -240,13 +240,14 @@ fun AppNavigation(
             DocumentScanScreen(
                 documentSide = com.artiusid.sdk.utils.DocumentSide.BACK,
                 onDocumentScanComplete = {
-                    // Check if Okta ID collection is enabled (matches iOS v2.0.12 flow)
+                    // Check if Okta ID collection is enabled; skip CollectOktaID if pre-set (iOS parity)
                     val includeOktaID = com.artiusid.sdk.config.ClientConfiguration.shouldIncludeOktaID()
-                    if (includeOktaID) {
+                    val hasPreSetOkta = !com.artiusid.sdk.ArtiusIDSDK.getOktaUserId().isNullOrEmpty()
+                    if (includeOktaID && !hasPreSetOkta) {
                         android.util.Log.d("AppNavigation", "=== Navigating to CollectOktaID from DocumentScanBack ===")
                         navController.navigate(Screen.CollectOktaID.route)
                     } else {
-                        android.util.Log.d("AppNavigation", "=== Okta ID disabled, navigating directly to VerificationProcessing ===")
+                        android.util.Log.d("AppNavigation", "=== ${if (hasPreSetOkta) "Okta ID pre-set, skipping collection" else "Okta ID disabled"}, navigating to VerificationProcessing ===")
                         navController.navigate(Screen.VerificationProcessing.route)
                     }
                 },
@@ -299,6 +300,10 @@ fun AppNavigation(
 
         composable(Screen.PassportChipScan.route) {
             android.util.Log.d("AppNavigation", "🔍 DIAGNOSTIC: Entering PassportChipScan screen")
+            // iOS parity: reset NFC state when entering chip scan so each attempt starts clean
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                com.artiusid.sdk.presentation.screens.document.NfcStateManager.resetNFCState()
+            }
             PassportChipScanScreen(
                 onChipScanComplete = { passportData ->
                     android.util.Log.d("AppNavigation", "=== Passport NFC scan completed ===")
@@ -319,17 +324,19 @@ fun AppNavigation(
                         android.util.Log.w("AppNavigation", "⚠️ No passport data received from NFC scan")
                     }
                     
-                    // Check if Okta ID collection is enabled (matches iOS v2.0.12 flow)
+                    // Check if Okta ID collection is enabled; skip CollectOktaID if pre-set (iOS parity)
                     val includeOktaID = com.artiusid.sdk.config.ClientConfiguration.shouldIncludeOktaID()
-                    if (includeOktaID) {
+                    val hasPreSetOkta = !com.artiusid.sdk.ArtiusIDSDK.getOktaUserId().isNullOrEmpty()
+                    if (includeOktaID && !hasPreSetOkta) {
                         android.util.Log.d("AppNavigation", "=== Navigating to CollectOktaID from PassportChipScan ===")
                         navController.navigate(Screen.CollectOktaID.route)
                     } else {
-                        android.util.Log.d("AppNavigation", "=== Okta ID disabled, navigating directly to VerificationProcessing ===")
+                        android.util.Log.d("AppNavigation", "=== ${if (hasPreSetOkta) "Okta ID pre-set, skipping collection" else "Okta ID disabled"}, navigating to VerificationProcessing ===")
                         navController.navigate(Screen.VerificationProcessing.route)
                     }
                 },
                 onNavigateBack = {
+                    com.artiusid.sdk.presentation.screens.document.NfcStateManager.resetNFCState()
                     navController.popBackStack()
                 }
             )

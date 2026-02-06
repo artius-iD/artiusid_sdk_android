@@ -40,7 +40,9 @@ data class SDKConfiguration(
     
     // Okta ID Integration (NEW - matches iOS v2.0.12)
     val includeOktaIDInVerificationPayload: Boolean = true, // Default to true like iOS
-    
+    /** Pre-set Okta user ID (iOS parity). When set, CollectOktaID screen is skipped and this value is used in verification payload. Stored per environment. */
+    val oktaUserId: String? = null,
+
     // Localization support
     val localizationOverrides: Map<String, String> = emptyMap(),
     // Image and GIF override support

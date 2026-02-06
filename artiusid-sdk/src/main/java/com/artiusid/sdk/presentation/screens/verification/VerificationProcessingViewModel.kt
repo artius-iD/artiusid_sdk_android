@@ -701,14 +701,26 @@ class VerificationProcessingViewModel @Inject constructor(
                 Log.d(TAG, "  deviceModel: $deviceModel")
                 Log.d(TAG, "  fcmToken: '$fcmToken'")
                 
-                // Get Okta ID if enabled (NEW - matches iOS v2.0.12)
-                val oktaId = if (com.artiusid.sdk.config.ClientConfiguration.shouldIncludeOktaID()) {
-                    val id = com.artiusid.sdk.utils.OktaIDHolder.getOktaID()
+                // Get Okta ID if enabled: pre-set (iOS parity) takes precedence over in-flow collection
+                val oktaId = if (ClientConfiguration.shouldIncludeOktaID()) {
+                    val id = com.artiusid.sdk.ArtiusIDSDK.getOktaUserId() ?: com.artiusid.sdk.utils.OktaIDHolder.getOktaID()
                     Log.d(TAG, "  oktaId: '${id ?: "<not provided>"}'")
                     id
                 } else {
                     Log.d(TAG, "  oktaId: <disabled by configuration>")
                     null
+                }
+
+                // Re-verification: include account number from previous verification if available (iOS v2.0.17)
+                val envName = when (ClientConfiguration.getCurrentConfig()?.environment) {
+                    com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
+                    com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
+                    com.artiusid.sdk.config.Environment.STAGING -> "Staging"
+                    null -> "Sandbox"
+                }
+                val accountNumber = com.artiusid.sdk.utils.VerificationStateManager(context).getAccountNumber(envName)
+                if (!accountNumber.isNullOrEmpty()) {
+                    Log.d(TAG, "  accountNumber (re-verification): '${accountNumber.take(10)}...'")
                 }
 
                 // Build request matching iOS format exactly - all fields required (non-nullable)
@@ -720,7 +732,8 @@ class VerificationProcessingViewModel @Inject constructor(
                     deviceId = deviceId,
                     deviceModel = deviceModel ?: "", // Default to empty string if null
                     fcmToken = fcmToken,
-                    oktaId = oktaId // NEW - matches iOS v2.0.12
+                    oktaId = oktaId,
+                    accountNumber = accountNumber
                 )
 
                 Log.d(TAG, "[RETROFIT] Outgoing VerificationRequest payload (iOS format):")

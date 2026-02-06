@@ -58,6 +58,7 @@ import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.artiusid.sdk.utils.UrlBuilder
 import com.artiusid.sample.config.AppUrlConfig
+import com.artiusid.sample.okta.OktaLoginHelper
 
 /**
  * Sample App demonstrating the artius.iD SDK Integration
@@ -137,7 +138,14 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     private var approvalTitle by mutableStateOf("")
     private var approvalDescription by mutableStateOf("")
     private var approvalResponse by mutableStateOf("")
-    
+
+    // Okta login (matches iOS OktaProvisioningCoordinator flow)
+    private var showOktaGuidanceDialog by mutableStateOf(false)
+    private var oktaLoginInProgress by mutableStateOf(false)
+    private var oktaError by mutableStateOf<String?>(null)
+    private var oktaSuccessMessage by mutableStateOf<String?>(null)
+    private var shouldTriggerOktaAfterVerification by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -188,8 +196,17 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
 
         // Handle notification intent if app was launched from notification
         handleNotificationIntent(intent)
-        
+        // Handle Okta OIDC redirect if app was launched from browser callback
+        handleOktaRedirect(intent)
+
         setContent {
+            // After verification success, optionally show Okta provisioning (like iOS RootNavigationView)
+            LaunchedEffect(shouldTriggerOktaAfterVerification) {
+                if (shouldTriggerOktaAfterVerification && ArtiusIDSDK.getOktaUserId().isNullOrEmpty()) {
+                    shouldTriggerOktaAfterVerification = false
+                    showOktaGuidanceDialog = true
+                }
+            }
             // Observe AppNotificationState like iOS RootView does
             val notificationType by AppNotificationState.notificationType.collectAsState()
             val notificationTitle by AppNotificationState.notificationTitle.collectAsState()
@@ -574,7 +591,76 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         color = if (includeOktaID) Color(0xFF4CAF50) else Color.Gray,
                         modifier = Modifier.padding(top = 4.dp)
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    // Login with Okta (matches iOS Okta provisioning flow)
+                    val currentOktaUserId = ArtiusIDSDK.getOktaUserId()
+                    if (!currentOktaUserId.isNullOrEmpty()) {
+                        Text(
+                            text = "✅ Okta user ID set (${currentOktaUserId.take(10)}...)",
+                            fontSize = 12.sp,
+                            color = Color(0xFF4CAF50),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                    Button(
+                        onClick = { showOktaGuidanceDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22354D))
+                    ) {
+                        Text(if (currentOktaUserId.isNullOrEmpty()) "🔐 Login with Okta" else "🔐 Re-login with Okta", color = Color.White)
+                    }
                 }
+            }
+            // Okta guidance dialog (matches iOS OktaProvisioningGuidanceView)
+            if (showOktaGuidanceDialog) {
+                AlertDialog(
+                    onDismissRequest = { showOktaGuidanceDialog = false; oktaError = null },
+                    title = { Text("Why Okta Login?") },
+                    text = {
+                        Column {
+                            Text("To enable secure authentication and approvals, you must sign in with Okta. This links your account to the app for future sign-ins and approvals.")
+                            oktaError?.let { Text(it, color = Color.Red, modifier = Modifier.padding(top = 8.dp)) }
+                            if (oktaLoginInProgress) Text("Signing in…", modifier = Modifier.padding(top = 8.dp))
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showOktaGuidanceDialog = false
+                                oktaError = null
+                                oktaLoginInProgress = true
+                                OktaLoginHelper.launchOktaLogin(this@BridgeMainActivity) { result ->
+                                    runOnUiThread {
+                                        oktaLoginInProgress = false
+                                        result.fold(
+                                            onSuccess = { loginResult ->
+                                                ArtiusIDSDK.setOktaUserId(loginResult.oktaUserId)
+                                                oktaSuccessMessage = "Okta login successful"
+                                                android.util.Log.d("BridgeMainActivity", "✅ Okta user ID set: ${loginResult.oktaUserId.take(10)}...")
+                                            },
+                                            onFailure = { e ->
+                                                oktaError = e.message
+                                                showOktaGuidanceDialog = true
+                                            }
+                                        )
+                                    }
+                                }
+                            },
+                            enabled = !oktaLoginInProgress
+                        ) { Text("Continue") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showOktaGuidanceDialog = false; oktaError = null }) { Text("Cancel", color = Color.Red) }
+                    }
+                )
+            }
+            if (oktaSuccessMessage != null) {
+                AlertDialog(
+                    onDismissRequest = { oktaSuccessMessage = null },
+                    title = { Text("Okta Login") },
+                    text = { Text(oktaSuccessMessage!!) },
+                    confirmButton = { Button(onClick = { oktaSuccessMessage = null }) { Text("OK") } }
+                )
             }
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -877,11 +963,6 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         }
     }
     
-    override fun onNewIntent(intent: android.content.Intent?) {
-        super.onNewIntent(intent)
-        intent?.let { handleNotificationIntent(it) }
-    }
-    
     private fun handleNotificationIntent(intent: android.content.Intent?) {
         intent?.let { notificationIntent ->
             val approvalTitle = notificationIntent.getStringExtra("approvalTitle")
@@ -902,6 +983,20 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             } else {
                 android.util.Log.d("BridgeMainActivity", "🔔 Non-approval notification received")
             }
+        }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleNotificationIntent(intent)
+        handleOktaRedirect(intent)
+    }
+
+    /** Handle Okta OIDC redirect (com.artiusid.sampleapp:/callback?code=...&state=...) */
+    private fun handleOktaRedirect(intent: android.content.Intent?) {
+        if (intent != null && OktaLoginHelper.handleRedirect(intent)) {
+            android.util.Log.d("BridgeMainActivity", "🔐 Handled Okta redirect")
         }
     }
 
@@ -1764,7 +1859,10 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         
         // Show the results screen
         showResultsScreen = true
-        
+        // Like iOS: after verification success, offer Okta login if no Okta user ID yet
+        if (ArtiusIDSDK.getOktaUserId().isNullOrEmpty()) {
+            shouldTriggerOktaAfterVerification = true
+        }
         // Refresh FCM token and member ID status after verification
         checkFCMTokenStatus()
         checkMemberIdStatus()

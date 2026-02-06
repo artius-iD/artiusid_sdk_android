@@ -28,7 +28,15 @@ class NfcReadingViewModel : ViewModel() {
 
     fun startNfcReading() {
         viewModelScope.launch {
-            _uiState.value = NfcReadingUiState.Reading
+            if (!NfcStateManager.tryAcquire()) {
+                android.util.Log.w("NfcReadingViewModel", "NFC already in progress, skipping duplicate start")
+                return@launch
+            }
+            try {
+                _uiState.value = NfcReadingUiState.Reading
+            } finally {
+                // release is called when operation completes (handleNfcTag) or resetState()
+            }
         }
     }
 
@@ -69,11 +77,19 @@ class NfcReadingViewModel : ViewModel() {
                 _uiState.value = NfcReadingUiState.Success(passportData)
             } catch (e: Exception) {
                 _uiState.value = NfcReadingUiState.Error(e.message ?: "NFC reading failed")
+            } finally {
+                NfcStateManager.release()
             }
         }
     }
 
     fun resetState() {
+        NfcStateManager.release()
         _uiState.value = NfcReadingUiState.Initial
+    }
+
+    companion object {
+        /** Call when verification completes, user cancels, or before starting NFC (iOS parity: ScanChipView.resetNFCState). */
+        fun resetNFCState() = NfcStateManager.resetNFCState()
     }
 } 

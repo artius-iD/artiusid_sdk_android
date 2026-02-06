@@ -31,6 +31,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Okta OIDC redirect (must match OktaConfig.REDIRECT_URI and Okta Application Sign-in redirect URIs) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.artiusid.sampleapp" android:host="callback" android:pathPrefix="/" />
+            </intent-filter>
         </activity>
         
         <!-- Sample App's Firebase Messaging Service -->

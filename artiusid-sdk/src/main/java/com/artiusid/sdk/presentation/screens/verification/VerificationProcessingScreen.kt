@@ -224,14 +224,12 @@ fun VerificationProcessingScreen(
                         // Navigate to results immediately when success state is reached
                         LaunchedEffect(Unit) {
                             Log.d("VerifProcessVM", "🔄 UI: SUCCESS - navigating to results immediately")
-                            
+                            com.artiusid.sdk.presentation.screens.document.NfcStateManager.resetNFCState()
                             // Play success sound
                             val soundManager = com.artiusid.sdk.utils.CameraSoundManager(context)
                             soundManager.playSuccessSound()
-                            
                             // Small delay to show success message
                             kotlinx.coroutines.delay(500)
-                            
                             Log.d("VerifProcessVM", "🔄 UI: Calling onNavigateToResults()")
                             onNavigateToResults()
                             
@@ -274,6 +272,7 @@ fun VerificationProcessingScreen(
                         
                         // Navigate back on error
                         LaunchedEffect(Unit) {
+                            com.artiusid.sdk.presentation.screens.document.NfcStateManager.resetNFCState()
                             kotlinx.coroutines.delay(1000)
                             onNavigateBack()
                         }
@@ -309,6 +308,7 @@ fun VerificationProcessingScreen(
                         
                         // Return to sample app via SDK error callback
                         LaunchedEffect(Unit) {
+                            com.artiusid.sdk.presentation.screens.document.NfcStateManager.resetNFCState()
                             kotlinx.coroutines.delay(2000)
                             if (onError != null) {
                                 // Call SDK error callback to return to sample app
@@ -324,6 +324,7 @@ fun VerificationProcessingScreen(
                         // Navigate to failure screen
                         val state = uiState as VerificationProcessingUiState.Failure
                         LaunchedEffect(Unit) {
+                            com.artiusid.sdk.presentation.screens.document.NfcStateManager.resetNFCState()
                             onNavigateToFailure(state.failureType, state.errorReason)
                         }
                     }

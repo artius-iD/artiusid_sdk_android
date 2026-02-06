@@ -1,8 +1,8 @@
 # iOS to Android SDK Feature Migration Punch List
 
-**Date:** December 9, 2025 (Updated)  
+**Date:** December 9, 2025 (Refreshed February 6, 2026)  
 **Purpose:** Identify iOS SDK features and fixes that need to be ported to Android SDK  
-**iOS SDK Version Reviewed:** v2.0.59  
+**iOS SDK Version Reviewed:** v2.0.59 (source at `/Users/toddbryant/Documents/mobile-sdk-ios`)  
 **Android SDK Current Version:** v1.2.49 (Okta ID integration completed)
 
 ---
@@ -88,24 +88,10 @@ The iOS SDK has received **significant updates** between v2.0.0 and v2.0.59, inc
 - If result state hasn't propagated, show failure instead of success
 
 ### Current Android Status
-- ⚠️ **NEEDS INVESTIGATION** - Need to check verification result handling in completion screen
+- ✅ **VERIFIED** - Android uses sealed `VerificationProcessingUiState` (Success / Failure). Success is set only when the API returns success (`verificationResult == VerificationResults.SUCCESS`). There is no nullable result that defaults to success; state is set explicitly in `VerificationProcessingViewModel`. No change required.
 
 ### Action Required
-1. **Find Equivalent Screen:** Locate Android's verification completion/result screen
-2. **Review Default Logic:** Search for nullable verification result with default values
-3. **Fix Default:** Ensure any null/default verification result defaults to FAILURE, not SUCCESS
-4. **Add Logging:** Add clear logging when result is null to catch state timing issues
-
-**Search Pattern:**
-```kotlin
-verificationResult?.isSuccessful ?: true  // ❌ BAD - defaults to success
-verificationResult?.isSuccessful ?: false // ✅ GOOD - defaults to failure
-```
-
-**Files to Review:**
-- `artiusid-sdk/src/main/java/com/artiusid/sdk/presentation/screens/verification/VerificationScreenView.kt` (if exists)
-- `artiusid-sdk/src/main/java/com/artiusid/sdk/presentation/screens/completion/`
-- Any screen showing final verification status
+- ✅ **NO ACTION NEEDED** - Architecture differs from iOS; Android does not have the nil-default bug.
 
 ---
 
@@ -140,9 +126,8 @@ verificationResult?.isSuccessful ?: false // ✅ GOOD - defaults to failure
 1. **Review Certificate Generation Flow:**
    - Check if `CertificateManager.storeCertificatePem()` also loads it into `TLSSessionManager`
    - Verify that `ensureCertificateRegistered()` triggers reload
-2. **Review Environment Switch:**
-   - Check if `ArtiusIDSDK.initialize()` clears `TLSSessionManager` when environment changes
-   - Add explicit `clearAndReloadIdentity()` call if missing
+2. **Environment Switch (CRITICAL):** iOS calls `TLSSessionManager.shared.clearAndReloadIdentity()` at the start of `configure()` every time so that re-initializing with a different environment uses the new certificate.
+   - **Android:** In `ArtiusIDSDK.initialize()` and `initializeWithEnhancedTheme()`, at the start (before URL/config and certificate init), call the equivalent of `clearAndReloadIdentity()` (e.g. via `SharedContextManager` or `APIManager`) so that environment switch clears the old certificate and the subsequent `ensureSharedCertificate` loads the correct one for the new environment.
 3. **Add Logging:**
    - "🔐 Reloading certificate into TLSSessionManager..." when reloading
    - "🔐 Clearing TLS session manager for environment switch" when switching environments
@@ -154,7 +139,8 @@ verificationResult?.isSuccessful ?: false // ✅ GOOD - defaults to failure
 **Files to Review:**
 - `artiusid-sdk/src/main/java/com/artiusid/sdk/utils/CertificateManager.kt` (lines 330-365)
 - `artiusid-sdk/src/main/java/com/artiusid/sdk/utils/TLSSessionManager.kt`
-- `artiusid-sdk/src/main/java/com/artiusid/sdk/ArtiusIDSDK.kt` (configuration method)
+- `artiusid-sdk/src/main/java/com/artiusid/sdk/ArtiusIDSDK.kt` (add clear at start of `initialize()`)
+- `artiusid-sdk/src/main/java/com/artiusid/sdk/utils/SharedContextManager.kt` (if it holds TLS state)
 
 ---
 
@@ -341,7 +327,52 @@ Two distinct authentication flows:
 
 ---
 
-## 9. Template-Based URL Configuration (v2.0.5) - 🟡 MEDIUM
+## 9. Pre-set Okta User ID (iOS configure / setOktaUserId) - 🟠 HIGH
+
+### iOS Implementation
+- `ArtiusIDSDKWrapper.configure(..., oktaUserId: String? = nil)` — client can pass Okta user ID at init; stored in keychain (environment-specific).
+- `setOktaUserId(_ userId: String?)` / `getOktaUserId(for environment: String?)` — runtime setter/getter; explicit value overrides keychain.
+- When Okta ID is already set (keychain or explicit), `CollectOktaIDView` is skipped and the stored ID is used in the verification payload.
+
+### Current Android Status
+- ❌ **NOT IMPLEMENTED** — No `oktaUserId` in `SDKConfiguration` or `ArtiusIDSDK`. Okta ID is only collected in-flow via `CollectOktaIDScreen` and `OktaIDHolder`.
+
+### Action Required
+1. **Add to configuration:** Optional `oktaUserId: String? = null` to `SDKConfiguration` (or equivalent) and pass through `ArtiusIDSDK.initialize()`.
+2. **Persist per environment:** Store in encrypted prefs/keychain keyed by environment (e.g. `oktaUserId_sandbox`) so re-verification can use it.
+3. **Add runtime API:** `ArtiusIDSDK.setOktaUserId(userId: String?)` and `ArtiusIDSDK.getOktaUserId(): String?` that update/read the same storage.
+4. **Skip CollectOktaID when set:** In verification flow, if `getOktaUserId()` is non-null/non-empty, skip navigation to `CollectOktaIDScreen` and use that value in `VerificationRequest` (same as iOS `shouldCollectOktaID()` / keychain check).
+
+**Files to Update:**
+- `artiusid-sdk/src/main/java/com/artiusid/sdk/config/SDKConfiguration.kt`
+- `artiusid-sdk/src/main/java/com/artiusid/sdk/ArtiusIDSDK.kt`
+- `artiusid-sdk/src/main/java/com/artiusid/sdk/navigation/AppNavigation.kt` (conditional navigation)
+- `artiusid-sdk/src/main/java/com/artiusid/sdk/presentation/screens/verification/VerificationProcessingViewModel.kt` (source of oktaId)
+- Consider `artiusid-sdk/src/main/java/com/artiusid/sdk/utils/EnvironmentCredentialManager.kt` or new helper for env-keyed Okta ID storage
+
+---
+
+## 10. Re-verification / accountNumber in VerificationRequest (iOS v2.0.17) - 🟡 MEDIUM
+
+### iOS Implementation
+- `VerificationRequest` includes `accountNumber` (member ID from keychain from previous verification).
+- Enables re-verification for existing users; key is environment-specific (`verification-{environment}`).
+
+### Current Android Status
+- ❌ **NOT IN REQUEST** — `VerificationRequest.kt` has no `accountNumber` field. Android stores account number in `VerificationStateManager` after success but does not include it in the verification API request body.
+
+### Action Required
+1. **Add field:** Add `accountNumber: String? = null` (or empty string) to `VerificationRequest` and include in `toOrderedMap()` when non-empty.
+2. **Populate from storage:** In `VerificationProcessingViewModel`, before building the request, retrieve existing account number for current environment from `VerificationStateManager` (or equivalent) and set on the request when available.
+3. **Match API:** Ensure request body matches backend expectation (same key name as iOS: `accountNumber`).
+
+**Files to Update:**
+- `artiusid-sdk/src/main/java/com/artiusid/sdk/data/model/VerificationRequest.kt`
+- `artiusid-sdk/src/main/java/com/artiusid/sdk/presentation/screens/verification/VerificationProcessingViewModel.kt`
+
+---
+
+## 11. Template-Based URL Configuration (v2.0.5) - 🟡 MEDIUM
 
 ### iOS Implementation
 - Flexible URL template system with `#env#` and `#domain#` placeholders
@@ -363,7 +394,7 @@ Two distinct authentication flows:
 
 ---
 
-## 10. UI/UX Improvements - 🟢 LOW
+## 12. UI/UX Improvements - 🟢 LOW
 
 ### iOS Changes
 1. **Navigation Back Button Redesign (v2.0.13):**
@@ -405,7 +436,7 @@ Two distinct authentication flows:
 
 ---
 
-## 11. Verification Request Payload Capture (iOS v2.0.59) - 🟢 LOW
+## 13. Verification Request Payload Capture (iOS v2.0.59) - 🟢 LOW
 
 ### iOS Implementation
 - `lastVerificationRequestPayload` property captures full JSON request
@@ -433,7 +464,7 @@ Two distinct authentication flows:
 
 ---
 
-## 12. Comprehensive Logging (v2.0.15) - 🟢 LOW
+## 14. Comprehensive Logging (v2.0.15) - 🟢 LOW
 
 ### iOS Implementation
 - Detailed logging at every step of certificate generation and loading
@@ -475,22 +506,24 @@ Log.d(TAG, "🔐 mTLS READY - Client certificate loaded")
 ### 🔴 CRITICAL (Immediate Action Required)
 1. ✅ **Dynamic Client Configuration** - Already implemented, verify usage
 2. ⚠️ **NFC Reset State Management** - Investigate if Android has same bug
-3. ⚠️ **Verification Screen Default Fix** - Find and fix null result handling
-4. ⚠️ **mTLS Certificate Automatic Reload** - Verify reload after generation and env switch
+3. ✅ **Verification Screen Default Fix** - Verified: Android uses sealed state; no null-default success
+4. ⚠️ **mTLS Certificate Automatic Reload** - Add clearAndReload at start of initialize() for env switch
 5. ⚠️ **NFC Concurrent Retry Prevention** - Test and add thread-safe guard if needed
 
 ### 🟠 HIGH (Important for UX)
 6. ⚠️ **Dual Authentication Flows** - Document flow separation, ensure API parity
 7. ✅ **Document Recapture** - Already implemented, verify completeness
+8. ❌ **Pre-set Okta User ID** - Add oktaUserId to config + setOktaUserId/getOktaUserId; skip CollectOktaID when set
 
 ### 🟡 MEDIUM (Nice-to-have)
-8. ✅ **Okta ID Integration** - ✅ **COMPLETED** - Full implementation matching iOS v2.0.12
-9. ✅ **Template-Based URL Configuration** - Already implemented, verify
+9. ✅ **Okta ID Integration** - ✅ **COMPLETED** - Full implementation matching iOS v2.0.12
+10. ❌ **Re-verification (accountNumber in VerificationRequest)** - Add field and populate from storage
+11. ✅ **Template-Based URL Configuration** - Already implemented, verify
 
 ### 🟢 LOW (Documentation/Polish)
-10. ⚠️ **UI/UX Improvements** - Audit theming consistency
-11. ❌ **Verification Request Payload Capture** - Add for debugging
-12. ⚠️ **Comprehensive Logging** - Improve log formatting and consistency
+12. ⚠️ **UI/UX Improvements** - Audit theming consistency
+13. ❌ **Verification Request Payload Capture** - Add for debugging
+14. ⚠️ **Comprehensive Logging** - Improve log formatting and consistency
 
 ---
 
@@ -514,7 +547,7 @@ Log.d(TAG, "🔐 mTLS READY - Client certificate loaded")
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** December 9, 2025  
-**Author:** AI Assistant (based on iOS SDK review)
+**Document Version:** 1.1  
+**Last Updated:** February 6, 2026  
+**Author:** AI Assistant (based on iOS SDK review; refreshed against `/Users/toddbryant/Documents/mobile-sdk-ios`)
 

@@ -133,8 +133,8 @@ fun VerificationStepsScreen(
                     }
                 }
                 
-                // Step 3: Okta ID (conditional - NEW matches iOS v2.0.12)
-                if (com.artiusid.sdk.config.ClientConfiguration.shouldIncludeOktaID()) {
+                // Step 3: Okta ID (conditional - show only when enabled and not pre-set; matches iOS)
+                if (com.artiusid.sdk.config.ClientConfiguration.shouldIncludeOktaID() && com.artiusid.sdk.ArtiusIDSDK.getOktaUserId().isNullOrEmpty()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

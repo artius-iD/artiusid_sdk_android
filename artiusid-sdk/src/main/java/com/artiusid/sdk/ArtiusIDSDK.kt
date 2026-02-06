@@ -64,7 +64,45 @@ object ArtiusIDSDK {
     // Guard flag to prevent duplicate approval requests
     private var isApprovalRequestInProgress = false
     private val approvalRequestLock = Any()
-    
+
+    private const val OKTA_PREFS_NAME = "artiusid_sdk"
+    private const val OKTA_KEY_PREFIX = "oktaUserId_"
+
+    private fun getOktaUserIdStorageKey(): String {
+        val envName = when (sdkConfiguration?.environment) {
+            com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
+            com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
+            com.artiusid.sdk.config.Environment.STAGING -> "Staging"
+            null -> "Sandbox"
+        }
+        return OKTA_KEY_PREFIX + envName
+    }
+
+    /**
+     * Set Okta user ID for the current environment (iOS parity: setOktaUserId).
+     * When set, CollectOktaID screen is skipped and this value is used in the verification payload.
+     */
+    fun setOktaUserId(userId: String?) {
+        val ctx = hostAppContext ?: return
+        val key = getOktaUserIdStorageKey()
+        ctx.getSharedPreferences(OKTA_PREFS_NAME, Context.MODE_PRIVATE).edit().apply {
+            if (!userId.isNullOrBlank()) putString(key, userId.trim()) else remove(key)
+            apply()
+        }
+        android.util.Log.i(TAG, "Okta user ID ${if (userId.isNullOrBlank()) "cleared" else "set"} (key=$key)")
+    }
+
+    /**
+     * Get Okta user ID for the current environment (iOS parity: getOktaUserId).
+     * Returns value set at configure time or via setOktaUserId().
+     */
+    fun getOktaUserId(): String? {
+        val ctx = hostAppContext ?: return null
+        val value = ctx.getSharedPreferences(OKTA_PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(getOktaUserIdStorageKey(), null)?.takeIf { it.isNotBlank() }
+        return value
+    }
+
     /**
      * Initialize the SDK with configuration and theming
      * 
@@ -85,6 +123,11 @@ object ArtiusIDSDK {
                 throw SecurityException("SDK initialization blocked due to security violations")
             }
 
+            // 🔐 CRITICAL (iOS parity): Clear TLS/cert state so environment switch uses new certificate
+            com.artiusid.sdk.utils.SharedContextManager.clearStaticState()
+            com.artiusid.sdk.services.APIManager(context).clearAndReloadIdentity()
+            android.util.Log.i(TAG, "🔐 Cleared TLS session manager for environment switch")
+
             // 🚨 CRITICAL FIX: Store host app context for SharedPreferences access
             hostAppContext = context.applicationContext
             
@@ -93,6 +136,9 @@ object ArtiusIDSDK {
                 hostAppPackageName = context.packageName
             )
             themeConfiguration = theme
+
+            // Pre-set Okta user ID from config if provided (iOS parity)
+            configuration.oktaUserId?.takeIf { it.isNotBlank() }?.let { setOktaUserId(it) }
             
             // ✅ Initialize client configuration (matches iOS AppConstants)
             com.artiusid.sdk.config.ClientConfiguration.initialize(sdkConfiguration!!)
@@ -185,9 +231,17 @@ object ArtiusIDSDK {
         try {
             android.util.Log.i(TAG, "🌉 Initializing artius.iD SDK Bridge with Enhanced Theming...")
 
+            // 🔐 CRITICAL (iOS parity): Clear TLS/cert state so environment switch uses new certificate
+            com.artiusid.sdk.utils.SharedContextManager.clearStaticState()
+            com.artiusid.sdk.services.APIManager(context).clearAndReloadIdentity()
+            android.util.Log.i(TAG, "🔐 Cleared TLS session manager for environment switch")
+
             // Store configurations
             sdkConfiguration = configuration
             enhancedThemeConfiguration = enhancedTheme
+
+            // Pre-set Okta user ID from config if provided (iOS parity)
+            configuration.oktaUserId?.takeIf { it.isNotBlank() }?.let { setOktaUserId(it) }
             
             // ✅ Initialize client configuration (matches iOS AppConstants)
             com.artiusid.sdk.config.ClientConfiguration.initialize(sdkConfiguration!!)

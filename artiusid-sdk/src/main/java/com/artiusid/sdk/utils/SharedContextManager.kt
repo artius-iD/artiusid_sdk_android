@@ -25,6 +25,16 @@ class SharedContextManager(
         private var sharedTLSManager: TLSSessionManager? = null
         private var sharedCertManager: CertificateManager? = null
         private var sharedFirebaseManager: FirebaseTokenManager? = null
+
+        /**
+         * Clear in-memory TLS and certificate state (iOS parity: clear on configure/init so environment switch uses new cert).
+         * Call at start of ArtiusIDSDK.initialize() before creating SharedContextManager and loading certificate.
+         */
+        fun clearStaticState() {
+            sharedTLSManager = null
+            sharedCertManager = null
+            Log.d(TAG, "🔐 Cleared TLS/certificate static state for environment switch")
+        }
     }
     
     /**

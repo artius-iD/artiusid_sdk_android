@@ -24,7 +24,9 @@ data class VerificationRequest(
     @SerializedName("fcmToken")
     val fcmToken: String,
     @SerializedName("oktaId")
-    val oktaId: String? = null // Optional Okta ID (NEW - matches iOS v2.0.12)
+    val oktaId: String? = null, // Optional Okta ID (matches iOS v2.0.12)
+    @SerializedName("accountNumber")
+    val accountNumber: String? = null // Re-verification: member ID from previous verification (iOS v2.0.17)
 ) {
     /**
      * Convert to LinkedHashMap to preserve field order during JSON serialization
@@ -48,7 +50,12 @@ data class VerificationRequest(
                 map["oktaId"] = it
             }
         }
-        
+        // Add accountNumber for re-verification (iOS v2.0.17)
+        accountNumber?.let {
+            if (it.isNotBlank()) {
+                map["accountNumber"] = it
+            }
+        }
         return map
     }
 } 

@@ -1,14 +1,14 @@
 # iOS to Android SDK Migration - Executive Summary
 
-**Date:** December 9, 2025  
-**iOS SDK Version Reviewed:** v2.0.59  
-**Android SDK Current Version:** v1.2.48
+**Date:** February 6, 2026 (refreshed)  
+**iOS SDK Version Reviewed:** v2.0.59 (source: `/Users/toddbryant/Documents/mobile-sdk-ios`)  
+**Android SDK Current Version:** v1.2.49
 
 ---
 
 ## Quick Overview
 
-I reviewed the iOS SDK changes from v2.0.0 through v2.0.59 and compared them with the current Android SDK. Below is a high-level summary of findings.
+The iOS SDK was reviewed again and compared with the current Android SDK. The detailed punch list is in `IOS_TO_ANDROID_MIGRATION_PUNCHLIST.md`. Below is a high-level summary.
 
 ---
 
@@ -20,55 +20,32 @@ These iOS features are **already present** in the Android SDK:
 2. **Document Recapture** - Error codes 600-604 trigger recapture with `DocumentRecaptureType`
 3. **Template-Based URL Configuration** - `UrlBuilder` has template system
 4. **Environment-Specific mTLS Certificate Storage** - Certificates stored per environment
+5. **Okta ID Integration (v2.0.12)** - CollectOktaIDScreen, OktaIDHolder, conditional payload
+6. **Verification result default** - Android uses sealed Success/Failure state; no null-default-to-success bug
 
 ---
 
-## Needs Investigation ⚠️
+## Needs Investigation or Implementation ⚠️ / ❌
 
-These areas require **testing and verification**:
+### 🔴 CRITICAL
 
-### 🔴 CRITICAL Priority
+1. **mTLS clear on initialize** - iOS calls `clearAndReloadIdentity()` at start of `configure()`. Android should call equivalent at start of `ArtiusIDSDK.initialize()` so environment switch uses the new certificate.
+2. **NFC Reset State (iOS v2.0.43)** - Test Android NFC on 2nd+ attempts; add reset if needed.
+3. **NFC Concurrent Retry (iOS v2.0.19)** - Test rapid retries; add thread-safe guard if needed.
 
-1. **NFC Reset State Bug (iOS v2.0.43)**
-   - **Issue:** iOS had a bug where NFC failed on 2nd+ verification attempts due to static state
-   - **Action:** Test Android NFC flow with multiple sequential verifications
-   - **Files:** `NfcReadingViewModel.kt`, `NfcReadingScreen.kt`
+### 🟠 HIGH
 
-2. **Verification Screen Default (iOS v2.0.43)**
-   - **Issue:** iOS defaulted to SUCCESS when result was nil, showing false positive
-   - **Action:** Find Android verification result handling and ensure it defaults to FAILURE
-   - **Search:** Look for `verificationResult?.isSuccessful ?: true` patterns
+4. **Pre-set Okta User ID** - iOS has `oktaUserId` in configure and `setOktaUserId()`/`getOktaUserId()`; when set, CollectOktaID is skipped. Android: add config + API + skip CollectOktaID when set.
+5. **Dual Authentication Flows** - Document button-triggered vs FCM-triggered; ensure API parity.
 
-3. **mTLS Certificate Reload (iOS v2.0.15, v2.0.13)**
-   - **Issue:** iOS certificate wasn't loaded into TLSSessionManager after generation
-   - **Action:** Verify Android reloads cert after generation and on environment switch
-   - **Files:** `CertificateManager.kt`, `TLSSessionManager.kt`
+### 🟡 MEDIUM
 
-4. **NFC Concurrent Retry Prevention (iOS v2.0.19)**
-   - **Issue:** iOS had race conditions causing "System resource unavailable"
-   - **Action:** Test rapid NFC retry attempts, add thread-safe lock if needed
-   - **Files:** `NfcReadingViewModel.kt`
+6. **Re-verification (accountNumber in request)** - iOS sends `accountNumber` from keychain in `VerificationRequest`. Android: add field and populate from `VerificationStateManager`.
 
-### 🟠 HIGH Priority
+### 🟢 LOW
 
-5. **Dual Authentication Flows (iOS v2.0.21)**
-   - **Issue:** iOS separated button-triggered vs FCM-triggered authentication
-   - **Action:** Document Android's authentication flow architecture
-   - **Files:** `AuthenticationViewModel.kt`, `ApprovalActivity.kt`
-
----
-
-## Not Implemented ❌
-
-These iOS features are **not present** in Android:
-
-1. **Okta ID Integration (v2.0.12)** - 🟡 MEDIUM
-   - Optional Okta ID collection during verification
-   - Determine if needed for Android
-
-2. **Verification Request Payload Capture (v2.0.59)** - 🟢 LOW
-   - Debugging feature to capture request JSON
-   - Nice-to-have for troubleshooting
+7. **Verification Request Payload Capture** - iOS captures last request JSON and summary; add for debugging.
+8. **UI/UX and Logging** - Audit theming; add emoji prefixes and success banners.
 
 ---
 
@@ -140,12 +117,12 @@ artiusid-sdk/src/main/java/com/artiusid/sdk/
 
 ## Questions for Team
 
-1. **Okta ID:** Do any Android clients need Okta ID collection during verification?
+1. **Pre-set Okta ID:** Do clients need to pass Okta user ID at init (or via setOktaUserId) and skip the in-flow collection screen?
 2. **NFC Bug:** Have we received reports of NFC failures on 2nd+ verification attempts?
 3. **Authentication Flows:** Should we create formal architecture documentation like iOS?
 4. **Version Parity:** Should Android SDK bump to v2.x.x to indicate feature parity with iOS?
 
 ---
 
-**Next Step:** Review the detailed punch list in `IOS_TO_ANDROID_MIGRATION_PUNCHLIST.md`
+**Next Step:** Implement items from `IOS_TO_ANDROID_MIGRATION_PUNCHLIST.md` in priority order (Critical → High → Medium → Low).
 

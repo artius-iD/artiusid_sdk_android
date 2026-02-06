@@ -112,4 +112,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-messaging:23.4.1'
+
+    // Chrome Custom Tabs for Okta OIDC browser sign-in (matches iOS OktaOidc signInWithBrowser)
+    implementation 'androidx.browser:browser:1.7.0'
 }
