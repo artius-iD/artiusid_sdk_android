@@ -8,24 +8,25 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 ## 📦 **Latest Release**
 
-**Version:** 1.2.43 ✅ STABLE RELEASE  
-**Release Date:** October 23, 2025  
+**Version:** 1.2.49 ✅ STABLE RELEASE  
+**Release Date:** February 6, 2026  
 **Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
 
 ---
 
-## ✅ **STABLE RELEASE - v1.2.43**
+## ✅ **STABLE RELEASE - v1.2.49**
 
-**PRODUCTION READY** - This version includes optional Firebase handling and all previous critical fixes.
+**PRODUCTION READY** - iOS parity, Okta integration, re-verification, and NFC improvements.
 
-**What's New:**
-- 🔥 **Optional Firebase Handling** - Client apps can handle their own Firebase notifications
-- ✅ **FCM Token Pass-through** - Provide your own FCM tokens to the SDK
-- ✅ **Runtime Token Updates** - Update FCM tokens dynamically
-- ✅ **Backward Compatible** - Existing Firebase integrations continue to work unchanged
-- ✅ **All Previous Fixes** - Includes all v1.2.41 verification and API compatibility improvements
+**What's New in v1.2.49:**
+- 🔄 **iOS Parity** – mTLS clear on environment switch; pre-set Okta user ID; re-verification (`accountNumber`); NFC reset and retry guard
+- 🆔 **Pre-set Okta User ID** – `SDKConfiguration.oktaUserId`, `ArtiusIDSDK.setOktaUserId()` / `getOktaUserId()`; skip CollectOktaID when set
+- 🔁 **Re-verification** – `VerificationRequest.accountNumber` for existing users (member ID from previous verification)
+- 📱 **NFC Reset** – `NfcStateManager` prevents stuck state; reset on PassportChipScan entry/exit and on completion/failure
+- 🔐 **Sample App Okta Login** – OIDC browser sign-in, extract Okta user ID from id_token, optional provisioning after verification
+- ✅ **All Previous** – Optional Firebase handling, FCM pass-through, dynamic branding, HILT support
 
-**Upgrade Priority:** **RECOMMENDED** - Enhanced flexibility for Firebase integration.
+**Upgrade Priority:** **RECOMMENDED** – Aligns Android with latest iOS SDK behavior.
 
 ---
 
@@ -35,16 +36,16 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.43 (STABLE RELEASE)
-curl -L -o artiusid-sdk-1.2.43.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.43/artiusid-sdk-1.2.43.aar
+# Download SDK v1.2.49 (STABLE RELEASE)
+curl -L -o artiusid-sdk-1.2.49.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.49/artiusid-sdk-1.2.49.aar
 ```
 
 ### **2. Add to Your Project**
 
 Copy the AAR to your app's `libs` directory:
 ```bash
-cp artiusid-sdk-1.2.43.aar your-app/app/libs/
+cp artiusid-sdk-1.2.49.aar your-app/app/libs/
 ```
 
 ### **3. Configure Dependencies**
@@ -52,7 +53,7 @@ cp artiusid-sdk-1.2.43.aar your-app/app/libs/
 Add to your app's `build.gradle`:
 ```gradle
 dependencies {
-    implementation files('libs/artiusid-sdk-1.2.41.aar')
+    implementation files('libs/artiusid-sdk-1.2.49.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
@@ -359,6 +360,13 @@ The SDK will automatically:
 
 ## 📝 **Changelog**
 
+### **v1.2.49 (February 6, 2026) - iOS PARITY & OKTA**
+- 🔄 **iOS Parity** – mTLS clear on init/env switch; pre-set Okta user ID; re-verification (`accountNumber`); NFC reset/retry guard
+- 🆔 **Pre-set Okta User ID** – `oktaUserId` in config, `setOktaUserId()` / `getOktaUserId()`; skip CollectOktaID when set
+- 🔁 **Re-verification** – `VerificationRequest.accountNumber` from VerificationStateManager
+- 📱 **NFC** – NfcStateManager tryAcquire/release/resetNFCState; reset on PassportChipScan and completion/failure
+- 🔐 **Sample app** – Okta OIDC browser sign-in, extract user ID from id_token
+
 ### **v1.2.43 (October 23, 2025) - 🔥 FIREBASE FLEXIBILITY**
 - 🔥 **NEW:** Optional Firebase notification handling - client apps can handle their own Firebase
 - ✅ **NEW:** `handleFirebaseNotifications` configuration option (default: true)
@@ -430,7 +438,7 @@ The SDK will automatically:
 
 ## 📦 **Package Contents**
 
-- `artiusid-sdk-1.2.41.aar` - Main SDK library (25MB)
+- `artiusid-sdk-1.2.49.aar` - Main SDK library (25MB)
 - `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
 - `README_HILT_SETUP.md` - Quick HILT reference
 - `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
@@ -462,8 +470,8 @@ This SDK is provided under license. See LICENSE.txt for full terms and condition
 
 ---
 
-**Version:** 1.2.38  
-**Release Date:** October 23, 2025  
+**Version:** 1.2.49  
+**Release Date:** February 6, 2026  
 **Package Size:** 25MB  
 **Status:** Production Ready
 

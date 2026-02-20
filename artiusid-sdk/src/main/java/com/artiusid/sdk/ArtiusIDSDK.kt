@@ -65,7 +65,13 @@ object ArtiusIDSDK {
     private var isApprovalRequestInProgress = false
     private val approvalRequestLock = Any()
 
+    // Verification request payload capture (iOS parity: lastVerificationRequestPayloadSummary)
+    @Volatile
+    private var lastVerificationRequestPayloadSummary: Map<String, Any>? = null
+
     private const val OKTA_PREFS_NAME = "artiusid_sdk"
+    private const val SDK_PREFS_NAME = "artiusid_sdk"
+    private const val PREF_LANGUAGE = "sdk_language_code"
     private const val OKTA_KEY_PREFIX = "oktaUserId_"
 
     private fun getOktaUserIdStorageKey(): String {
@@ -73,6 +79,7 @@ object ArtiusIDSDK {
             com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
             com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
             com.artiusid.sdk.config.Environment.STAGING -> "Staging"
+            com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
             null -> "Sandbox"
         }
         return OKTA_KEY_PREFIX + envName
@@ -101,6 +108,93 @@ object ArtiusIDSDK {
         val value = ctx.getSharedPreferences(OKTA_PREFS_NAME, Context.MODE_PRIVATE)
             .getString(getOktaUserIdStorageKey(), null)?.takeIf { it.isNotBlank() }
         return value
+    }
+
+    /**
+     * Set the SDK display language at runtime (iOS parity: setLanguage).
+     * @param context Application context
+     * @param languageCode Language code (e.g. "en", "es", "fr")
+     */
+    fun setLanguage(context: Context, languageCode: String) {
+        hostAppContext ?: Unit
+        com.artiusid.sdk.utils.LocalizationManager.setLanguage(languageCode)
+        context.getSharedPreferences(SDK_PREFS_NAME, Context.MODE_PRIVATE).edit()
+            .putString(PREF_LANGUAGE, languageCode).apply()
+        android.util.Log.i(TAG, "🌍 Language set to $languageCode")
+    }
+
+    /**
+     * Get comprehensive SDK and integration info (iOS parity: getSDKInfo).
+     * @param context Application context
+     * @return Map with sdkVersion, platform, firebaseAvailable, firebaseConfigured, fcmTokenAvailable
+     */
+    fun getSDKInfo(context: Context): Map<String, Any> {
+        val firebaseAvailable = try {
+            Class.forName("com.google.firebase.FirebaseApp")
+            true
+        } catch (e: ClassNotFoundException) {
+            false
+        }
+        val fcmToken = com.artiusid.sdk.utils.FirebaseConfigurationManager.getFcmTokenSync(context)
+        return mapOf(
+            "sdkVersion" to (BuildConfig.SDK_VERSION_NAME),
+            "platform" to "Android",
+            "architecture" to "Android ${android.os.Build.VERSION.SDK_INT}",
+            "firebaseAvailable" to firebaseAvailable,
+            "firebaseConfigured" to firebaseAvailable,
+            "fcmTokenAvailable" to fcmToken.isNotEmpty()
+        )
+    }
+
+    /**
+     * Check if SDK is ready for verification (FCM token available) (iOS parity: isReadyForVerification).
+     */
+    fun isReadyForVerification(context: Context): Boolean {
+        return com.artiusid.sdk.utils.FirebaseConfigurationManager.getFcmTokenSync(context).isNotEmpty()
+    }
+
+    /**
+     * Last verification request payload summary (field names + size hints, no full base64) for debug/support.
+     * Set by SDK before sending verification request.
+     */
+    fun getLastVerificationRequestPayloadSummary(): Map<String, Any>? = lastVerificationRequestPayloadSummary
+
+    /**
+     * Get last verification request payload summary as JSON string (iOS parity: getVerificationRequestSummaryJSON).
+     */
+    fun getVerificationRequestSummaryJSON(): String? {
+        val summary = lastVerificationRequestPayloadSummary ?: return null
+        return try {
+            org.json.JSONObject(summary).toString(2)
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "getVerificationRequestSummaryJSON: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Capture verification request payload summary before send (iOS parity).
+     * Called internally by SDK. Summary uses size hints for base64 fields, not full data.
+     */
+    fun captureVerificationRequestPayload(summary: Map<String, Any>) {
+        lastVerificationRequestPayloadSummary = summary
+    }
+
+    /**
+     * Verify that required dependencies (e.g. Firebase) are available (iOS parity: verifyDependencies).
+     * @return true if dependencies are satisfied
+     */
+    fun verifyDependencies(context: Context): Boolean {
+        val firebaseOk = try {
+            val clazz = Class.forName("com.google.firebase.FirebaseApp")
+            val getInstance = clazz.getMethod("getInstance")
+            getInstance.invoke(null) != null
+        } catch (e: Throwable) {
+            android.util.Log.w(TAG, "Firebase not available: ${e.message}")
+            false
+        }
+        android.util.Log.i(TAG, if (firebaseOk) "✅ Dependencies verified" else "⚠️ Firebase not configured")
+        return firebaseOk
     }
 
     /**
@@ -155,6 +249,7 @@ object ArtiusIDSDK {
                 com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                 com.artiusid.sdk.config.Environment.STAGING -> "Staging"
+                com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
             }
             prefs.edit().putString("environment", environmentName).apply()
             android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
@@ -164,6 +259,7 @@ object ArtiusIDSDK {
                 com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
                 com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
+                com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
             }
             com.artiusid.sdk.utils.UrlBuilder.setConfiguration(urlConfig)
             android.util.Log.i(TAG, "🌐 Backend URLs configured: ${urlConfig.getDescription()}")
@@ -266,6 +362,7 @@ object ArtiusIDSDK {
                 com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                 com.artiusid.sdk.config.Environment.STAGING -> "Staging"
+                com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
             }
             android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
             
@@ -274,6 +371,7 @@ object ArtiusIDSDK {
                 com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
                 com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
+                com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
             }
             com.artiusid.sdk.utils.UrlBuilder.setConfiguration(urlConfig)
             android.util.Log.i(TAG, "🌐 Backend URLs configured: ${urlConfig.getDescription()}")

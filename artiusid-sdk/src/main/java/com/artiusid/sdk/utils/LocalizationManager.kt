@@ -7,18 +7,35 @@
 package com.artiusid.sdk.utils
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import java.util.Locale
 
 /**
  * LocalizationManager handles string overrides from the host application
  * 
  * This allows the host app to customize any text displayed in the SDK
  * by providing string overrides in the SDKConfiguration.
+ * Supports runtime language change via setLanguage (iOS parity).
  */
 object LocalizationManager {
     private var stringOverrides: Map<String, String> = emptyMap()
-    
+    @Volatile
+    private var currentLanguageCode: String? = null
+
+    /**
+     * Set the SDK display language at runtime (e.g. "en", "es", "fr").
+     */
+    fun setLanguage(languageCode: String) {
+        currentLanguageCode = if (languageCode.isBlank()) null else languageCode
+    }
+
+    /**
+     * Get current language code if set.
+     */
+    fun getCurrentLanguageCode(): String? = currentLanguageCode
+
     /**
      * Initialize with string overrides from the host application
      */
@@ -40,11 +57,15 @@ object LocalizationManager {
             return override
         }
         
-        // Try to get from SDK resources
+        // Try to get from SDK resources (with optional locale override)
         try {
             val resId = context.resources.getIdentifier(resourceName, "string", context.packageName)
             if (resId != 0) {
-                val sdkString = context.getString(resId)
+                val ctx = currentLanguageCode?.let { code ->
+                    val config = Configuration(context.resources.configuration).apply { setLocale(Locale(code)) }
+                    context.createConfigurationContext(config)
+                } ?: context
+                val sdkString = ctx.getString(resId)
                 android.util.Log.d("LocalizationManager", "📚 Using SDK string for '$resourceName': $sdkString")
                 return sdkString
             }
@@ -72,8 +93,12 @@ object LocalizationManager {
                 return override
             }
             
-            // Fall back to the original resource
-            val sdkString = context.getString(resourceId)
+            // Fall back to the original resource (with optional locale override)
+            val ctx = currentLanguageCode?.let { code ->
+                val config = Configuration(context.resources.configuration).apply { setLocale(Locale(code)) }
+                context.createConfigurationContext(config)
+            } ?: context
+            val sdkString = ctx.getString(resourceId)
             android.util.Log.d("LocalizationManager", "📚 Using SDK string for resource ID $resourceId ('$resourceName'): $sdkString")
             return sdkString
             

@@ -716,6 +716,7 @@ class VerificationProcessingViewModel @Inject constructor(
                     com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
                     com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                     com.artiusid.sdk.config.Environment.STAGING -> "Staging"
+                    com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
                     null -> "Sandbox"
                 }
                 val accountNumber = com.artiusid.sdk.utils.VerificationStateManager(context).getAccountNumber(envName)
@@ -756,6 +757,15 @@ class VerificationProcessingViewModel @Inject constructor(
                 Log.d(TAG, "[DEBUG] LinkedHashMap contents: documentType = '${orderedMap["documentType"]}' (${orderedMap["documentType"]?.javaClass?.simpleName})")
                 val requestJson = gson.toJson(orderedMap)
                 Log.d(TAG, "[DEBUG] Actual JSON being sent (LinkedHashMap): $requestJson")
+
+                // iOS parity: capture verification request payload summary (no full base64) for debug/support
+                val summary = orderedMap.mapValues { (_, v) ->
+                    when (v) {
+                        is String -> if (v.length > 200) "<base64: ${v.length} chars>" else v
+                        else -> v
+                    }
+                }.toMap()
+                com.artiusid.sdk.ArtiusIDSDK.captureVerificationRequestPayload(summary)
                 
                 // SDK v1.2.45 CRITICAL FIX: Add global API call tracking to detect duplicates
                 val apiCallId = java.util.UUID.randomUUID().toString().substring(0, 8)

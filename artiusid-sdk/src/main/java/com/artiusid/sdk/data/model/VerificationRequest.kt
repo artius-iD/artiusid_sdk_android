@@ -50,12 +50,8 @@ data class VerificationRequest(
                 map["oktaId"] = it
             }
         }
-        // Add accountNumber for re-verification (iOS v2.0.17)
-        accountNumber?.let {
-            if (it.isNotBlank()) {
-                map["accountNumber"] = it
-            }
-        }
+        // Always include accountNumber (iOS parity: toEncodableBody uses "" when empty)
+        map["accountNumber"] = accountNumber?.takeIf { it.isNotBlank() } ?: ""
         return map
     }
 } 

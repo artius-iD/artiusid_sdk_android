@@ -399,9 +399,8 @@ App manifest declaring:
 - Intent filters
 
 ### **proguard-rules-*.pro**
-ProGuard rules for different build variants:
-- `proguard-rules-customer.pro` - Customer distribution rules
-- `proguard-rules-obfuscated.pro` - Obfuscation rules
+ProGuard rules for release and customer distribution builds:
+- `proguard-rules-customer.pro` – Used for release and customer distribution variants.
 
 ---
 

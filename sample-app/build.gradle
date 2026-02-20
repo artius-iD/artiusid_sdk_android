@@ -43,7 +43,7 @@ android {
             minifyEnabled false  // Temporarily disabled due to memory issues
             shrinkResources false  // Temporarily disabled due to memory issues
             debuggable false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-obfuscated.pro' // Changed to obfuscated.pro
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules-customer.pro'
             
             // Maximum obfuscation for IP protection (when minification is re-enabled)
             zipAlignEnabled true

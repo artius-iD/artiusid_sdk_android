@@ -11,6 +11,13 @@ import kotlinx.parcelize.Parcelize
 import com.artiusid.sdk.models.SDKImageOverrides
 
 /**
+ * Log level for SDK output (iOS parity: LogLevel).
+ */
+enum class LogLevel {
+    DEBUG, INFO, WARNING, ERROR
+}
+
+/**
  * SDK Configuration for the bridge to standalone application
  */
 @Parcelize
@@ -24,6 +31,8 @@ data class SDKConfiguration(
     val clientGroupId: Int = 1,
     
     val enableLogging: Boolean = false,
+    /** Structured log level (iOS parity). Default INFO. */
+    val logLevel: LogLevel = LogLevel.INFO,
     val enableAnalytics: Boolean = true,
     val enableBiometrics: Boolean = true,
     val enableNFC: Boolean = true,
@@ -52,5 +61,6 @@ data class SDKConfiguration(
 enum class Environment {
     SANDBOX,      // Sandbox environment (sandbox.mobile.artiusid.dev)
     DEVELOPMENT,  // Development environment (service-mobile.dev.artiusid.dev)
-    STAGING       // Staging environment (service-mobile.stage.artiusid.dev)
+    STAGING,      // Staging environment (service-mobile.stage.artiusid.dev)
+    PRODUCTION    // Production (mobile.artiusid.com) - iOS parity
 }

@@ -23,7 +23,7 @@ object UrlBuilder {
     private var currentConfiguration: UrlConfiguration? = null
     
     enum class Environment {
-        SANDBOX, DEVELOPMENT, STAGING
+        SANDBOX, DEVELOPMENT, STAGING, PRODUCTION
     }
     
     enum class ServiceType {
@@ -70,6 +70,7 @@ object UrlBuilder {
             "Sandbox" -> Environment.SANDBOX
             "Development" -> Environment.DEVELOPMENT
             "Staging" -> Environment.STAGING
+            "Production" -> Environment.PRODUCTION
             else -> Environment.SANDBOX
         }
     }
@@ -87,57 +88,86 @@ object UrlBuilder {
         return prefs.getString("domain", "artiusid.dev") ?: "artiusid.dev"
     }
     
+    /** Token for #env# in URL templates (iOS parity: empty for production). */
+    private fun getEnvironmentToken(environment: Environment): String {
+        return when (environment) {
+            Environment.SANDBOX -> "sandbox"
+            Environment.DEVELOPMENT -> "dev"
+            Environment.STAGING -> "stage"
+            Environment.PRODUCTION -> ""
+        }
+    }
+    
     private fun getEnvironmentPrefix(environment: Environment): String {
         return when (environment) {
             Environment.SANDBOX -> "sandbox"
-            Environment.DEVELOPMENT -> "service"  // ✅ Updated to use "service" prefix for dev
-            Environment.STAGING -> "service"     // ✅ Updated to use "service" prefix for staging
+            Environment.DEVELOPMENT -> "service"
+            Environment.STAGING -> "service"
+            Environment.PRODUCTION -> ""
         }
     }
     
     private fun getEnvironmentSuffix(environment: Environment): String {
         return when (environment) {
-            Environment.SANDBOX -> ""           // sandbox.mobile.artiusid.dev
-            Environment.DEVELOPMENT -> ".dev"   // service-mobile.dev.artiusid.dev
-            Environment.STAGING -> ".stage"     // service-mobile.stage.artiusid.dev
+            Environment.SANDBOX -> ""
+            Environment.DEVELOPMENT -> ".dev"
+            Environment.STAGING -> ".stage"
+            Environment.PRODUCTION -> ""
         }
     }
     
     private fun getBaseUrl(serviceType: ServiceType, context: Context): String {
-        // 🚨 CRITICAL FIX: Use dynamic settings from SharedPreferences, not static configuration
         val environment = getEnvironmentFromSettings(context)
+        val config = currentConfiguration
+        val envToken = getEnvironmentToken(environment)
+        
+        // iOS-style URL templates: if all four are set, build URLs from templates
+        if (config != null && !config.urlTemplate.isNullOrBlank() && !config.mobileDomain.isNullOrBlank() &&
+            !config.registrationUrlTemplate.isNullOrBlank() && !config.registrationDomain.isNullOrBlank()) {
+            val mobileBase = config.urlTemplate!!
+                .replace("#env#", envToken)
+                .replace("#domain#", config.mobileDomain!!)
+            val registrationBase = config.registrationUrlTemplate!!
+                .replace("#env#", envToken)
+                .replace("#domain#", config.registrationDomain!!)
+            return when (serviceType) {
+                ServiceType.VERIFICATION, ServiceType.AUTHENTICATION -> mobileBase
+                ServiceType.APPROVAL_REQUEST, ServiceType.APPROVAL_RESPONSE -> mobileBase
+                ServiceType.LOAD_CERTIFICATE -> registrationBase
+            }
+        }
+        
         val domain = getDomainFromSettings(context)
         val envPrefix = getEnvironmentPrefix(environment)
         val envSuffix = getEnvironmentSuffix(environment)
         
-        // 🚨 DEBUG: Log what environment is actually being used for URL generation
-        android.util.Log.d("UrlBuilder", "🚨 CRITICAL DEBUG: getBaseUrl for $serviceType")
-        android.util.Log.d("UrlBuilder", "🚨 Environment from settings: $environment")
-        android.util.Log.d("UrlBuilder", "🚨 Domain from settings: $domain")
-        android.util.Log.d("UrlBuilder", "🚨 Prefix: $envPrefix, Suffix: $envSuffix")
+        android.util.Log.d("UrlBuilder", "getBaseUrl for $serviceType env=$environment domain=$domain")
         
         return when (serviceType) {
-            ServiceType.VERIFICATION, 
+            ServiceType.VERIFICATION,
             ServiceType.AUTHENTICATION -> {
-                if (environment == Environment.SANDBOX) {
-                    "https://$envPrefix.mobile.$domain"  // sandbox.mobile.artiusid.dev
-                } else {
-                    "https://$envPrefix-mobile$envSuffix.$domain"  // service-mobile.dev.artiusid.dev or service-mobile.stage.artiusid.dev
+                when (environment) {
+                    Environment.SANDBOX -> "https://$envPrefix.mobile.$domain"
+                    Environment.DEVELOPMENT, Environment.STAGING ->
+                        "https://$envPrefix-mobile$envSuffix.$domain"
+                    Environment.PRODUCTION -> "https://mobile.$domain"
                 }
             }
-            ServiceType.APPROVAL_REQUEST, 
+            ServiceType.APPROVAL_REQUEST,
             ServiceType.APPROVAL_RESPONSE -> {
-                if (environment == Environment.SANDBOX) {
-                    "https://$envPrefix.services.$domain"  // sandbox.services.artiusid.dev (CRITICAL: Different domain for approval in sandbox)
-                } else {
-                    "https://$envPrefix-mobile$envSuffix.$domain"  // service-mobile.dev.artiusid.dev or service-mobile.stage.artiusid.dev
+                when (environment) {
+                    Environment.SANDBOX -> "https://$envPrefix.services.$domain"
+                    Environment.DEVELOPMENT, Environment.STAGING ->
+                        "https://$envPrefix-mobile$envSuffix.$domain"
+                    Environment.PRODUCTION -> "https://mobile.$domain"
                 }
             }
             ServiceType.LOAD_CERTIFICATE -> {
-                if (environment == Environment.SANDBOX) {
-                    "https://$envPrefix.registration.$domain"  // sandbox.registration.artiusid.dev
-                } else {
-                    "https://$envPrefix-registration$envSuffix.$domain"  // service-registration.dev.artiusid.dev or service-registration.stage.artiusid.dev
+                when (environment) {
+                    Environment.SANDBOX -> "https://$envPrefix.registration.$domain"
+                    Environment.DEVELOPMENT, Environment.STAGING ->
+                        "https://$envPrefix-registration$envSuffix.$domain"
+                    Environment.PRODUCTION -> "https://registration.$domain"
                 }
             }
         }
@@ -148,6 +178,7 @@ object UrlBuilder {
             "Sandbox" -> Environment.SANDBOX
             "Development" -> Environment.DEVELOPMENT
             "Staging" -> Environment.STAGING
+            "Production" -> Environment.PRODUCTION
             else -> Environment.SANDBOX
         }
     }

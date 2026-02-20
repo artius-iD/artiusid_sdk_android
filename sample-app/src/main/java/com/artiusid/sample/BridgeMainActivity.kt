@@ -59,6 +59,9 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.artiusid.sdk.utils.UrlBuilder
 import com.artiusid.sample.config.AppUrlConfig
 import com.artiusid.sample.okta.OktaLoginHelper
+import com.artiusid.sample.localization.LanguageManager
+import android.content.Context
+import com.artiusid.sample.R
 
 /**
  * Sample App demonstrating the artius.iD SDK Integration
@@ -67,6 +70,10 @@ import com.artiusid.sample.okta.OktaLoginHelper
  * launches the complete standalone application with full verification capabilities.
  */
 class BridgeMainActivity : FragmentActivity(), VerificationCallback, AuthenticationCallback {
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LanguageManager.wrapWithStoredLocale(newBase))
+    }
     
     /**
      * Create Material3 ColorScheme from selected theme
@@ -145,6 +152,11 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     private var oktaError by mutableStateOf<String?>(null)
     private var oktaSuccessMessage by mutableStateOf<String?>(null)
     private var shouldTriggerOktaAfterVerification by mutableStateOf(false)
+    private var showClearVerificationDialog by mutableStateOf(false)
+    private var showClearOktaReregisterDialog by mutableStateOf(false)
+    private var developerMode by mutableStateOf(false)
+    private var demoMode by mutableStateOf(false)
+    private var faceMeshUploadEnabled by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -186,6 +198,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
 
         // Initialize SDK on startup so it's available for all operations
         initializeSDK()
+        // Sync SDK display language with app language
+        ArtiusIDSDK.setLanguage(this, LanguageManager.getStoredLanguage(this))
 
         // Request notification permissions for Android 13+
         requestNotificationPermissions()
@@ -375,7 +389,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         ) {
             // Header
             Text(
-                text = "artius.iD SDK Demo",
+                text = getString(R.string.intro_sdk_demo),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -383,7 +397,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             )
             
             Text(
-                text = "Secure identity verification and authentication",
+                text = getString(R.string.intro_sdk_subtitle),
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
@@ -402,7 +416,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "🎨 Theme Selection",
+                        text = getString(R.string.settings_themeSelection),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -422,6 +436,38 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     )
                 }
             }
+
+            // Language Selection
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = getString(R.string.settings_languageSelection),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        text = getString(R.string.settings_languageSelectionDescription),
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    LanguageDropdown(
+                        currentCode = LanguageManager.getStoredLanguage(this@BridgeMainActivity),
+                        onLanguageSelected = { code ->
+                            if (code != LanguageManager.getStoredLanguage(this@BridgeMainActivity)) {
+                                LanguageManager.setLanguage(this@BridgeMainActivity, code)
+                                recreate()
+                            }
+                        }
+                    )
+                }
+            }
             
             // Image Override Selection
             Card(
@@ -434,7 +480,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "🖼️ Image Override Selection",
+                        text = getString(R.string.image_override_title),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -474,7 +520,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "🌐 Environment & Domain Configuration",
+                        text = getString(R.string.settings_environmentalSettings),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -482,7 +528,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     
                     // Environment Selection
                     Text(
-                        text = "Environment:",
+                        text = getString(R.string.environment_label) + ":",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -505,7 +551,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     
                     // Domain Selection
                     Text(
-                        text = "Domain:",
+                        text = getString(R.string.domain_label) + ":",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -544,7 +590,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "🔐 Okta ID Configuration",
+                        text = getString(R.string.settings_includeOktaID),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -559,12 +605,12 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = "Include Okta ID in Verification",
+                                text = getString(R.string.settings_includeOktaID),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
-                                text = "Collect Okta ID during verification flow",
+                                text = getString(R.string.okta_collection_description),
                                 fontSize = 12.sp,
                                 color = Color.Gray,
                                 modifier = Modifier.padding(top = 4.dp)
@@ -586,7 +632,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     
                     // Show current status
                     Text(
-                        text = if (includeOktaID) "✅ Okta ID collection enabled" else "❌ Okta ID collection disabled",
+                        text = if (includeOktaID) getString(R.string.okta_enabled_status) else getString(R.string.okta_disabled_status),
                         fontSize = 12.sp,
                         color = if (includeOktaID) Color(0xFF4CAF50) else Color.Gray,
                         modifier = Modifier.padding(top = 4.dp)
@@ -607,20 +653,68 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22354D))
                     ) {
-                        Text(if (currentOktaUserId.isNullOrEmpty()) "🔐 Login with Okta" else "🔐 Re-login with Okta", color = Color.White)
+                        Text(if (currentOktaUserId.isNullOrEmpty()) getString(R.string.okta_login_button) else getString(R.string.okta_relogin_button), color = Color.White)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    // Okta actions (iOS Settings parity)
+                    OutlinedButton(onClick = {
+                        ArtiusIDSDK.setOktaUserId(null)
+                        android.util.Log.d("BridgeMainActivity", "🔐 Okta User ID reset")
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text(getString(R.string.settings_resetOktaUserID), fontSize = 14.sp)
+                    }
+                    OutlinedButton(onClick = { showClearOktaReregisterDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text(getString(R.string.settings_clearOktaAndReregister), fontSize = 14.sp)
+                    }
+                    OutlinedButton(onClick = { refreshFCMToken() }, modifier = Modifier.fillMaxWidth()) {
+                        Text(getString(R.string.settings_forceFcmRegistration), fontSize = 14.sp)
+                    }
+                    OutlinedButton(onClick = { showClearVerificationDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text(getString(R.string.settings_clearVerification), fontSize = 14.sp)
                     }
                 }
+            }
+            if (showClearVerificationDialog) {
+                AlertDialog(
+                    onDismissRequest = { showClearVerificationDialog = false },
+                    title = { Text(getString(R.string.settings_clearVerification)) },
+                    text = { Text(getString(R.string.settings_verificationClearedMessage)) },
+                    confirmButton = {
+                        Button(onClick = {
+                            com.artiusid.sdk.utils.VerificationStateManager(this@BridgeMainActivity).clearVerificationData()
+                            memberIdStatus = "❌ Verification Required"
+                            memberIdPreview = "Not verified"
+                            showClearVerificationDialog = false
+                        }) { Text(getString(R.string.alert_proceed)) }
+                    },
+                    dismissButton = { TextButton(onClick = { showClearVerificationDialog = false }) { Text(getString(R.string.alert_cancel)) } }
+                )
+            }
+            if (showClearOktaReregisterDialog) {
+                AlertDialog(
+                    onDismissRequest = { showClearOktaReregisterDialog = false },
+                    title = { Text(getString(R.string.settings_clearOktaAndReregister)) },
+                    text = { Text(getString(R.string.settings_reregisterMessage)) },
+                    confirmButton = {
+                        Button(onClick = {
+                            ArtiusIDSDK.setOktaUserId(null)
+                            refreshFCMToken()
+                            showClearOktaReregisterDialog = false
+                        }) { Text(getString(R.string.alert_proceed)) }
+                    },
+                    dismissButton = { TextButton(onClick = { showClearOktaReregisterDialog = false }) { Text(getString(R.string.alert_cancel)) } }
+                )
             }
             // Okta guidance dialog (matches iOS OktaProvisioningGuidanceView)
             if (showOktaGuidanceDialog) {
                 AlertDialog(
                     onDismissRequest = { showOktaGuidanceDialog = false; oktaError = null },
-                    title = { Text("Why Okta Login?") },
+                    title = { Text(getString(R.string.okta_whyLoginRequired)) },
                     text = {
                         Column {
-                            Text("To enable secure authentication and approvals, you must sign in with Okta. This links your account to the app for future sign-ins and approvals.")
+                            Text(getString(R.string.okta_provisioningMessage))
                             oktaError?.let { Text(it, color = Color.Red, modifier = Modifier.padding(top = 8.dp)) }
-                            if (oktaLoginInProgress) Text("Signing in…", modifier = Modifier.padding(top = 8.dp))
+                            if (oktaLoginInProgress) Text(getString(R.string.intro_requestApprovalSending), modifier = Modifier.padding(top = 8.dp))
                         }
                     },
                     confirmButton = {
@@ -647,10 +741,10 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                                 }
                             },
                             enabled = !oktaLoginInProgress
-                        ) { Text("Continue") }
+                        ) { Text(getString(R.string.view_continue)) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showOktaGuidanceDialog = false; oktaError = null }) { Text("Cancel", color = Color.Red) }
+                        TextButton(onClick = { showOktaGuidanceDialog = false; oktaError = null }) { Text(getString(R.string.alert_cancel), color = Color.Red) }
                     }
                 )
             }
@@ -659,7 +753,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     onDismissRequest = { oktaSuccessMessage = null },
                     title = { Text("Okta Login") },
                     text = { Text(oktaSuccessMessage!!) },
-                    confirmButton = { Button(onClick = { oktaSuccessMessage = null }) { Text("OK") } }
+                    confirmButton = { Button(onClick = { oktaSuccessMessage = null }) { Text(getString(R.string.alert_ok)) } }
                 )
             }
             
@@ -683,7 +777,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     )
                 } else {
                     Text(
-                        text = "🔍 Start Verification",
+                        text = getString(R.string.intro_start_verification),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
@@ -704,7 +798,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 )
             ) {
                 Text(
-                    text = "🔐 Start Authentication",
+                    text = getString(R.string.intro_start_authentication),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
@@ -730,7 +824,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     )
                 } else {
                     Text(
-                        text = "📋 Test Approval Process",
+                        text = getString(R.string.intro_test_approval),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
@@ -802,10 +896,45 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             }
             
             
-            // Results Display
+            // Application Modes (iOS Settings parity)
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = getString(R.string.settings_applicationModes),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(getString(R.string.settings_developerMode), Modifier.weight(1f), fontSize = 14.sp)
+                        Switch(checked = developerMode, onCheckedChange = { developerMode = it })
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(getString(R.string.settings_demoMode), Modifier.weight(1f), fontSize = 14.sp)
+                        Switch(checked = demoMode, onCheckedChange = { demoMode = it })
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text(getString(R.string.settings_enableFaceMeshUpload), Modifier.weight(1f), fontSize = 14.sp)
+                        Switch(checked = faceMeshUploadEnabled, onCheckedChange = { faceMeshUploadEnabled = it })
+                    }
+                }
+            }
+            // Device & Tokens / Results Display
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = getString(R.string.settings_deviceAndTokens),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
             if (lastResult.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(24.dp))
-                
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -814,7 +943,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "📋 Last Result",
+                            text = getString(R.string.last_result_title),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -830,14 +959,14 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         
                         // FCM Token Section
                         Text(
-                            text = "🔥 FCM Token Status",
+                            text = getString(R.string.fcm_token_status_title),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                         
                         Text(
-                            text = "Status: $fcmTokenStatus",
+                            text = getString(R.string.status_label) + ": $fcmTokenStatus",
                             fontSize = 12.sp,
                             color = if (fcmTokenStatus.contains("✅")) Color(0xFF4CAF50) else Color(0xFFF44336)
                         )
@@ -855,7 +984,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         
                         // Certificate Section
                         Text(
-                            text = "🔐 Client Certificate Status",
+                            text = getString(R.string.certificate_status_title),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(bottom = 4.dp)
@@ -868,7 +997,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         val certColor = if (hasCertificate) Color(0xFF4CAF50) else Color(0xFFF44336)
                         
                         Text(
-                            text = "Status: $certStatus",
+                            text = getString(R.string.status_label) + ": $certStatus",
                             fontSize = 12.sp,
                             color = certColor
                         )
@@ -890,14 +1019,14 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         
                         // Member ID Section
                         Text(
-                            text = "👤 Member ID Status",
+                            text = getString(R.string.member_id_status_title),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(bottom = 4.dp)
                         )
                         
                         Text(
-                            text = "Status: $memberIdStatus",
+                            text = getString(R.string.status_label) + ": $memberIdStatus",
                             fontSize = 12.sp,
                             color = if (memberIdStatus.contains("✅")) Color(0xFF4CAF50) else Color(0xFFF44336)
                         )
@@ -925,7 +1054,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Text(
-                        text = "🎨 Current Theme Preview",
+                        text = getString(R.string.theme_preview_title),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(bottom = 16.dp)
@@ -1169,6 +1298,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             "SANDBOX" -> Environment.SANDBOX
             "DEVELOPMENT" -> Environment.DEVELOPMENT
             "STAGING" -> Environment.STAGING
+            "PRODUCTION" -> Environment.PRODUCTION
             else -> Environment.SANDBOX // Default fallback
         }
             android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL: SDK Environment: $sdkEnvironment (from SharedPreferences: $storedEnvironment)")
@@ -2102,17 +2232,57 @@ private fun ImageOverrideDropdown(
 }
 
 @Composable
+private fun LanguageDropdown(
+    currentCode: String,
+    onLanguageSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val languages = LanguageManager.getSupportedLanguages()
+    val displayName = languages.find { it.first == currentCode }?.second ?: currentCode
+    Box {
+        OutlinedButton(
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = displayName, fontWeight = FontWeight.Medium)
+                Text("▼", fontSize = 12.sp)
+            }
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            languages.forEach { (code, name) ->
+                DropdownMenuItem(
+                    text = { Text(text = name, fontWeight = FontWeight.Medium) },
+                    onClick = {
+                        onLanguageSelected(code)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun EnvironmentDropdown(
     selectedEnvironment: String,
     onEnvironmentSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    // ✅ FIX: Convert to Title Case to match UrlConfiguration format
+    // ✅ FIX: Convert to Title Case to match UrlConfiguration format (iOS: Sandbox, Development, Staging, Production)
     val availableEnvironments = UrlBuilder.getAvailableEnvironments().map { env ->
         when (env) {
             "SANDBOX" -> "Sandbox"
-            "DEVELOPMENT" -> "Development" 
+            "DEVELOPMENT" -> "Development"
             "STAGING" -> "Staging"
+            "PRODUCTION" -> "Production"
             else -> env
         }
     }
