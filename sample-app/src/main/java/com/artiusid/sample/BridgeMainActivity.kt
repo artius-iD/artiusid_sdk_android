@@ -57,6 +57,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.artiusid.sdk.utils.UrlBuilder
+import com.artiusid.sample.config.AppConstants
 import com.artiusid.sample.config.AppUrlConfig
 import com.artiusid.sample.okta.OktaLoginHelper
 import com.artiusid.sample.localization.LanguageManager
@@ -141,6 +142,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     // Approval flow state
     private var showApprovalRequestScreen by mutableStateOf(false)
     private var showApprovalResponseScreen by mutableStateOf(false)
+    // Test Authentication Request (iOS parity: SampleAppView "Test Authentication Request" button)
+    private var showTestAuthenticationRequest by mutableStateOf(false)
     private var approvalRequestId by mutableStateOf<Int?>(null)
     private var approvalTitle by mutableStateOf("")
     private var approvalDescription by mutableStateOf("")
@@ -351,6 +354,31 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                                         approvalTitle = ""
                                         approvalDescription = ""
                                         approvalResponse = ""
+                                        AppNotificationState.reset()
+                                    }
+                                )
+                            }
+                        }
+                        showTestAuthenticationRequest -> {
+                            // iOS parity: Test Authentication Request - local UI test (ArtiusID.AuthenticationRequestView)
+                            val themeConfig = com.artiusid.sdk.ui.theme.EnhancedThemeManager.getCurrentThemeConfig()
+                            com.artiusid.sdk.ui.theme.EnhancedSDKTheme(themeConfig = themeConfig) {
+                                TestAuthenticationRequestScreen(
+                                    title = getString(R.string.test_authentication_request_title),
+                                    description = getString(R.string.test_authentication_request_description),
+                                    onApprove = {
+                                        android.util.Log.d("BridgeMainActivity", "User approved authentication request")
+                                        showTestAuthenticationRequest = false
+                                        AppNotificationState.reset()
+                                    },
+                                    onDeny = {
+                                        android.util.Log.d("BridgeMainActivity", "User denied authentication request")
+                                        showTestAuthenticationRequest = false
+                                        AppNotificationState.reset()
+                                    },
+                                    onCancel = {
+                                        android.util.Log.d("BridgeMainActivity", "User cancelled authentication")
+                                        showTestAuthenticationRequest = false
                                         AppNotificationState.reset()
                                     }
                                 )
@@ -834,6 +862,25 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            // Test Authentication Request (iOS parity: SampleAppView "Test Authentication Request" button)
+            Button(
+                onClick = { showTestAuthenticationRequest = true },
+                enabled = !isVerificationLoading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+            ) {
+                Text(
+                    text = getString(R.string.intro_test_authentication_request),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
             // Test Sound Effects Button
             Button(
                 onClick = { testSoundEffects() },
@@ -1091,6 +1138,65 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             )
         }
     }
+
+    /**
+     * iOS parity: Test Authentication Request screen (ArtiusID.AuthenticationRequestView).
+     * Local UI test with Approve / Deny / Cancel - no server call.
+     */
+    @Composable
+    private fun TestAuthenticationRequestScreen(
+        title: String,
+        description: String,
+        onApprove: () -> Unit,
+        onDeny: () -> Unit,
+        onCancel: () -> Unit
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            Text(
+                text = description,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = onApprove,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text("Approve", color = Color.White)
+                }
+                Button(
+                    onClick = onDeny,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
+                ) {
+                    Text("Deny", color = Color.White)
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
+                Text("Cancel")
+            }
+        }
+    }
     
     private fun handleNotificationIntent(intent: android.content.Intent?) {
         intent?.let { notificationIntent ->
@@ -1305,13 +1411,13 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL: This environment will be used for ALL SDK operations")
             
             val sdkConfig = SDKConfiguration(
-                apiKey = "demo_api_key_12345",
+                apiKey = AppConstants.apiKey,
                 baseUrl = "https://api.artiusid.com", // Will be overridden by UrlBuilder based on environment
                 environment = sdkEnvironment, // ✅ Now uses current UrlBuilder environment
                 
-                // ✅ Sample App uses clientId=1 (default/demo client)
-                clientId = 1,
-                clientGroupId = 1,
+                // From AppConstants (MFA iOS app parity; overridable via appconstants.json)
+                clientId = AppConstants.clientId,
+                clientGroupId = AppConstants.clientGroupId,
                 
                 enableLogging = true,
                 hostAppPackageName = packageName,

@@ -36,6 +36,7 @@ import com.artiusid.sdk.ui.theme.ColorManager
 import com.artiusid.sdk.ui.theme.ProvideAppColorScheme
 import com.artiusid.sdk.models.VerificationResult
 import com.artiusid.sdk.models.AuthenticationResult
+import com.artiusid.sdk.data.model.VerificationResultData
 import com.artiusid.sdk.models.SDKError
 import com.artiusid.sdk.models.SDKErrorCode
 import com.artiusid.sdk.navigation.AppNavigation
@@ -149,75 +150,109 @@ class StandaloneAppActivity : ComponentActivity() {
         android.util.Log.d(TAG, "📄 Standalone result type: ${standaloneResult::class.simpleName}")
         android.util.Log.d(TAG, "📄 Standalone result data: $standaloneResult")
         
-        // Extract raw JSON response for detailed results parsing
-        val rawResponse = when (standaloneResult) {
-            is String -> standaloneResult // JSON string
-            is com.artiusid.sdk.data.model.VerificationResultData -> {
-                // Convert to JSON if it's the data class
-                try {
-                    org.json.JSONObject().apply {
-                        put("accountNumber", standaloneResult.accountNumber)
-                        put("documentData", org.json.JSONObject().apply {
-                            put("payload", org.json.JSONObject().apply {
-                                put("document_data", org.json.JSONObject().apply {
-                                    put("documentStatus", standaloneResult.documentStatus)
-                                    put("documentScore", standaloneResult.documentScore)
-                                    put("faceMatchScore", standaloneResult.faceMatchScore)
-                                    put("antiSpoofingFaceScore", standaloneResult.antiSpoofingFaceScore)
-                                })
-                            })
-                        })
-                        put("riskData", org.json.JSONObject().apply {
-                            put("personSearchDataResults", org.json.JSONObject().apply {
-                                put("personsearch_data", org.json.JSONObject().apply {
-                                    put("personSearchScore", standaloneResult.personScore)
-                                    put("personSearchResult", standaloneResult.personResult)
-                                    put("personSearchRating", standaloneResult.personRating)
-                                })
-                            })
-                            put("informationSearchDataResults", org.json.JSONObject().apply {
-                                put("informationsearch_data", org.json.JSONObject().apply {
-                                    put("riskInformationScore", standaloneResult.riskInformationScore)
-                                    put("riskInformationResult", standaloneResult.riskInformationResult)
-                                    put("riskInformationRating", standaloneResult.riskInformationRating)
-                                })
-                            })
-                        })
-                    }.toString()
-                } catch (e: Exception) {
-                    android.util.Log.e(TAG, "Error converting result to JSON", e)
-                    "{\"success\": true}"
-                }
-            }
+        val result = when (standaloneResult) {
+            is VerificationResult -> standaloneResult
+            is VerificationResultData -> verificationResultFromData(standaloneResult)
+            is String -> VerificationResult(
+                success = true,
+                verificationId = "verify_${System.currentTimeMillis()}",
+                confidence = 0.95f,
+                documentType = "ID_CARD",
+                extractedData = emptyMap(),
+                processingTime = System.currentTimeMillis() - (intent.getLongExtra(StandaloneAppBridge.EXTRA_START_TIME, 0)),
+                sessionId = "session_${System.currentTimeMillis()}",
+                rawResponse = standaloneResult
+            )
             else -> {
-                android.util.Log.w(TAG, "Unknown result type, using default JSON")
-                "{\"success\": true}"
+                android.util.Log.w(TAG, "Unknown result type, using default")
+                VerificationResult(
+                    success = true,
+                    verificationId = "verify_${System.currentTimeMillis()}",
+                    confidence = 0.95f,
+                    documentType = "ID_CARD",
+                    extractedData = emptyMap(),
+                    processingTime = System.currentTimeMillis() - (intent.getLongExtra(StandaloneAppBridge.EXTRA_START_TIME, 0)),
+                    sessionId = "session_${System.currentTimeMillis()}",
+                    rawResponse = "{\"success\": true}"
+                )
             }
         }
         
-        // Convert standalone verification result to SDK format
-        val result = VerificationResult(
-            success = true,
-            verificationId = "verify_${System.currentTimeMillis()}",
-            confidence = 0.95f,
-            documentType = "ID_CARD", // Extract from standalone result
-            extractedData = mapOf(
-                "name" to "Extracted Name",
-                "document_number" to "Extracted Number"
-                // Extract actual data from standalone result
-            ),
-            processingTime = System.currentTimeMillis() - (intent.getLongExtra(StandaloneAppBridge.EXTRA_START_TIME, 0)),
-            sessionId = "session_${System.currentTimeMillis()}",
-            rawResponse = rawResponse // Include raw JSON for detailed parsing
-        )
-        
-        android.util.Log.d(TAG, "🔄 Converted to SDK result with raw response length: ${rawResponse.length}")
+        android.util.Log.d(TAG, "🔄 Delivering VerificationResult (iOS parity: isSuccessful=${result.isSuccessful}, requiresRecapture=${result.requiresRecapture})")
         
         BridgeCallbackRegistry.getVerificationCallback()?.onVerificationSuccess(result)
         
-        // Clear callbacks and finish activity
         BridgeCallbackRegistry.clearCallbacks()
         finish()
+    }
+    
+    /** Build public VerificationResult from VerificationResultData (iOS parity: all fields). */
+    private fun verificationResultFromData(data: VerificationResultData): VerificationResult {
+        val fullName = listOfNotNull(data.firstName, data.lastName).joinToString(" ").trim().ifEmpty { null }
+        val rawResponse = try {
+            org.json.JSONObject().apply {
+                put("accountNumber", data.accountNumber)
+                put("documentData", org.json.JSONObject().apply {
+                    put("payload", org.json.JSONObject().apply {
+                        put("document_data", org.json.JSONObject().apply {
+                            put("documentStatus", data.documentStatus)
+                            put("documentScore", data.documentScore)
+                            put("faceMatchScore", data.faceMatchScore)
+                            put("antiSpoofingFaceScore", data.antiSpoofingFaceScore)
+                        })
+                    })
+                })
+                put("riskData", org.json.JSONObject().apply {
+                    put("personSearchDataResults", org.json.JSONObject().apply {
+                        put("personsearch_data", org.json.JSONObject().apply {
+                            put("personSearchScore", data.personScore)
+                            put("personSearchResult", data.personResult)
+                            put("personSearchRating", data.personRating)
+                        })
+                    })
+                    put("informationSearchDataResults", org.json.JSONObject().apply {
+                        put("informationsearch_data", org.json.JSONObject().apply {
+                            put("riskInformationScore", data.riskInformationScore)
+                            put("riskInformationResult", data.riskInformationResult)
+                            put("riskInformationRating", data.riskInformationRating)
+                        })
+                    })
+                })
+            }.toString()
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Error building rawResponse JSON", e)
+            "{\"success\": true}"
+        }
+        return VerificationResult(
+            success = true,
+            verificationId = "verify_${System.currentTimeMillis()}",
+            confidence = 0.95f,
+            documentType = if (data.documentStatus != null) "ID_CARD" else null,
+            extractedData = mapOf(
+                "name" to (fullName ?: ""),
+                "accountNumber" to (data.accountNumber ?: "")
+            ),
+            processingTime = System.currentTimeMillis() - (intent.getLongExtra(StandaloneAppBridge.EXTRA_START_TIME, 0)),
+            sessionId = "session_${System.currentTimeMillis()}",
+            rawResponse = rawResponse,
+            accountNumber = data.accountNumber,
+            fullName = fullName,
+            firstName = data.firstName,
+            lastName = data.lastName,
+            verificationScore = data.personScore,
+            documentStatus = data.documentStatus,
+            faceMatchScore = data.faceMatchScore,
+            documentScore = data.documentScore,
+            antiSpoofingFaceScore = data.antiSpoofingFaceScore,
+            personScore = data.personScore,
+            personResult = data.personResult,
+            personRating = data.personRating,
+            riskInformationScore = data.riskInformationScore,
+            riskInformationResult = data.riskInformationResult,
+            riskInformationRating = data.riskInformationRating,
+            requiresRecapture = false,
+            recaptureType = null
+        )
     }
     
     private fun handleAuthenticationSuccess(standaloneResult: Any) {

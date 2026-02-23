@@ -29,6 +29,7 @@ import com.artiusid.sdk.ui.components.ThemedImage
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.presentation.components.DocumentRecaptureNotificationView
+import com.artiusid.sdk.models.VerificationResult
 
 @OptIn(ExperimentalMaterial3Api::class)
 // ✅ CRITICAL FIX v1.2.47: Global screen guard to prevent multiple screen instances
@@ -58,6 +59,7 @@ fun VerificationProcessingScreen(
     onNavigateToResults: () -> Unit,
     onNavigateBack: () -> Unit,
     onError: ((String) -> Unit)? = null,
+    onCompleteWithRecapture: (VerificationResult) -> Unit = {},
     onNavigateToPassportCapture: () -> Unit,
     onNavigateToStateIdFrontCapture: () -> Unit = {},
     onNavigateToStateIdBackCapture: () -> Unit = {},
@@ -78,6 +80,35 @@ fun VerificationProcessingScreen(
         Log.d("VerifProcessVM", "🔄 UI: Is Processing? ${uiState is VerificationProcessingUiState.Processing}")
         Log.d("VerifProcessVM", "🔄 UI: Timestamp: ${System.currentTimeMillis()}")
         Log.d("VerifProcessVM", "🔄 ========================================")
+    }
+    
+    // iOS parity: when recapture is required, return VerificationResult(requiresRecapture=true) to host and finish
+    LaunchedEffect(uiState) {
+        val recaptureType = when (uiState) {
+            is VerificationProcessingUiState.PassportRecaptureRequired -> (uiState as VerificationProcessingUiState.PassportRecaptureRequired).recaptureType
+            is VerificationProcessingUiState.StateIdFrontRecaptureRequired -> (uiState as VerificationProcessingUiState.StateIdFrontRecaptureRequired).recaptureType
+            is VerificationProcessingUiState.StateIdBackRecaptureRequired -> (uiState as VerificationProcessingUiState.StateIdBackRecaptureRequired).recaptureType
+            is VerificationProcessingUiState.DocumentRecaptureRequired -> (uiState as VerificationProcessingUiState.DocumentRecaptureRequired).recaptureType
+            else -> null
+        }
+        if (recaptureType != null) {
+            Log.d("VerifProcessVM", "📤 iOS parity: completing with recapture result type=${recaptureType.title}")
+            onCompleteWithRecapture(
+                VerificationResult(
+                    success = false,
+                    verificationId = "",
+                    confidence = 0f,
+                    documentType = null,
+                    extractedData = emptyMap(),
+                    processingTime = 0L,
+                    sessionId = "",
+                    rawResponse = null,
+                    errorMessage = recaptureType.message,
+                    requiresRecapture = true,
+                    recaptureType = recaptureType
+                )
+            )
+        }
     }
     
     // ARCHITECTURAL FIX: No more guards needed - verification is triggered once by ViewModel

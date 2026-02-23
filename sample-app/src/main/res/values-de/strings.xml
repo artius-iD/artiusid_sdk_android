@@ -199,6 +199,9 @@
     <string name="intro_start_verification">Überprüfung starten</string>
     <string name="intro_start_authentication">Authentifizierung starten</string>
     <string name="intro_test_approval">Genehmigungsprozess testen</string>
+    <string name="intro_test_authentication_request">Authentifizierungsanfrage testen</string>
+    <string name="test_authentication_request_title">Authentifizierungsanfrage</string>
+    <string name="test_authentication_request_description">Bitte bestätigen Sie diese Authentifizierungsanfrage.</string>
     <string name="intro_sdk_demo">artius.iD SDK Demo</string>
     <string name="intro_sdk_subtitle">Sichere Identitätsüberprüfung und Authentifizierung</string>
     <string name="environment_label">Umgebung</string>

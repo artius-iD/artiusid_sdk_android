@@ -1012,31 +1012,46 @@ class VerificationProcessingViewModel @Inject constructor(
                                 return@launch
                             }
                         }
-                        600, 602, 603, 604, 605 -> {
-                            // Convert HTTP status code to VerificationResults like iOS
+                        600, 602, 603, 604 -> {
+                            // iOS parity: recapture-able errors (600-604) -> return VerificationResult(requiresRecapture=true) to host
+                            val recaptureType = DocumentRecaptureType.fromHttpErrorCode(e.code(), isPassportFlow)
+                            if (recaptureType != null) {
+                                val state = when (recaptureType) {
+                                    DocumentRecaptureType.PASSPORT_MRZ_ERROR, DocumentRecaptureType.PASSPORT_OCR_ERROR ->
+                                        VerificationProcessingUiState.PassportRecaptureRequired(recaptureType)
+                                    DocumentRecaptureType.STATE_ID_FRONT_ERROR ->
+                                        VerificationProcessingUiState.StateIdFrontRecaptureRequired(recaptureType)
+                                    DocumentRecaptureType.STATE_ID_BACK_ERROR, DocumentRecaptureType.STATE_ID_BARCODE_ERROR ->
+                                        VerificationProcessingUiState.StateIdBackRecaptureRequired(recaptureType)
+                                    else ->
+                                        VerificationProcessingUiState.DocumentRecaptureRequired(recaptureType)
+                                }
+                                withContext(Dispatchers.Main) {
+                                    _uiState.value = state
+                                }
+                                Log.d(TAG, "=== VERIFICATION FLOW ENDED: RECAPTURE REQUIRED (HTTP ${e.code()}) -> return to host (iOS parity) ===")
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    _uiState.value = VerificationProcessingUiState.Failure(
+                                        failureType = VerificationFailureType.GENERAL,
+                                        errorReason = "Verification failed (${e.code()})"
+                                    )
+                                }
+                            }
+                            return@launch
+                        }
+                        605 -> {
+                            // 605 = document validation error, not recapture-able (iOS parity)
                             val verificationResult = VerificationResults.fromHttpStatusCode(e.code())
                             val failureType = getFailureTypeFromResult(verificationResult)
                             val errorReason = verificationResult.localizedDescription
-                            
-                            Log.w(TAG, "HTTP ${e.code()}: ${verificationResult.name} - navigating to failure screen")
-                            LogManager.addLog("Verification failed: $errorReason")
-                            
-                            // Navigate to failure screen like iOS
-                            Log.d(TAG, "🔴 Setting UI state to FAILURE")
-                            Log.d(TAG, "🔴 Current UI state before: ${_uiState.value}")
-                            Log.d(TAG, "🔴 Failure type: $failureType, Error reason: $errorReason")
-                            
-                            // Ensure state update happens on main thread
                             withContext(Dispatchers.Main) {
                                 _uiState.value = VerificationProcessingUiState.Failure(
                                     failureType = failureType,
                                     errorReason = errorReason
                                 )
-                                Log.d(TAG, "🔴 UI state set to FAILURE: ${_uiState.value}")
-                                Log.d(TAG, "🔴 UI state type: ${_uiState.value.javaClass.simpleName}")
                             }
-                            
-                            Log.d(TAG, "=== VERIFICATION FLOW ENDED: FAILURE SCREEN (HTTP ${e.code()}) ===")
+                            Log.d(TAG, "=== VERIFICATION FLOW ENDED: FAILURE SCREEN (HTTP 605) ===")
                             return@launch
                         }
                         

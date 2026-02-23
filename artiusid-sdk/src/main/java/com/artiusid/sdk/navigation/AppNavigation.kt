@@ -41,6 +41,7 @@ import com.artiusid.sdk.ui.screens.face.FaceScanScreen
 import com.artiusid.sdk.presentation.screens.document.SelectDocumentTypeScreen
 import com.artiusid.sdk.presentation.screens.verification.VerificationProcessingScreen
 import com.artiusid.sdk.presentation.screens.document.DocumentScanIntroScreen
+import com.artiusid.sdk.models.VerificationResult
 import com.artiusid.sdk.presentation.screens.document.DocumentScanBackIntroScreen
 import com.artiusid.sdk.presentation.screens.document.DocumentScanBackScreen
 import com.artiusid.sdk.presentation.screens.document.PassportScanIntroScreen
@@ -101,6 +102,10 @@ fun AppNavigation(
     onError: ((String) -> Unit)? = null,
     onCancel: (() -> Unit)? = null
 ) {
+    val onCompleteWithRecapture: (VerificationResult) -> Unit = { result ->
+        android.util.Log.d("AppNavigation", "📤 Recapture result (iOS parity): requiresRecapture=${result.requiresRecapture}, recaptureType=${result.recaptureType}")
+        onVerificationComplete?.invoke(result)
+    }
     NavHost(
         navController = navController,
         startDestination = startDestination
@@ -406,6 +411,7 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onError = onError,
+                onCompleteWithRecapture = onCompleteWithRecapture,
                 onNavigateToPassportCapture = {
                     // Clear the passport image so user can recapture
                     ImageStorage.clearPassportImage()

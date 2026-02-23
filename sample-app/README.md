@@ -74,6 +74,10 @@ Environment configuration:
 - Certificate registration URLs
 - Environment detection logic
 
+#### **config/OktaConfig.kt** & **config/AppConstants.kt** (MFA iOS app parity)
+- **Okta (Okta.plist):** Okta OIDC config for browser sign-in. Defaults are in code; optional override: add `okta.json` to `src/main/assets/` with keys from your MFA iOS app’s Okta.plist (`issuer`, `clientId`, `redirectUri`, `scopes`). Copy `okta.json.example` to `okta.json` and fill in your values.
+- **AppConstants:** ArtiusID credentials and app settings. Optional override: add `appconstants.json` to `src/main/assets/` with `apiKey`, `clientId`, `clientGroupId`, `appName`, `enableDebugLogging`, etc. Copy `appconstants.json.example` to `appconstants.json` and edit. Loaded at app startup in `SampleApplication.onCreate()`.
+
 #### **theme/SampleAppThemes.kt**
 Theme configurations demonstrating:
 - Multiple brand themes

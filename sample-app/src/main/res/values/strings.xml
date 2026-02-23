@@ -320,6 +320,9 @@
     <string name="intro_start_verification">Start Verification</string>
     <string name="intro_start_authentication">Start Authentication</string>
     <string name="intro_test_approval">Test Approval Process</string>
+    <string name="intro_test_authentication_request">Test Authentication Request</string>
+    <string name="test_authentication_request_title">Authentication Request</string>
+    <string name="test_authentication_request_description">Please confirm this authentication request.</string>
     <string name="intro_sdk_demo">artius.iD SDK Demo</string>
     <string name="intro_sdk_subtitle">Secure identity verification and authentication</string>
     <string name="environment_label">Environment</string>

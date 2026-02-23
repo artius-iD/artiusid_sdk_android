@@ -66,15 +66,17 @@ enum class DocumentRecaptureType(
     
     companion object {
         /**
-         * Determine recapture type from HTTP error code
+         * Determine recapture type from HTTP error code (iOS parity).
+         * 605 = document validation error, not recapture-able → returns null.
          */
-        fun fromHttpErrorCode(errorCode: Int, isPassport: Boolean = false): DocumentRecaptureType {
+        fun fromHttpErrorCode(errorCode: Int, isPassport: Boolean = false): DocumentRecaptureType? {
             return when (errorCode) {
                 600 -> if (isPassport) PASSPORT_OCR_ERROR else STATE_ID_FRONT_ERROR
                 601 -> if (isPassport) PASSPORT_MRZ_ERROR else STATE_ID_BARCODE_ERROR
                 602 -> STATE_ID_BACK_ERROR
                 603 -> IMAGE_QUALITY_ERROR
                 604 -> NFC_TIMEOUT_ERROR
+                605 -> null // Document validation error - not recapture-able, permanent failure (iOS parity)
                 else -> GENERAL_API_ERROR
             }
         }

@@ -14,6 +14,8 @@ import coil.ImageLoaderFactory
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.util.DebugLogger
+import com.artiusid.sample.config.AppConstants
+import com.artiusid.sample.config.OktaConfig
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.HiltAndroidApp
 import okhttp3.OkHttpClient
@@ -32,6 +34,10 @@ class SampleApplication : Application(), ImageLoaderFactory {
         
         Log.d("SampleApplication", "🚀 Starting SampleApplication initialization...")
         
+        // Load Okta.plist / AppConstants-style config from assets (MFA iOS app parity)
+        OktaConfig.loadFromAssets(this)
+        AppConstants.loadFromAssets(this)
+
         // Initialize Firebase (critical for FCM tokens)
         try {
             FirebaseApp.initializeApp(this)

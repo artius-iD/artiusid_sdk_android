@@ -1,0 +1,10 @@
+{
+  "apiKey": "YOUR_ARTIUSID_API_KEY",
+  "clientId": 1,
+  "clientGroupId": 1,
+  "appName": "ArtiusID Sample",
+  "appVersion": "1.0.0",
+  "enableDebugLogging": true,
+  "enableFirebase": true,
+  "enableEnvironmentSwitching": true
+}

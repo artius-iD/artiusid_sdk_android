@@ -48,6 +48,10 @@ captures/
 # Google Services (e.g. APIs or Firebase)
 sample-app/google-services.json
 
+# Optional config with secrets (copy from .example and edit)
+sample-app/src/main/assets/okta.json
+sample-app/src/main/assets/appconstants.json
+
 # Version control
 vcs.xml
 

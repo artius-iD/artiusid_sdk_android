@@ -7,6 +7,7 @@
 package com.artiusid.sdk.models
 
 import android.os.Parcelable
+import com.artiusid.sdk.data.model.DocumentRecaptureType
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
 
@@ -34,7 +35,8 @@ data class SDKError(
 ) : Parcelable
 
 /**
- * Verification result from the standalone application
+ * Verification result from the standalone application.
+ * Matches iOS VerificationResult for parity (isSuccessful, accountNumber, requiresRecapture, recaptureType, etc.).
  */
 @Parcelize
 data class VerificationResult(
@@ -45,8 +47,32 @@ data class VerificationResult(
     val extractedData: Map<String, String> = emptyMap(),
     val processingTime: Long,
     val sessionId: String,
-    val rawResponse: String? = null // JSON payload for detailed results parsing
-) : Parcelable
+    val rawResponse: String? = null, // JSON payload for detailed results parsing
+    // iOS parity fields
+    val accountNumber: String? = null,
+    val fullName: String? = null,
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val verificationScore: Double = 0.0,
+    val documentStatus: String? = null,
+    val faceMatchScore: Int = 0,
+    val errorMessage: String? = null,
+    val documentScore: Int? = null,
+    val antiSpoofingFaceScore: Int? = null,
+    val personScore: Double? = null,
+    val personResult: String? = null,
+    val personRating: String? = null,
+    val riskInformationScore: Int? = null,
+    val riskInformationResult: String? = null,
+    val riskInformationRating: String? = null,
+    /** If true, the host should re-present verification (e.g. show recapture UI or call startVerification again). */
+    val requiresRecapture: Boolean = false,
+    /** Type of document recapture required when requiresRecapture is true (iOS DocumentRecaptureType parity). */
+    val recaptureType: DocumentRecaptureType? = null
+) : Parcelable {
+    /** iOS parity: same as success. */
+    val isSuccessful: Boolean get() = success
+}
 
 /**
  * Authentication result from the standalone application

@@ -1,6 +1,19 @@
-# Sample App Image Override Assets
+# Sample App Assets
 
-This directory contains sample image override assets for demonstrating the artius.iD SDK image override functionality.
+## Okta & AppConstants (MFA iOS app parity)
+
+To use the same Okta and AppConstants values as your MFA iOS app:
+
+1. **Okta (Okta.plist):** Copy `okta.json.example` to `okta.json` in this folder. Set `issuer`, `clientId`, `redirectUri`, and `scopes` from your iOS Okta.plist. The app loads this at startup and overrides the default Okta config.
+2. **AppConstants:** Copy `appconstants.json.example` to `appconstants.json`. Set `apiKey`, `clientId`, `clientGroupId`, and any other fields from your iOS AppConstants. The app uses these for SDK initialization.
+
+If `okta.json` or `appconstants.json` are missing, built-in defaults are used.
+
+---
+
+## Image Override Assets
+
+This directory also contains sample image override assets for demonstrating the artius.iD SDK image override functionality.
 
 ## Directory Structure
 
