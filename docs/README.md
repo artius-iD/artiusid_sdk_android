@@ -5,7 +5,7 @@ This folder contains documentation for integrating and using the ArtiusID Androi
 ## For integrators
 
 - **[client/CLIENT_IMPLEMENTATION_GUIDE.md](client/CLIENT_IMPLEMENTATION_GUIDE.md)** – Implementation guide: Firebase, environment configuration, notifications, and testing.
-- **[client/RELEASE_NOTES_v1.2.49.md](client/RELEASE_NOTES_v1.2.49.md)** – Latest release notes.
+- **[client/RELEASE_NOTES_v1.2.50.md](client/RELEASE_NOTES_v1.2.50.md)** – Latest release notes.
 - **[client/RELEASE_NOTES_v1.2.48.md](client/RELEASE_NOTES_v1.2.48.md)** – Previous release notes.
 
 For quick start, build instructions, and dependency setup, see the main [README.md](../README.md) in the project root.

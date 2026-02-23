@@ -44,7 +44,8 @@ else
   exit 1
 fi
 
-# 3. Tag this commit if the tag doesn't already exist
+# 3. Tag this commit if the tag doesn't already exist (locally)
+TAG_CREATED=false
 if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
   echo ""
   echo "Tag $TAG_NAME already exists. Skipping tag creation."
@@ -52,13 +53,18 @@ else
   echo ""
   echo "Creating tag $TAG_NAME..."
   git tag -a "$TAG_NAME" -m "Release ${SDK_VERSION}"
+  TAG_CREATED=true
 fi
 
-# 4. Push main and tags to GitHub
+# 4. Push main (and tag only if we just created it) to GitHub
 echo ""
-echo "Pushing main and tags to GitHub (remote: github)..."
+echo "Pushing to GitHub (remote: github)..."
 git push github main
-git push github "$TAG_NAME"
+if [ "$TAG_CREATED" = true ]; then
+  git push github "$TAG_NAME"
+else
+  echo "Skipping tag push (already exists on remote)."
+fi
 
 # 5. Create GitHub Release with AAR asset (if gh is installed)
 if command -v gh >/dev/null 2>&1; then

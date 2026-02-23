@@ -8,23 +8,22 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 ## 📦 **Latest Release**
 
-**Version:** 1.2.49 ✅ STABLE RELEASE  
-**Release Date:** February 6, 2026  
+**Version:** 1.2.50 ✅ STABLE RELEASE  
+**Release Date:** February 2026  
 **Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
 
 ---
 
-## ✅ **STABLE RELEASE - v1.2.49**
+## ✅ **STABLE RELEASE - v1.2.50**
 
-**PRODUCTION READY** - iOS parity, Okta integration, re-verification, and NFC improvements.
+**PRODUCTION READY** - iOS parity for VerificationResult/recapture, sample app Okta & AppConstants config, Test Authentication Request.
 
-**What's New in v1.2.49:**
-- 🔄 **iOS Parity** – mTLS clear on environment switch; pre-set Okta user ID; re-verification (`accountNumber`); NFC reset and retry guard
-- 🆔 **Pre-set Okta User ID** – `SDKConfiguration.oktaUserId`, `ArtiusIDSDK.setOktaUserId()` / `getOktaUserId()`; skip CollectOktaID when set
-- 🔁 **Re-verification** – `VerificationRequest.accountNumber` for existing users (member ID from previous verification)
-- 📱 **NFC Reset** – `NfcStateManager` prevents stuck state; reset on PassportChipScan entry/exit and on completion/failure
-- 🔐 **Sample App Okta Login** – OIDC browser sign-in, extract Okta user ID from id_token, optional provisioning after verification
-- ✅ **All Previous** – Optional Firebase handling, FCM pass-through, dynamic branding, HILT support
+**What's New in v1.2.50:**
+- 📋 **VerificationResult (iOS parity)** – `requiresRecapture`, `recaptureType`, plus full result fields (`accountNumber`, `fullName`, `verificationScore`, `documentStatus`, etc.). When API returns recapture (600–604), host receives result and can call `startVerification()` again.
+- 🔄 **DocumentRecaptureType** – `fromHttpErrorCode()` nullable; 605 = permanent failure (not recapture). Recapture-able errors 600–604 map to specific recapture states.
+- 🔐 **Sample App – Okta.plist & AppConstants** – Optional `okta.json` and `appconstants.json` in assets override Okta (issuer, clientId, redirectUri, scopes) and ArtiusID credentials (apiKey, clientId, clientGroupId). Copy from `.example` files; matches MFA iOS app config.
+- 🔐 **Sample App – Test Authentication Request** – New button and Approve/Deny/Cancel screen (iOS SampleAppView parity).
+- ✅ **All Previous** – mTLS clear on env switch, pre-set Okta user ID, re-verification, NFC reset, Okta login, Firebase/FCM, HILT
 
 **Upgrade Priority:** **RECOMMENDED** – Aligns Android with latest iOS SDK behavior.
 
@@ -36,16 +35,16 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.49 (STABLE RELEASE)
-curl -L -o artiusid-sdk-1.2.49.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.49/artiusid-sdk-1.2.49.aar
+# Download SDK v1.2.50 (STABLE RELEASE)
+curl -L -o artiusid-sdk-1.2.50.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.50/artiusid-sdk-1.2.50.aar
 ```
 
 ### **2. Add to Your Project**
 
 Copy the AAR to your app's `libs` directory:
 ```bash
-cp artiusid-sdk-1.2.49.aar your-app/app/libs/
+cp artiusid-sdk-1.2.50.aar your-app/app/libs/
 ```
 
 ### **3. Configure Dependencies**
@@ -53,7 +52,7 @@ cp artiusid-sdk-1.2.49.aar your-app/app/libs/
 Add to your app's `build.gradle`:
 ```gradle
 dependencies {
-    implementation files('libs/artiusid-sdk-1.2.49.aar')
+    implementation files('libs/artiusid-sdk-1.2.50.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
@@ -360,7 +359,7 @@ The SDK will automatically:
 
 ## 📝 **Changelog**
 
-### **v1.2.49 (February 6, 2026) - iOS PARITY & OKTA**
+### **v1.2.50 (February 2026) - iOS PARITY & RELEASE**
 - 🔄 **iOS Parity** – mTLS clear on init/env switch; pre-set Okta user ID; re-verification (`accountNumber`); NFC reset/retry guard
 - 🆔 **Pre-set Okta User ID** – `oktaUserId` in config, `setOktaUserId()` / `getOktaUserId()`; skip CollectOktaID when set
 - 🔁 **Re-verification** – `VerificationRequest.accountNumber` from VerificationStateManager
@@ -438,7 +437,7 @@ The SDK will automatically:
 
 ## 📦 **Package Contents**
 
-- `artiusid-sdk-1.2.49.aar` - Main SDK library (25MB)
+- `artiusid-sdk-1.2.50.aar` - Main SDK library (25MB)
 - `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
 - `README_HILT_SETUP.md` - Quick HILT reference
 - `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
@@ -470,7 +469,7 @@ This SDK is provided under license. See LICENSE.txt for full terms and condition
 
 ---
 
-**Version:** 1.2.49  
+**Version:** 1.2.50  
 **Release Date:** February 6, 2026  
 **Package Size:** 25MB  
 **Status:** Production Ready
