@@ -538,12 +538,14 @@ fun PassportChipScanScreen(
         }
     }
     
-    // State management
+    // State management: failureCount = number of failed NFC read attempts; after 3, we proceed to verification
     var nfcScanState by remember { mutableStateOf<NFCScanState>(NFCScanState.Initial) }
     var lastNfcTag by remember { mutableStateOf<Tag?>(null) }
     var retryCount by remember { mutableStateOf(0) }
+    var failureCount by remember { mutableStateOf(0) }
     var isProcessingNfc by remember { mutableStateOf(false) } // Prevent multiple retry loops
     val maxRetries = 3
+    val maxFailuresThenProceed = 3
     
     // Check NFC availability
     val isNfcAvailable = nfcAdapter?.isEnabled == true
@@ -624,16 +626,22 @@ fun PassportChipScanScreen(
                             }
                         }
                         
-                        // All attempts failed - proceed with verification without NFC data
+                        // All attempts failed - proceed immediately without showing Error screen (avoids Compose semantics crash)
                         Log.w("PassportChipScan", "⚠️ All $maxRetries NFC reading attempts failed. Proceeding with verification without NFC data.")
                         retryCount = maxRetries
-                        nfcScanState = NFCScanState.Error("NFC reading failed after $maxRetries attempts. Proceeding with verification...")
-                        
-                        // Wait a moment to show the error message, then proceed
-                        kotlinx.coroutines.delay(2000)
-                        
-                        // Proceed with verification without NFC data (pass null)
-                        Log.d("PassportChipScan", "📋 Proceeding with verification without NFC passport data")
+                        val mrzDataForHolder = ImageStorage.getPassportMRZData()
+                        if (mrzDataForHolder != null) {
+                            val utilPassportData = com.artiusid.sdk.utils.PassportData(
+                                firstName = mrzDataForHolder.givenNames?.takeIf { it.isNotBlank() },
+                                lastName = mrzDataForHolder.surname?.takeIf { it.isNotBlank() },
+                                documentNumber = mrzDataForHolder.passportNumber?.takeIf { it.isNotBlank() },
+                                nationality = mrzDataForHolder.nationality?.takeIf { it.isNotBlank() },
+                                dateOfBirth = mrzDataForHolder.dateOfBirth?.takeIf { it.isNotBlank() },
+                                dateOfExpiry = mrzDataForHolder.dateOfExpiry?.takeIf { it.isNotBlank() }
+                            )
+                            com.artiusid.sdk.utils.DocumentDataHolder.setPassportData(utilPassportData)
+                        }
+                        Log.d("PassportChipScan", "📋 Proceeding to verification without NFC passport data")
                         onChipScanComplete(null)
                     }
                     break
@@ -729,13 +737,11 @@ fun PassportChipScanScreen(
         }
     }
 
-    // Auto-navigate to verification when max retries reached
-    LaunchedEffect(retryCount, nfcScanState) {
-        if (retryCount >= 3 && nfcScanState is NFCScanState.Error) {
-            Log.d("PassportChipScan", "🔄 Max retries (3) reached with error state - auto-navigating to verification")
-            kotlinx.coroutines.delay(2000) // Show error message for 2 seconds
-            
-            // Preserve OCR passport data when NFC fails
+    // Auto-navigate to verification when NFC has failed 3 times (fail three times then move forward)
+    LaunchedEffect(failureCount, nfcScanState) {
+        if (failureCount >= maxFailuresThenProceed && nfcScanState is NFCScanState.Error) {
+            Log.d("PassportChipScan", "🔄 NFC failed $maxFailuresThenProceed times - proceeding to verification")
+            // Preserve OCR passport data when NFC fails (before navigating)
             val mrzData = ImageStorage.getPassportMRZData()
             if (mrzData != null) {
                 Log.d("PassportChipScan", "📝 Preserving OCR passport data for verification results...")
@@ -750,8 +756,7 @@ fun PassportChipScanScreen(
                 com.artiusid.sdk.utils.DocumentDataHolder.setPassportData(utilPassportData)
                 Log.d("PassportChipScan", "📝 Stored OCR passport data for verification: ${utilPassportData.firstName} ${utilPassportData.lastName}")
             }
-            
-            Log.d("PassportChipScan", "📋 Auto-proceeding to verification without NFC data")
+            Log.d("PassportChipScan", "📋 Proceeding to verification without NFC data")
             onChipScanComplete(null)
         }
     }
@@ -803,6 +808,7 @@ fun PassportChipScanScreen(
                         Log.d("PassportChipScan", "   Name: ${passportData.firstName} ${passportData.lastName}")
                         Log.d("PassportChipScan", "   BAC Status: ${passportData.bacStatus}")
                         
+                        failureCount = 0 // reset on success
                         // Provide success feedback
                         provideNFCFeedback(context, isSuccess = true)
                         
@@ -823,13 +829,33 @@ fun PassportChipScanScreen(
                         onChipScanComplete(passportData)
                     } else {
                         Log.w("PassportChipScan", "⚠️ NFC reading returned null - authentication may have failed")
-                        
-                        // Set error state - let auto-navigation handle the completion
-                        nfcScanState = NFCScanState.Error("Failed to read passport chip. Keep passport steady on NFC area during entire scan process. Try again.")
+                        failureCount += 1
+                        Log.d("PassportChipScan", "📋 Failed attempt $failureCount/$maxFailuresThenProceed; after $maxFailuresThenProceed will proceed to verification")
+                        if (failureCount >= maxFailuresThenProceed) {
+                            val mrzDataForHolder = ImageStorage.getPassportMRZData()
+                            if (mrzDataForHolder != null) {
+                                val utilPassportData = com.artiusid.sdk.utils.PassportData(
+                                    firstName = mrzDataForHolder.givenNames?.takeIf { it.isNotBlank() },
+                                    lastName = mrzDataForHolder.surname?.takeIf { it.isNotBlank() },
+                                    documentNumber = mrzDataForHolder.passportNumber?.takeIf { it.isNotBlank() },
+                                    nationality = mrzDataForHolder.nationality?.takeIf { it.isNotBlank() },
+                                    dateOfBirth = mrzDataForHolder.dateOfBirth?.takeIf { it.isNotBlank() },
+                                    dateOfExpiry = mrzDataForHolder.dateOfExpiry?.takeIf { it.isNotBlank() }
+                                )
+                                com.artiusid.sdk.utils.DocumentDataHolder.setPassportData(utilPassportData)
+                            }
+                            Log.d("PassportChipScan", "📋 Proceeding to verification without NFC data (no Error screen)")
+                            onChipScanComplete(null)
+                            return@launch
+                        }
+                        val msg = "Failed to read passport chip. Keep passport steady on NFC area. Try again (attempt $failureCount of $maxFailuresThenProceed)."
+                        nfcScanState = NFCScanState.Error(msg)
                     }
                     
                 } catch (e: Exception) {
                     Log.e("PassportChipScan", "❌ NFC chip reading error: ${e.message}", e)
+                    failureCount += 1
+                    Log.d("PassportChipScan", "📋 Failed attempt $failureCount/$maxFailuresThenProceed; after $maxFailuresThenProceed will proceed to verification")
                     
                     // CRITICAL: Clear stale IsoDep connection on error to prevent lockups
                     StandaloneAppActivity.currentIsoDep?.let { isoDep ->
@@ -842,15 +868,32 @@ fun PassportChipScanScreen(
                     }
                     StandaloneAppActivity.setIsoDep(null)
                     
-                    // Set error state with appropriate message - let auto-navigation handle the completion
-                    val errorMessage = when {
-                        e.message?.contains("Tag was lost") == true -> 
-                            "Passport moved during scan! Keep passport steady on NFC area for entire process. Try again."
-                        e.message?.contains("BAC failed") == true -> 
-                            "Authentication failed. MRZ data may not match passport chip. Try scanning MRZ again."
-                        else -> 
-                            "NFC reading failed: ${e.localizedMessage ?: "Unknown error"}. Try again."
+                    if (failureCount >= maxFailuresThenProceed) {
+                        val mrzDataForHolder = ImageStorage.getPassportMRZData()
+                        if (mrzDataForHolder != null) {
+                            val utilPassportData = com.artiusid.sdk.utils.PassportData(
+                                firstName = mrzDataForHolder.givenNames?.takeIf { it.isNotBlank() },
+                                lastName = mrzDataForHolder.surname?.takeIf { it.isNotBlank() },
+                                documentNumber = mrzDataForHolder.passportNumber?.takeIf { it.isNotBlank() },
+                                nationality = mrzDataForHolder.nationality?.takeIf { it.isNotBlank() },
+                                dateOfBirth = mrzDataForHolder.dateOfBirth?.takeIf { it.isNotBlank() },
+                                dateOfExpiry = mrzDataForHolder.dateOfExpiry?.takeIf { it.isNotBlank() }
+                            )
+                            com.artiusid.sdk.utils.DocumentDataHolder.setPassportData(utilPassportData)
+                        }
+                        Log.d("PassportChipScan", "📋 Proceeding to verification without NFC data (no Error screen)")
+                        onChipScanComplete(null)
+                        return@launch
                     }
+                    val baseMessage = when {
+                        e.message?.contains("Tag was lost") == true ->
+                            "Passport moved during scan! Keep passport steady on NFC area for entire process."
+                        e.message?.contains("BAC failed") == true ->
+                            "Authentication failed. MRZ data may not match passport chip."
+                        else ->
+                            "NFC reading failed: ${e.localizedMessage ?: "Unknown error"}."
+                    }
+                    val errorMessage = "$baseMessage Try again (attempt $failureCount of $maxFailuresThenProceed)."
                     nfcScanState = NFCScanState.Error(errorMessage)
                 }
             }
@@ -891,7 +934,7 @@ fun PassportChipScanScreen(
             Spacer(modifier = Modifier.height(40.dp))
             
             // Title and Status
-            NFCStatusContent(nfcScanState, retryCount, maxRetries)
+            NFCStatusContent(nfcScanState, retryCount, failureCount, maxRetries, maxFailuresThenProceed)
             
             Spacer(modifier = Modifier.height(32.dp))
             
@@ -906,10 +949,10 @@ fun PassportChipScanScreen(
             NFCActionButtons(
                 nfcScanState = nfcScanState,
                 retryCount = retryCount,
+                failureCount = failureCount,
                 maxRetries = maxRetries,
-                onRetry = { 
-                    retryNfcScan()
-                },
+                maxFailuresThenProceed = maxFailuresThenProceed,
+                onRetry = { retryNfcScan() },
                 onComplete = { onChipScanComplete(null) }
             )
         }
@@ -1032,7 +1075,7 @@ private fun NFCStatusContent(state: NFCScanState) {
 }
 
 @Composable
-private fun NFCStatusContent(state: NFCScanState, retryCount: Int, maxRetries: Int) {
+private fun NFCStatusContent(state: NFCScanState, retryCount: Int, failureCount: Int, maxRetries: Int, maxFailuresThenProceed: Int) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -1041,16 +1084,12 @@ private fun NFCStatusContent(state: NFCScanState, retryCount: Int, maxRetries: I
             is NFCScanState.Initial -> "NFC Passport Reading" to "Initializing NFC scanner..."
             is NFCScanState.WaitingForNFC -> "Ready to Scan" to "Hold your passport against the back of your phone"
             is NFCScanState.Connecting -> "Connecting" to "Establishing connection to passport chip..."
-            is NFCScanState.Authenticating -> "Authenticating" to if (retryCount > 0) "Authenticating... (Attempt ${retryCount + 1}/$maxRetries)" else "Authenticating with passport chip..."
+            is NFCScanState.Authenticating -> "Authenticating" to if (failureCount > 0) "Authenticating... (Attempt ${failureCount + 1}/$maxFailuresThenProceed)" else "Authenticating with passport chip..."
             is NFCScanState.ReadingData -> "Reading Data" to "Reading passport information from chip..."
             is NFCScanState.Success -> "Success!" to "Passport data read successfully"
             is NFCScanState.Error -> {
-                val errorTitle = if (retryCount >= maxRetries) "NFC Reading Failed" else "Scan Failed"
-                val errorDesc = if (retryCount >= maxRetries) {
-                    "Unable to read passport after $maxRetries attempts. Please try again or contact support."
-                } else {
-                    state.message
-                }
+                val errorTitle = if (failureCount >= maxFailuresThenProceed) "Proceeding to verification" else "Scan Failed"
+                val errorDesc = state.message
                 errorTitle to errorDesc
             }
         }
@@ -1104,7 +1143,9 @@ private fun NFCProgressIndicator(state: NFCScanState) {
 private fun NFCActionButtons(
     nfcScanState: NFCScanState,
     retryCount: Int,
+    failureCount: Int,
     maxRetries: Int,
+    maxFailuresThenProceed: Int,
     onRetry: () -> Unit,
     onComplete: () -> Unit
 ) {
@@ -1114,18 +1155,16 @@ private fun NFCActionButtons(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Show retry count if we've attempted
-                if (retryCount > 0) {
+                if (failureCount > 0) {
                     Text(
-                        text = "Attempt $retryCount of $maxRetries failed",
+                        text = "Attempt $failureCount of $maxFailuresThenProceed failed",
                         color = com.artiusid.sdk.ui.theme.ThemedTextColors.getSecondaryTextColor(),
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center
                     )
                 }
-                
-                // Try Again button (if we haven't exceeded max retries)
-                if (retryCount < maxRetries) {
+                // Try Again (until we've failed 3 times)
+                if (failureCount < maxFailuresThenProceed) {
                     Button(
                         onClick = onRetry,
                         modifier = Modifier.fillMaxWidth(),
@@ -1135,7 +1174,23 @@ private fun NFCActionButtons(
                         )
                     ) {
                         Text(
-                            text = "Try Again (${retryCount + 1}/$maxRetries)",
+                            text = "Try Again (${failureCount + 1}/$maxFailuresThenProceed)",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                } else {
+                    // After 3 failures: show Continue so user can proceed immediately (or wait for auto-proceed)
+                    Button(
+                        onClick = onComplete,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonColor(),
+                            contentColor = com.artiusid.sdk.ui.theme.ThemedButtonColors.getPrimaryButtonTextColor()
+                        )
+                    ) {
+                        Text(
+                            text = "Continue to verification",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
