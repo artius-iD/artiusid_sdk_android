@@ -1975,17 +1975,17 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 try {
                     // Use the new public SDK method for approval requests
                     android.util.Log.d("BridgeMainActivity", "📋 Calling ArtiusIDSDK.sendApprovalRequest()...")
-                    val (success, message, requestId) = ArtiusIDSDK.sendApprovalRequest(this@BridgeMainActivity)
+                    val result = ArtiusIDSDK.sendApprovalRequest(this@BridgeMainActivity)
                     
                     // Update UI on main thread
                     runOnUiThread {
                         isApprovalLoading = false
-                        if (success) {
-                            lastResult = "✅ Approval request sent successfully!\nRequest ID: $requestId\nMessage: $message"
-                            android.util.Log.d("BridgeMainActivity", "✅ Approval request successful: $message")
+                        if (result.success) {
+                            lastResult = "✅ Approval request sent successfully!\nRequest ID: ${result.requestId}\nMessage: ${result.message}"
+                            android.util.Log.d("BridgeMainActivity", "✅ Approval request successful: ${result.message}")
                         } else {
-                            lastResult = "❌ Approval request failed: $message"
-                            android.util.Log.e("BridgeMainActivity", "❌ Approval request failed: $message")
+                            lastResult = "❌ Approval request failed: ${result.message}"
+                            android.util.Log.e("BridgeMainActivity", "❌ Approval request failed: ${result.message}")
                         }
                     }
                     

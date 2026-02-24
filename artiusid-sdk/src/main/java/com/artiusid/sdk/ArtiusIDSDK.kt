@@ -17,6 +17,7 @@ import com.artiusid.sdk.models.SDKThemeConfiguration
 import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
 import com.artiusid.sdk.models.SDKError
 import com.artiusid.sdk.models.SDKErrorCode
+import com.artiusid.sdk.models.ApprovalRequestResult
 import com.artiusid.sdk.services.APIManager
 import com.artiusid.sdk.util.DeviceUtils
 import com.artiusid.sdk.utils.SharedContextManager
@@ -77,6 +78,7 @@ object ArtiusIDSDK {
     private fun getOktaUserIdStorageKey(): String {
         val envName = when (sdkConfiguration?.environment) {
             com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
+            com.artiusid.sdk.config.Environment.QA -> "QA"
             com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
             com.artiusid.sdk.config.Environment.STAGING -> "Staging"
             com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
@@ -152,6 +154,22 @@ object ArtiusIDSDK {
     fun isReadyForVerification(context: Context): Boolean {
         return com.artiusid.sdk.utils.FirebaseConfigurationManager.getFcmTokenSync(context).isNotEmpty()
     }
+
+    /**
+     * Get current FCM token (cached; iOS parity: getCurrentFCMToken).
+     * @param context Application context
+     * @return FCM token string or empty if not available
+     */
+    fun getCurrentFCMToken(context: Context): String {
+        return com.artiusid.sdk.utils.FirebaseConfigurationManager.getFcmTokenSync(context)
+    }
+
+    /**
+     * Get FCM token (alias for getCurrentFCMToken; iOS parity: getFCMToken).
+     * @param context Application context
+     * @return FCM token string or empty if not available
+     */
+    fun getFCMToken(context: Context): String = getCurrentFCMToken(context)
 
     /**
      * Last verification request payload summary (field names + size hints, no full base64) for debug/support.
@@ -247,6 +265,7 @@ object ArtiusIDSDK {
             val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
             val environmentName = when (configuration.environment) {
                 com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
+                com.artiusid.sdk.config.Environment.QA -> "QA"
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                 com.artiusid.sdk.config.Environment.STAGING -> "Staging"
                 com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
@@ -257,6 +276,7 @@ object ArtiusIDSDK {
             // Automatically configure UrlBuilder based on SDKConfiguration environment
             val urlConfig = when (configuration.environment) {
                 com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
+                com.artiusid.sdk.config.Environment.QA -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
                 com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
                 com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
@@ -360,6 +380,7 @@ object ArtiusIDSDK {
             // Set environment name for logging
             val environmentName = when (configuration.environment) {
                 com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
+                com.artiusid.sdk.config.Environment.QA -> "QA"
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                 com.artiusid.sdk.config.Environment.STAGING -> "Staging"
                 com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
@@ -369,6 +390,7 @@ object ArtiusIDSDK {
             // Automatically configure UrlBuilder based on SDKConfiguration environment
             val urlConfig = when (configuration.environment) {
                 com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
+                com.artiusid.sdk.config.Environment.QA -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
                 com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
                 com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
                 com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
@@ -791,11 +813,11 @@ object ArtiusIDSDK {
     }
     
     /**
-     * Send approval request using the same logic as developer settings
+     * Send approval request using the same logic as developer settings (iOS parity: ApprovalRequestResult).
      * @param context Application context
-     * @return Triple<Boolean, String, Int?> - (success, message, requestId)
+     * @return ApprovalRequestResult (success, message, requestId)
      */
-    suspend fun sendApprovalRequest(context: Context): Triple<Boolean, String, Int?> {
+    suspend fun sendApprovalRequest(context: Context): ApprovalRequestResult {
         // Generate unique call ID for tracking
         val callId = java.util.UUID.randomUUID().toString().substring(0, 8)
         val startTime = System.currentTimeMillis()
@@ -819,7 +841,7 @@ object ArtiusIDSDK {
                     android.util.Log.w(TAG, "📞 [Call $callId] ⚠️ This prevents duplicate backend requests and duplicate notifications")
                     android.util.Log.w(TAG, "📞 [Call $callId] ⚠️ BLOCKING this duplicate call")
                     android.util.Log.w(TAG, "📞 ========================================")
-                    return Triple(false, "Request already in progress", null)
+                    return ApprovalRequestResult(success = false, message = "Request already in progress", requestId = null)
                 }
                 isApprovalRequestInProgress = true
                 android.util.Log.d(TAG, "📞 [Call $callId] ✅ Guard flag set - this is the FIRST and ONLY call")
@@ -829,7 +851,7 @@ object ArtiusIDSDK {
             if (!_isInitialized) {
                 android.util.Log.e(TAG, "📞 [Call $callId] ❌ SDK not initialized")
                 isApprovalRequestInProgress = false
-                Triple(false, "SDK not initialized", null)
+                ApprovalRequestResult(success = false, message = "SDK not initialized", requestId = null)
             } else {
                 // Create approval API service using shared mTLS context (like iOS requiresTLS: true)
                 android.util.Log.d(TAG, "📞 [Call $callId] 🔐 Using mTLS for approval testing (matching iOS requiresTLS: true)")
@@ -857,7 +879,7 @@ object ArtiusIDSDK {
                 android.util.Log.d(TAG, "📞 [Call $callId] ✅ sendApprovalRequest() COMPLETED successfully")
                 android.util.Log.d(TAG, "📞 [Call $callId] ✅ Total duration: ${totalDuration}ms")
                 android.util.Log.d(TAG, "📞 [Call $callId] ✅ Guard flag RESET - ready for next request")
-                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Result: success=${result.first}, message='${result.second}', requestId=${result.third}")
+                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Result: success=${result.success}, message='${result.message}', requestId=${result.requestId}")
                 android.util.Log.d(TAG, "📞 ========================================")
                 
                 result
@@ -871,7 +893,7 @@ object ArtiusIDSDK {
             android.util.Log.e(TAG, "📞 [Call $callId] ❌ Error: ${e.message}", e)
             android.util.Log.e(TAG, "📞 [Call $callId] ❌ Guard flag RESET due to error")
             android.util.Log.e(TAG, "📞 ========================================")
-            Triple(false, "Error: ${e.message}", null)
+            ApprovalRequestResult(success = false, message = "Error: ${e.message}", requestId = null)
         }
     }
     

@@ -75,7 +75,7 @@ data class VerificationResult(
 }
 
 /**
- * Authentication result from the standalone application
+ * Authentication result from the standalone application (iOS parity).
  */
 @Parcelize
 data class AuthenticationResult(
@@ -83,7 +83,29 @@ data class AuthenticationResult(
     val authenticationId: String,
     val confidence: Float,
     val processingTime: Long,
-    val sessionId: String
+    val sessionId: String,
+    val message: String? = null,
+    val accountInfo: AuthenticationAccountInfo? = null,
+    val errorMessage: String? = null,
+    val rawResponse: String? = null
+) : Parcelable
+
+/** iOS parity: account info returned with authentication result. */
+@Parcelize
+data class AuthenticationAccountInfo(
+    val accountNumber: String?,
+    val fullName: String?,
+    val isActive: Boolean
+) : Parcelable
+
+/**
+ * Result of sending an approval request (iOS parity: ApprovalRequestResult).
+ */
+@Parcelize
+data class ApprovalRequestResult(
+    val success: Boolean,
+    val message: String,
+    val requestId: Int? = null
 ) : Parcelable
 
 /**

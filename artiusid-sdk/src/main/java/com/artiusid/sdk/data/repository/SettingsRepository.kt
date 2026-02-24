@@ -54,33 +54,32 @@ class SettingsRepository(
         LogManager.addLog(message, level, source)
 
     // --- Approval Request (real implementation like iOS) ---
-    suspend fun sendApprovalRequest(): Triple<Boolean, String, Int?> = withContext(Dispatchers.IO) {
+    suspend fun sendApprovalRequest(): com.artiusid.sdk.models.ApprovalRequestResult = withContext(Dispatchers.IO) {
         return@withContext try {
             if (apiService == null) {
                 Log.e(TAG, "ApiService not available for approval request")
                 LogManager.logError("Error: ApiService not configured", TAG)
-                Triple(false, "Service not available", null)
+                com.artiusid.sdk.models.ApprovalRequestResult(success = false, message = "Service not available", requestId = null)
             } else {
                 val sendApprovalRequest = SendApprovalRequest(apiService, context)
                 val (success, requestId) = sendApprovalRequest.send()
-                
                 if (success) {
                     val message = "Approval request sent successfully."
                     LogManager.logInfo(message, TAG)
                     Log.d(TAG, message)
-                    Triple(true, message, requestId)
+                    com.artiusid.sdk.models.ApprovalRequestResult(success = true, message = message, requestId = requestId)
                 } else {
                     val message = "Failed to send approval request."
                     LogManager.logError(message, TAG)
                     Log.e(TAG, message)
-                    Triple(false, message, null)
+                    com.artiusid.sdk.models.ApprovalRequestResult(success = false, message = message, requestId = null)
                 }
             }
         } catch (e: Exception) {
             val message = "Approval request error: ${e.localizedMessage}"
             LogManager.logError(message, TAG)
             Log.e(TAG, "Approval request exception", e)
-            Triple(false, message, null)
+            com.artiusid.sdk.models.ApprovalRequestResult(success = false, message = message, requestId = null)
         }
     }
 } 

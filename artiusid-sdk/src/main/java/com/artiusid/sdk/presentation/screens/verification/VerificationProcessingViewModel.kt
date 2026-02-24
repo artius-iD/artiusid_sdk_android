@@ -714,6 +714,7 @@ class VerificationProcessingViewModel @Inject constructor(
                 // Re-verification: include account number from previous verification if available (iOS v2.0.17)
                 val envName = when (ClientConfiguration.getCurrentConfig()?.environment) {
                     com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
+                    com.artiusid.sdk.config.Environment.QA -> "QA"
                     com.artiusid.sdk.config.Environment.DEVELOPMENT -> "Development"
                     com.artiusid.sdk.config.Environment.STAGING -> "Staging"
                     com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
