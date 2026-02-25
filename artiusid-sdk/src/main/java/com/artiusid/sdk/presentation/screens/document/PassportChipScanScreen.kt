@@ -832,6 +832,7 @@ fun PassportChipScanScreen(
                         failureCount += 1
                         Log.d("PassportChipScan", "📋 Failed attempt $failureCount/$maxFailuresThenProceed; after $maxFailuresThenProceed will proceed to verification")
                         if (failureCount >= maxFailuresThenProceed) {
+                            // 3 failures: proceed immediately without showing "Scan failed" screen (avoids Compose semantics crash)
                             val mrzDataForHolder = ImageStorage.getPassportMRZData()
                             if (mrzDataForHolder != null) {
                                 val utilPassportData = com.artiusid.sdk.utils.PassportData(
@@ -848,6 +849,7 @@ fun PassportChipScanScreen(
                             onChipScanComplete(null)
                             return@launch
                         }
+                        // Only show error UI for attempts 1 and 2; never set Error state when at max failures
                         val msg = "Failed to read passport chip. Keep passport steady on NFC area. Try again (attempt $failureCount of $maxFailuresThenProceed)."
                         nfcScanState = NFCScanState.Error(msg)
                     }
@@ -869,6 +871,7 @@ fun PassportChipScanScreen(
                     StandaloneAppActivity.setIsoDep(null)
                     
                     if (failureCount >= maxFailuresThenProceed) {
+                        // 3 failures: proceed immediately without showing "Scan failed" screen (avoids Compose semantics crash)
                         val mrzDataForHolder = ImageStorage.getPassportMRZData()
                         if (mrzDataForHolder != null) {
                             val utilPassportData = com.artiusid.sdk.utils.PassportData(
@@ -885,6 +888,7 @@ fun PassportChipScanScreen(
                         onChipScanComplete(null)
                         return@launch
                     }
+                    // Only show error UI for attempts 1 and 2; never set Error state when at max failures
                     val baseMessage = when {
                         e.message?.contains("Tag was lost") == true ->
                             "Passport moved during scan! Keep passport steady on NFC area for entire process."

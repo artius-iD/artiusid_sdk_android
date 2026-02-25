@@ -63,6 +63,34 @@
 
 ---
 
+## 🎨 Compose build compatibility (host app alignment)
+
+The SDK AAR is built with the following Compose versions. **Host apps must use the same BOM and compiler** to avoid runtime `NoSuchMethodError` (e.g. `performImeAction$default` in `SemanticsPropertiesKt` when SDK screens with `TextField` are composed).
+
+| Component | Version |
+|-----------|---------|
+| **Compose BOM** | `androidx.compose:compose-bom:2023.10.01` |
+| **Compose compiler** | `1.5.3` (Kotlin 1.9.x) |
+
+In your app's `build.gradle`:
+
+```gradle
+android {
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.5.3'
+    }
+}
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2023.10.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
+    implementation 'androidx.compose.material3:material3'
+    // ... other Compose deps as needed
+}
+```
+
+---
+
 ## 📦 WHAT'S INCLUDED
 
 - `artiusid-sdk-1.2.51.aar` – Production SDK library

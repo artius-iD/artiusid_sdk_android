@@ -8,17 +8,17 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 ## 📦 **Latest Release**
 
-**Version:** 1.2.51 ✅ STABLE RELEASE  
+**Version:** 1.2.52 ✅ STABLE RELEASE  
 **Release Date:** February 2026  
 **Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
 
 ---
 
-## ✅ **STABLE RELEASE - v1.2.51**
+## ✅ **STABLE RELEASE - v1.2.52**
 
 **PRODUCTION READY** - iOS parity for VerificationResult/recapture, sample app Okta & AppConstants config, Test Authentication Request.
 
-**What's New in v1.2.51:**
+**What's New in v1.2.52:**
 - 📋 **VerificationResult (iOS parity)** – `requiresRecapture`, `recaptureType`, plus full result fields (`accountNumber`, `fullName`, `verificationScore`, `documentStatus`, etc.). When API returns recapture (600–604), host receives result and can call `startVerification()` again.
 - 🔄 **DocumentRecaptureType** – `fromHttpErrorCode()` nullable; 605 = permanent failure (not recapture). Recapture-able errors 600–604 map to specific recapture states.
 - 🔐 **Sample App – Okta.plist & AppConstants** – Optional `okta.json` and `appconstants.json` in assets override Okta (issuer, clientId, redirectUri, scopes) and ArtiusID credentials (apiKey, clientId, clientGroupId). Copy from `.example` files; matches MFA iOS app config.
@@ -35,24 +35,35 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.51 (STABLE RELEASE)
-curl -L -o artiusid-sdk-1.2.51.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.51/artiusid-sdk-1.2.51.aar
+# Download SDK v1.2.52 (STABLE RELEASE)
+curl -L -o artiusid-sdk-1.2.52.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.52/artiusid-sdk-1.2.52.aar
 ```
 
 ### **2. Add to Your Project**
 
 Copy the AAR to your app's `libs` directory:
 ```bash
-cp artiusid-sdk-1.2.51.aar your-app/app/libs/
+cp artiusid-sdk-1.2.52.aar your-app/app/libs/
 ```
 
 ### **3. Configure Dependencies**
 
+**Compose version alignment (required):** The SDK is built with a specific Compose BOM and compiler. Host apps **must** use the same versions to avoid runtime crashes (e.g. `NoSuchMethodError: performImeAction$default`). See [Troubleshooting](#troubleshooting) if you see Compose semantics errors.
+
 Add to your app's `build.gradle`:
+
 ```gradle
+android {
+    // ... other config ...
+    buildFeatures { compose true }
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.5.3'  // Must match SDK (see release notes)
+    }
+}
+
 dependencies {
-    implementation files('libs/artiusid-sdk-1.2.51.aar')
+    implementation files('libs/artiusid-sdk-1.2.52.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
@@ -60,9 +71,10 @@ dependencies {
     ksp "com.google.dagger:hilt-android-compiler:${hilt_version}"
     implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
     
-    // Compose
+    // Compose – use same BOM as SDK (compose-bom:2023.10.01, compiler 1.5.3)
     implementation platform('androidx.compose:compose-bom:2023.10.01')
     implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.foundation:foundation'
     implementation 'androidx.compose.material3:material3'
     
     // Image loading (required for SDK animations)
@@ -329,6 +341,17 @@ The SDK will automatically:
 
 ## 🐛 **Troubleshooting**
 
+### **Compose version alignment (NoSuchMethodError):**
+If you see a crash such as:
+```text
+NoSuchMethodError: No static method performImeAction$default(...) in class Landroidx/compose/ui/semantics/SemanticsPropertiesKt;
+```
+or similar semantics-related errors when the SDK shows a screen with a text field (e.g. verification, CollectOktaID), your app’s Compose BOM or compiler does not match the SDK. **Fix:** Use the same versions the SDK is built with:
+- **Compose BOM:** `androidx.compose:compose-bom:2023.10.01`
+- **Compose compiler:** `kotlinCompilerExtensionVersion '1.5.3'` in `android` → `composeOptions { }`
+
+See [Configure Dependencies](#3-configure-dependencies) and [SDK Dependencies](SDK_DEPENDENCY_REQUIREMENTS.md).
+
 ### **HILT Issues:**
 1. Run `./gradlew diagnoseHilt` for automated diagnosis
 2. Check [HILT_INTEGRATION_GUIDE.md](HILT_INTEGRATION_GUIDE.md) for detailed setup
@@ -358,6 +381,10 @@ The SDK will automatically:
 ---
 
 ## 📝 **Changelog**
+
+### **v1.2.52 (February 2026) - HOST APP FIXES**
+- 📄 **Compose alignment** – Documented BOM `2023.10.01` and compiler `1.5.3`; host apps must match to avoid `NoSuchMethodError` (performImeAction$default). Troubleshooting added.
+- 📱 **NFC 3-failures flow** – After 3 NFC read failures, proceed to verification without showing “Scan failed” screen; completion callback and OCR data preserved on both IsoDep and tag paths.
 
 ### **v1.2.51 (February 2026) - iOS PARITY (API & CONFIG)**
 - 📋 **ApprovalRequestResult** – `sendApprovalRequest()` now returns `ApprovalRequestResult(success, message, requestId)` (iOS parity).
@@ -444,7 +471,7 @@ The SDK will automatically:
 
 ## 📦 **Package Contents**
 
-- `artiusid-sdk-1.2.51.aar` - Main SDK library (25MB)
+- `artiusid-sdk-1.2.52.aar` - Main SDK library (25MB)
 - `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
 - `README_HILT_SETUP.md` - Quick HILT reference
 - `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
@@ -476,7 +503,7 @@ This SDK is provided under license. See LICENSE.txt for full terms and condition
 
 ---
 
-**Version:** 1.2.51  
+**Version:** 1.2.52  
 **Release Date:** February 2026  
 **Package Size:** 25MB  
 **Status:** Production Ready

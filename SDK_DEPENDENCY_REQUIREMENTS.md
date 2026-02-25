@@ -293,16 +293,27 @@ Error: NoClassDefFoundError: com.google.mlkit.vision.face.FaceDetector
 
 **Why needed:** The SDK is built with Jetpack Compose
 
+**Version alignment:** Host apps **must** use the **same** Compose BOM and Compose compiler as the SDK to avoid runtime `NoSuchMethodError` (e.g. `performImeAction$default` in `SemanticsPropertiesKt`). The SDK is built with:
+- **BOM:** `androidx.compose:compose-bom:2023.10.01`
+- **Compiler:** `kotlinCompilerExtensionVersion '1.5.3'`
+
 ```gradle
-// Compose BOM and libraries
-implementation platform('androidx.compose:compose-bom:2023.10.01')
-// + 12 compose libraries
+android {
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.5.3'
+    }
+}
+dependencies {
+    implementation platform('androidx.compose:compose-bom:2023.10.01')
+    // + compose libraries (ui, foundation, material3, etc.)
+}
 ```
 
-**If missing:**
+**If missing or version mismatch:**
 ```
 ❌ SDK screens won't display
 ❌ Crashes on activity start
+❌ NoSuchMethodError: performImeAction$default in SemanticsPropertiesKt (when SDK uses TextField)
 Error: NoClassDefFoundError: androidx.compose.runtime.Composer
 ```
 
@@ -599,6 +610,16 @@ dependencies {
     // (See complete list in "Complete Dependency List" section)
 }
 ```
+
+---
+
+## 🔧 **Troubleshooting: Compose version alignment**
+
+If you see:
+```text
+NoSuchMethodError: No static method performImeAction$default(...) in class Landroidx/compose/ui/semantics/SemanticsPropertiesKt;
+```
+when the SDK shows a screen with a text field (e.g. verification, CollectOktaID), your app’s Compose BOM or compiler does not match the SDK. **Fix:** Use the same BOM and compiler as the SDK (see Category 3 above): `compose-bom:2023.10.01` and `kotlinCompilerExtensionVersion '1.5.3'`.
 
 ---
 
