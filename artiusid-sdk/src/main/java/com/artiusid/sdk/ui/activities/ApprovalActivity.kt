@@ -80,6 +80,8 @@ class ApprovalActivity : FragmentActivity() {
                                 throw NotImplementedError("Not needed for approval flow")
                             override suspend fun approval(request: com.artiusid.sdk.data.model.ApprovalRequest) = 
                                 throw NotImplementedError("Not needed for approval flow")
+                            override suspend fun registerOkta(request: Map<String, String>) = 
+                                throw NotImplementedError("Not needed for approval flow")
                         }
                         @Suppress("UNCHECKED_CAST")
                         return ApprovalRequestViewModel(apiService) as T

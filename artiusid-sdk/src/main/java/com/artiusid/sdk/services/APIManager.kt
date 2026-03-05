@@ -62,19 +62,23 @@ class APIManager(private val context: Context) {
         certManager.removeKeyPair()
     }
 
-    // Load certificate using full URL (for UrlBuilder integration)
+    /**
+     * Ensure client certificate for mTLS: retrieve from keystore (keychain) or, if not present,
+     * retrieve from cert URL and store in keychain for signing.
+     */
     suspend fun loadCertificateFromFullUrl(deviceId: String, fullUrl: String) {
         val certManager = CertificateManager(context)
-        if (certManager.loadCertificatePem() == null) {
-            Log.d(TAG, "No certificate PEM found, generating Keystore keypair and CSR...")
+        val existingPem = certManager.loadCertificatePem()
+        if (existingPem == null) {
+            Log.d(TAG, "Certificate not in keystore; retrieving from cert URL and storing in keychain for signing")
+            Log.d(TAG, "Generating keypair and CSR for device...")
             val csr = certManager.generateCSR(deviceId)
-            
             Log.d(TAG, "Using full certificate URL: $fullUrl")
             val response = loadCertificateFromUrl(fullUrl, LoadCertificateRequest(deviceId, csr))
             certManager.storeCertificatePem(response.certificate)
-            Log.d(TAG, "Certificate registration and PEM storage complete")
+            Log.d(TAG, "Certificate retrieved from cert URL and stored in keychain for mTLS signing")
         } else {
-            Log.d(TAG, "Existing certificate PEM found")
+            Log.d(TAG, "Certificate already in keystore; using for mTLS signing")
         }
     }
 

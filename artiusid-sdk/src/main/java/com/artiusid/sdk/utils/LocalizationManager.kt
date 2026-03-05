@@ -11,16 +11,18 @@ import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * LocalizationManager handles string overrides from the host application
- * 
+ *
  * This allows the host app to customize any text displayed in the SDK
  * by providing string overrides in the SDKConfiguration.
  * Supports runtime language change via setLanguage (iOS parity).
+ * Supports add/remove/clear overrides and debug info (iOS parity).
  */
 object LocalizationManager {
-    private var stringOverrides: Map<String, String> = emptyMap()
+    private val stringOverrides = ConcurrentHashMap<String, String>()
     @Volatile
     private var currentLanguageCode: String? = null
 
@@ -37,10 +39,11 @@ object LocalizationManager {
     fun getCurrentLanguageCode(): String? = currentLanguageCode
 
     /**
-     * Initialize with string overrides from the host application
+     * Initialize with string overrides from the host application (replaces all overrides).
      */
     fun initialize(overrides: Map<String, String>) {
-        stringOverrides = overrides
+        stringOverrides.clear()
+        stringOverrides.putAll(overrides)
         android.util.Log.d("LocalizationManager", "🌐 Initialized with ${overrides.size} string overrides")
         overrides.forEach { (key, value) ->
             android.util.Log.d("LocalizationManager", "  📝 $key = $value")
@@ -116,10 +119,61 @@ object LocalizationManager {
     }
     
     /**
-     * Get all current overrides (for debugging)
+     * Get all current overrides (for debugging).
      */
-    fun getAllOverrides(): Map<String, String> {
-        return stringOverrides.toMap()
+    fun getAllOverrides(): Map<String, String> = stringOverrides.toMap()
+
+    /**
+     * Set all overrides at once (replaces existing). iOS parity: setOverrides.
+     */
+    fun setOverrides(overrides: Map<String, String>) {
+        stringOverrides.clear()
+        stringOverrides.putAll(overrides)
+    }
+
+    /**
+     * Add or update a single override. iOS parity: addOverride(key:value:).
+     */
+    fun addOverride(key: String, value: String) {
+        stringOverrides[key] = value
+    }
+
+    /**
+     * Remove a single override by key. iOS parity: removeOverride(key:).
+     */
+    fun removeOverride(key: String) {
+        stringOverrides.remove(key)
+    }
+
+    /**
+     * Clear all overrides. iOS parity: clearOverrides.
+     */
+    fun clearOverrides() {
+        stringOverrides.clear()
+    }
+
+    /**
+     * Number of active overrides. iOS parity: overrideCount.
+     */
+    fun getOverrideCount(): Int = stringOverrides.size
+
+    /**
+     * Set of override keys. iOS parity: overrideKeys.
+     */
+    fun getOverrideKeys(): Set<String> = stringOverrides.keys.toSet()
+
+    /**
+     * Debug description (iOS parity: getDebugInfo).
+     */
+    fun getDebugInfo(): String = buildString {
+        append("LocalizationManager:\n")
+        append("  - Override count: ${stringOverrides.size}\n")
+        append("  - Current language: ${currentLanguageCode ?: "system"}\n")
+        if (stringOverrides.isNotEmpty()) {
+            append("  - Keys: ${stringOverrides.keys.take(10).joinToString()}")
+            if (stringOverrides.size > 10) append(" ... (+${stringOverrides.size - 10} more)")
+            append("\n")
+        }
     }
 }
 

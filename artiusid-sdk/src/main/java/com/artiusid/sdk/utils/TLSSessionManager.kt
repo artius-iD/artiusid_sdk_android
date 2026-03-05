@@ -162,17 +162,21 @@ class TLSSessionManager(private val context: Context) {
         }
     }
 
+    /**
+     * Create KeyManager for mTLS: certificate is retrieved from keystore (keychain).
+     * If not in keystore, it must be loaded from cert URL first (ensureCertificateRegistered or verification) and stored in keychain for signing.
+     */
     private fun createKeyManager(): Array<KeyManager>? {
         try {
+            Log.d(TAG, "Attempting to load client certificate from keystore for mTLS signing...")
             val certManager = CertificateManager(context)
             val certPem = certManager.loadCertificatePem()
-            Log.d(TAG, "Attempting to load client certificate PEM from app storage...")
             if (certPem == null) {
-                Log.e(TAG, "No certificate PEM found for mTLS!")
+                Log.e(TAG, "No certificate in keystore; cannot perform mTLS. Load certificate from cert URL first (ensureCertificateRegistered or complete verification), then it will be stored in keychain for signing.")
                 return null
             }
+            Log.d(TAG, "Certificate loaded from keystore; using for mTLS signing")
             
-            // Use hybrid approach for TLS compatibility
             val hybridManager = HybridCertificateManager(context)
             val tlsKeyStore = hybridManager.createTLSKeyStore(certPem)
             

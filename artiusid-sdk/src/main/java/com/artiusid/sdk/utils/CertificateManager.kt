@@ -327,24 +327,27 @@ class CertificateManager(private val context: Context) {
      * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
      * corruption detection and recovery from AEADBadTagException.
      */
+    /**
+     * Store the certificate PEM in keychain (keystore) for mTLS signing.
+     * Called after certificate is retrieved from cert URL.
+     */
     fun storeCertificatePem(certPem: String) {
         try {
             val currentEnv = getCurrentEnvironment()
             val environmentKey = getEnvironmentKey(CERT_PEM_KEY)
             
-            Log.d(TAG, "🔐 Storing certificate PEM for environment: $currentEnv")
+            Log.d(TAG, "🔐 Storing certificate in keychain for mTLS signing (environment: $currentEnv)")
             Log.d(TAG, "🔑 Using storage key: $environmentKey")
             
-            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
             val success = EncryptedPreferencesManager.safePutString(
                 context, 
                 ENCRYPTED_PREFS_NAME, 
-                environmentKey, // 🚨 CRITICAL: Use environment-specific key
+                environmentKey,
                 certPem
             )
             
             if (success) {
-                Log.d(TAG, "✅ Certificate PEM stored securely for environment '$currentEnv' (iOS Keychain equivalent)")
+                Log.d(TAG, "✅ Certificate stored in keychain for signing (environment: $currentEnv)")
             } else {
                 Log.w(TAG, "⚠️ Failed to store certificate PEM for environment '$currentEnv', using fallback")
                 throw Exception("EncryptedPreferencesManager.safePutString failed")
@@ -365,14 +368,16 @@ class CertificateManager(private val context: Context) {
     }
 
     /**
-     * Load the certificate PEM string from encrypted storage (iOS Keychain equivalent).
+     * Load the certificate PEM from keystore (keychain). If not present, certificate must be
+     * retrieved from cert URL (ensureCertificateRegistered or verification) and stored in keychain for signing.
      * Falls back to file storage for backward compatibility.
      * Returns null if not found.
-     * 
+     *
      * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
      * corruption detection and recovery from AEADBadTagException.
      */
     fun loadCertificatePem(): String? {
+        Log.d(TAG, "🔐 Attempting to retrieve certificate from keystore (keychain) for mTLS signing...")
         try {
             val currentEnv = getCurrentEnvironment()
             val environmentKey = getEnvironmentKey(CERT_PEM_KEY)
@@ -380,35 +385,32 @@ class CertificateManager(private val context: Context) {
             Log.d(TAG, "🔐 Loading certificate PEM for environment: $currentEnv")
             Log.d(TAG, "🔑 Using storage key: $environmentKey")
             
-            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
             val encryptedCertPem = EncryptedPreferencesManager.safeGetString(
                 context, 
                 ENCRYPTED_PREFS_NAME, 
-                environmentKey, // 🚨 CRITICAL: Use environment-specific key
+                environmentKey,
                 null
             )
             
             if (encryptedCertPem != null) {
-                Log.d(TAG, "✅ Certificate PEM loaded for environment '$currentEnv' (iOS Keychain equivalent)")
+                Log.d(TAG, "✅ Certificate retrieved from keystore; available for mTLS signing (environment: $currentEnv)")
                 return encryptedCertPem
             }
             
-            Log.d(TAG, "🔍 No certificate found for environment '$currentEnv', checking file storage...")
+            Log.d(TAG, "🔍 No certificate in keystore for environment '$currentEnv', checking file storage...")
             
         } catch (e: Exception) {
             Log.w(TAG, "⚠️ Failed to load certificate PEM from encrypted storage, falling back to file", e)
         }
         
-        // Fallback to file storage for backward compatibility
         val file = File(context.filesDir, CERT_FILE_NAME)
         if (file.exists()) {
             val fileCertPem = file.readText()
             Log.d(TAG, "📁 Certificate PEM loaded from file storage (backward compatibility)")
             
-            // Migrate to encrypted storage for future use
             try {
                 storeCertificatePem(fileCertPem)
-                Log.d(TAG, "🔄 Migrated certificate PEM to encrypted storage")
+                Log.d(TAG, "🔄 Migrated certificate PEM to keychain (keystore)")
             } catch (e: Exception) {
                 Log.w(TAG, "⚠️ Failed to migrate certificate PEM to encrypted storage", e)
             }
@@ -416,7 +418,7 @@ class CertificateManager(private val context: Context) {
             return fileCertPem
         }
         
-        Log.d(TAG, "❌ No certificate PEM found in either encrypted or file storage")
+        Log.d(TAG, "❌ Certificate not in keystore; must be loaded from cert URL (ensureCertificateRegistered or verification) and stored in keychain for signing.")
         return null
     }
 
@@ -492,28 +494,26 @@ class CertificateManager(private val context: Context) {
     }
 
     /**
-     * Remove the certificate and private key from both encrypted and file storage.
-     * 
-     * SDK v1.2.38 CRITICAL FIX: Uses EncryptedPreferencesManager for automatic
-     * corruption detection and recovery from AEADBadTagException.
+     * Remove the certificate and private key from keychain (encrypted storage) and file.
+     * Uses environment-specific keys so only current environment's cert is removed.
      */
     fun removeCertificatePem() {
         try {
-            // SDK v1.2.38: Use EncryptedPreferencesManager for corruption recovery
-            val success1 = EncryptedPreferencesManager.safeRemove(context, ENCRYPTED_PREFS_NAME, CERT_PEM_KEY)
-            val success2 = EncryptedPreferencesManager.safeRemove(context, ENCRYPTED_PREFS_NAME, PRIVATE_KEY_KEY)
+            val certKey = getEnvironmentKey(CERT_PEM_KEY)
+            val keyKey = getEnvironmentKey(PRIVATE_KEY_KEY)
+            val success1 = EncryptedPreferencesManager.safeRemove(context, ENCRYPTED_PREFS_NAME, certKey)
+            val success2 = EncryptedPreferencesManager.safeRemove(context, ENCRYPTED_PREFS_NAME, keyKey)
             
             if (success1 && success2) {
-                Log.d(TAG, "✅ Certificate and private key removed from encrypted storage")
+                Log.d(TAG, "✅ Certificate and private key removed from keychain (keystore)")
             } else {
-                Log.w(TAG, "⚠️ Partial failure removing from encrypted storage (cert: $success1, key: $success2)")
+                Log.w(TAG, "⚠️ Partial failure removing from keychain (cert: $success1, key: $success2)")
             }
             
         } catch (e: Exception) {
-            Log.w(TAG, "⚠️ Failed to remove certificate from encrypted storage", e)
+            Log.w(TAG, "⚠️ Failed to remove certificate from keychain", e)
         }
         
-        // Also remove file storage for backward compatibility
         val file = File(context.filesDir, CERT_FILE_NAME)
         if (file.exists()) {
             file.delete()

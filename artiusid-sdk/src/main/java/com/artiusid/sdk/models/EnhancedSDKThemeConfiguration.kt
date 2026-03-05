@@ -41,7 +41,127 @@ data class EnhancedSDKThemeConfiguration(
     
     // === ANIMATION & TRANSITIONS ===
     val animationConfig: SDKAnimationConfig = SDKAnimationConfig()
-) : Parcelable
+) : Parcelable {
+
+    /** Validate theme configuration (iOS parity). Returns list of issues or empty. */
+    fun validate(): List<String> {
+        val issues = mutableListOf<String>()
+        if (brandName.isBlank()) issues.add("Brand name cannot be empty")
+        if (colorScheme.primaryColorHex == colorScheme.backgroundColorHex)
+            issues.add("Primary color should contrast with background color")
+        if (typography.bodyLarge < 12) issues.add("Body text size should be at least 12sp for readability")
+        if (componentStyling.buttonHeight < 44) issues.add("Button height should be at least 44dp for touch targets")
+        return issues
+    }
+
+    /** True if validate() is empty (iOS parity: isValid). */
+    val isValid: Boolean get() = validate().isEmpty()
+
+    /** Copy with new brand name (iOS parity: withBrandName). */
+    fun withBrandName(name: String) = copy(brandName = name)
+
+    /** Copy with new color scheme (iOS parity: withColors). */
+    fun withColors(colors: SDKColorScheme) = copy(colorScheme = colors)
+
+    /** Copy with new typography (iOS parity: withTypography). */
+    fun withTypography(typography: SDKTypography) = copy(typography = typography)
+
+    /** Debug description (iOS parity: debugDescription). */
+    fun debugDescription(): String = buildString {
+        append("Enhanced SDK Theme Configuration:\n")
+        append("  - Brand: $brandName, Logo: ${brandLogoResourceName ?: brandLogoUrl ?: "none"}\n")
+        append("  - Primary: ${colorScheme.primaryColorHex}, Secondary: ${colorScheme.secondaryColorHex}\n")
+        append("  - Background: ${colorScheme.backgroundColorHex}, Surface: ${colorScheme.surfaceColorHex}\n")
+        append("  - Font: ${typography.fontFamily}, Button Height: ${componentStyling.buttonHeight}dp\n")
+        append("  - Animations: ${if (animationConfig.enablePageTransitions) "enabled" else "disabled"}\n")
+        append("  - Valid: $isValid\n")
+    }
+
+    companion object {
+        /**
+         * Default artius.iD theme matching the standalone app (iOS parity).
+         */
+        @JvmStatic
+        fun artiusIDDefault(): EnhancedSDKThemeConfiguration = EnhancedSDKThemeConfiguration(
+            brandName = "artius.iD",
+            brandLogoResourceName = "logo",
+            typography = SDKTypography(
+                fontFamily = "default",
+                headlineLarge = 32f,
+                headlineMedium = 28f,
+                titleLarge = 22f,
+                bodyLarge = 16f,
+                bodyMedium = 14f,
+                headlineWeight = "bold",
+                titleWeight = "medium",
+                bodyWeight = "normal"
+            ),
+            colorScheme = SDKColorScheme(
+                primaryColorHex = "#FFFFFF",
+                secondaryColorHex = "#F58220",
+                backgroundColorHex = "#22354D",
+                surfaceColorHex = "#22354D",
+                onPrimaryColorHex = "#22354D",
+                onSecondaryColorHex = "#FFFFFF",
+                onBackgroundColorHex = "#FFFFFF",
+                onSurfaceColorHex = "#FFFFFF",
+                primaryButtonColorHex = "#F58220",
+                primaryButtonTextColorHex = "#FFFFFF",
+                secondaryButtonColorHex = "#F58220",
+                secondaryButtonTextColorHex = "#FFFFFF"
+            ),
+            iconTheme = SDKIconTheme(
+                primaryIconColorHex = "#F58220",
+                secondaryIconColorHex = "#F58220",
+                navigationIconColorHex = "#F58220"
+            ),
+            textContent = SDKTextContent(
+                welcomeTitle = "artius.iD Verification",
+                welcomeSubtitle = "Secure identity verification powered by artius.iD"
+            )
+        )
+
+        /**
+         * Light theme with blue accent (iOS parity).
+         */
+        @JvmStatic
+        fun lightBlue(): EnhancedSDKThemeConfiguration = EnhancedSDKThemeConfiguration(
+            brandName = "Verify",
+            colorScheme = SDKColorScheme(
+                primaryColorHex = "#003DA5",
+                secondaryColorHex = "#00B4D8",
+                backgroundColorHex = "#FFFFFF",
+                surfaceColorHex = "#F5F5F5",
+                onBackgroundColorHex = "#000000",
+                onSurfaceColorHex = "#000000",
+                primaryButtonColorHex = "#003DA5",
+                primaryButtonTextColorHex = "#FFFFFF",
+                secondaryButtonColorHex = "#00B4D8",
+                secondaryButtonTextColorHex = "#FFFFFF"
+            )
+        )
+
+        /**
+         * Dark theme with purple accent (iOS parity).
+         */
+        @JvmStatic
+        fun darkPurple(): EnhancedSDKThemeConfiguration = EnhancedSDKThemeConfiguration(
+            brandName = "SecureID",
+            colorScheme = SDKColorScheme(
+                primaryColorHex = "#6366F1",
+                secondaryColorHex = "#EC4899",
+                backgroundColorHex = "#1F2937",
+                surfaceColorHex = "#374151",
+                onBackgroundColorHex = "#F9FAFB",
+                onSurfaceColorHex = "#F9FAFB",
+                primaryButtonColorHex = "#6366F1",
+                primaryButtonTextColorHex = "#FFFFFF",
+                secondaryButtonColorHex = "#EC4899",
+                secondaryButtonTextColorHex = "#FFFFFF"
+            )
+        )
+    }
+}
 
 /**
  * Typography Configuration
@@ -74,7 +194,9 @@ data class SDKTypography(
     
     // Letter Spacing
     val letterSpacing: Float = 0f,
-    val lineHeight: Float = 1.5f
+    val lineHeight: Float = 1.5f,
+    /** iOS parity: paragraphSpacing. */
+    val paragraphSpacing: Float = 0f
 ) : Parcelable
 
 /**
@@ -139,6 +261,21 @@ data class SDKColorScheme(
     val scrimColorHex: String = "#000000",
     val overlayColorHex: String = "#000000"
 ) : Parcelable
+
+/** Icon category keys for theme (iOS parity: IconCategory). Use in customIcons map. */
+object IconCategory {
+    const val CAMERA = "camera"
+    const val FACE = "face"
+    const val DOCUMENT = "document"
+    const val NFC = "nfc"
+    const val SUCCESS = "success"
+    const val ERROR = "error"
+    const val WARNING = "warning"
+    const val BACK = "back"
+    const val CLOSE = "close"
+    const val NAVIGATION = "navigation"
+    const val ACTION = "action"
+}
 
 /**
  * Icon Theme Configuration
@@ -279,7 +416,7 @@ data class SDKTextContent(
 ) : Parcelable
 
 /**
- * Component Styling Configuration
+ * Component Styling Configuration (iOS parity: SDKComponentStyling)
  */
 @Parcelize
 data class SDKComponentStyling(
@@ -288,14 +425,26 @@ data class SDKComponentStyling(
     val buttonElevation: Float = 4f,
     val buttonHeight: Float = 48f,
     val buttonMinWidth: Float = 120f,
+    val smallButtonHeight: Float = 36f,
+    val largeButtonHeight: Float = 56f,
     
     // === CARDS ===
     val cardCornerRadius: Float = 12f,
     val cardElevation: Float = 8f,
+    val cardPadding: Float = 16f,
     
     // === INPUT FIELDS ===
     val inputFieldCornerRadius: Float = 8f,
     val inputFieldHeight: Float = 56f,
+    val inputFieldBorderWidth: Float = 1f,
+    
+    // === DIALOG & BOTTOM SHEET (iOS parity) ===
+    val dialogCornerRadius: Float = 16f,
+    val bottomSheetCornerRadius: Float = 20f,
+    val dialogElevation: Float = 8f,
+    val bottomSheetElevation: Float = 16f,
+    val dialogPadding: Float = 24f,
+    val toolbarHeight: Float = 56f,
     
     // === OVERLAYS ===
     val overlayCornerRadius: Float = 16f,
@@ -303,7 +452,15 @@ data class SDKComponentStyling(
     
     // === BORDERS ===
     val borderWidth: Float = 1f,
+    val thickBorderWidth: Float = 2f,
     val focusedBorderWidth: Float = 2f,
+    val buttonHorizontalPadding: Float = 16f,
+    val buttonVerticalPadding: Float = 12f,
+    
+    // === OPACITY (iOS parity) ===
+    val disabledOpacity: Float = 0.4f,
+    val pressedOpacity: Float = 0.8f,
+    val dividerThickness: Float = 1f,
     
     // === SHADOWS ===
     val shadowBlurRadius: Float = 8f,
@@ -312,42 +469,68 @@ data class SDKComponentStyling(
 ) : Parcelable
 
 /**
- * Layout Configuration
+ * Layout Configuration (iOS parity: SDKLayoutConfig)
  */
 @Parcelize
 data class SDKLayoutConfig(
     // === PADDING & MARGINS ===
     val screenPadding: Float = 16f,
-    val componentSpacing: Float = 16f,
+    val screenTopPadding: Float = 16f,
+    val screenBottomPadding: Float = 16f,
+    val extraSmallSpacing: Float = 4f,
     val smallSpacing: Float = 8f,
+    val componentSpacing: Float = 16f,
     val largeSpacing: Float = 24f,
+    val extraLargeSpacing: Float = 32f,
+    val sectionHeaderSpacing: Float = 12f,
+    val sectionContentSpacing: Float = 8f,
+    val betweenSectionsSpacing: Float = 24f,
+    val listItemSpacing: Float = 12f,
+    val gridItemSpacing: Float = 16f,
+    val gridColumns: Int = 2,
     
     // === CONTENT SIZING ===
     val maxContentWidth: Float = 400f,
     val minTouchTarget: Float = 48f,
     
     // === CAMERA OVERLAY ===
-    val documentOverlayAspectRatio: Float = 1.6f, // Standard ID card ratio
+    val documentOverlayAspectRatio: Float = 1.6f,
     val faceOverlaySize: Float = 200f,
+    val faceOverlaySizeRatio: Float = 0.7f,
+    val cameraOverlayHorizontalInset: Float = 24f,
+    val cameraOverlayVerticalInset: Float = 80f,
     val overlayStrokeWidth: Float = 4f
 ) : Parcelable
 
 /**
- * Animation Configuration
+ * Animation Configuration (iOS parity: SDKAnimationConfig)
  */
 @Parcelize
 data class SDKAnimationConfig(
-    // === TIMING ===
-    val shortAnimationDuration: Int = 200,
-    val mediumAnimationDuration: Int = 400,
-    val longAnimationDuration: Int = 600,
-    
-    // === TRANSITIONS ===
+    // === ENABLE/DISABLE ===
     val enablePageTransitions: Boolean = true,
     val enableButtonAnimations: Boolean = true,
     val enableProgressAnimations: Boolean = true,
     val enableSuccessAnimations: Boolean = true,
+    val enableLoadingAnimations: Boolean = true,
+    val enableStatusAnimations: Boolean = true,
+    
+    // === DURATIONS (ms) ===
+    val fastAnimationDuration: Int = 150,
+    val shortAnimationDuration: Int = 200,
+    val mediumAnimationDuration: Int = 300,
+    val longAnimationDuration: Int = 500,
+    val extraLongAnimationDuration: Int = 1000,
+    
+    // === TRANSITION STYLE ===
+    val pageTransitionStyle: String = "slide",
+    val modalTransitionStyle: String = "fade",
     
     // === EASING ===
-    val animationEasing: String = "ease_in_out" // "linear", "ease_in", "ease_out", "ease_in_out"
+    val animationEasing: String = "ease_in_out",
+    val defaultAnimationCurve: String = "easeInOut",
+    val buttonAnimationCurve: String = "spring",
+    val springResponse: Double = 0.3,
+    val springDampingFraction: Double = 0.7,
+    val springBlendDuration: Double = 0.3
 ) : Parcelable

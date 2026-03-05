@@ -15,6 +15,7 @@ import com.artiusid.sdk.data.model.AuthenticationRequest
 import com.artiusid.sdk.data.model.AuthenticationResponse
 import com.artiusid.sdk.data.model.LoadCertificateRequest
 import com.artiusid.sdk.data.model.LoadCertificateResponse
+import com.artiusid.sdk.data.model.OktaRegistrationResponse
 import com.artiusid.sdk.data.model.VerificationRequest
 import com.artiusid.sdk.data.model.VerificationResponse
 import retrofit2.http.GET
@@ -63,6 +64,12 @@ interface ApiService {
     suspend fun approval(
         @Body request: ApprovalRequest
     ): ApprovalResultData
+
+    /** Okta user registration (iOS parity: same base URL as approval response). */
+    @POST("okta-registration")
+    suspend fun registerOkta(
+        @Body request: Map<String, String>
+    ): OktaRegistrationResponse
 }
 
 // Separate API service for certificate loading (uses different base URL)

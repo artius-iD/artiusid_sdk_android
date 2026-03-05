@@ -18,6 +18,8 @@ import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
 import com.artiusid.sdk.models.SDKError
 import com.artiusid.sdk.models.SDKErrorCode
 import com.artiusid.sdk.models.ApprovalRequestResult
+import com.artiusid.sdk.models.AuthenticationResult
+import com.artiusid.sdk.models.AuthenticationAccountInfo
 import com.artiusid.sdk.services.APIManager
 import com.artiusid.sdk.util.DeviceUtils
 import com.artiusid.sdk.utils.SharedContextManager
@@ -66,9 +68,16 @@ object ArtiusIDSDK {
     private var isApprovalRequestInProgress = false
     private val approvalRequestLock = Any()
 
-    // Verification request payload capture (iOS parity: lastVerificationRequestPayloadSummary)
+    // Verification request payload capture (iOS parity: lastVerificationRequestPayloadSummary + lastVerificationRequestPayload)
     @Volatile
     private var lastVerificationRequestPayloadSummary: Map<String, Any>? = null
+    @Volatile
+    private var lastVerificationRequestPayload: String? = null
+
+    /** Optional listener when verification request payload is about to be sent (iOS parity: verificationRequestWillSendNotification). */
+    var verificationRequestWillSendListener: ((Map<String, Any>, String?) -> Unit)? = null
+    /** Optional listener when FCM token is updated (iOS parity: fcmTokenUpdatedNotification). */
+    var fcmTokenUpdatedListener: ((String?) -> Unit)? = null
 
     private const val OKTA_PREFS_NAME = "artiusid_sdk"
     private const val SDK_PREFS_NAME = "artiusid_sdk"
@@ -126,9 +135,15 @@ object ArtiusIDSDK {
     }
 
     /**
+     * Get the SDK version string (iOS parity: getSDKVersion on wrapper).
+     * @return SDK version (e.g. "1.2.54")
+     */
+    fun getSdkVersion(): String = BuildConfig.SDK_VERSION_NAME
+
+    /**
      * Get comprehensive SDK and integration info (iOS parity: getSDKInfo).
      * @param context Application context
-     * @return Map with sdkVersion, platform, firebaseAvailable, firebaseConfigured, fcmTokenAvailable
+     * @return Map with sdkVersion, platform, architecture, wrapperVersion, firebaseAvailable, firebaseConfigured, fcmTokenAvailable
      */
     fun getSDKInfo(context: Context): Map<String, Any> {
         val firebaseAvailable = try {
@@ -141,7 +156,8 @@ object ArtiusIDSDK {
         return mapOf(
             "sdkVersion" to (BuildConfig.SDK_VERSION_NAME),
             "platform" to "Android",
-            "architecture" to "Android ${android.os.Build.VERSION.SDK_INT}",
+            "architecture" to (android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "unknown"),
+            "wrapperVersion" to (BuildConfig.SDK_VERSION_NAME), // No separate wrapper on Android; use SDK version
             "firebaseAvailable" to firebaseAvailable,
             "firebaseConfigured" to firebaseAvailable,
             "fcmTokenAvailable" to fcmToken.isNotEmpty()
@@ -172,6 +188,14 @@ object ArtiusIDSDK {
     fun getFCMToken(context: Context): String = getCurrentFCMToken(context)
 
     /**
+     * Set FCM token (iOS parity: setFCMToken). Alias for updateFcmToken for API consistency.
+     * Use when the client provides a token without going through Firebase.
+     */
+    fun setFcmToken(token: String?) {
+        updateFcmToken(token)
+    }
+
+    /**
      * Last verification request payload summary (field names + size hints, no full base64) for debug/support.
      * Set by SDK before sending verification request.
      */
@@ -191,11 +215,49 @@ object ArtiusIDSDK {
     }
 
     /**
-     * Capture verification request payload summary before send (iOS parity).
-     * Called internally by SDK. Summary uses size hints for base64 fields, not full data.
+     * Last verification request payload as raw JSON string (iOS parity: lastVerificationRequestPayload).
+     * Set by SDK before sending the verification request.
      */
-    fun captureVerificationRequestPayload(summary: Map<String, Any>) {
+    fun getLastVerificationRequestPayload(): String? = lastVerificationRequestPayload
+
+    /**
+     * Capture verification request payload before send (iOS parity).
+     * Called internally by SDK. Summary uses size hints for base64 fields; rawPayload is the full JSON string if provided.
+     */
+    fun captureVerificationRequestPayload(summary: Map<String, Any>, rawPayload: String? = null) {
         lastVerificationRequestPayloadSummary = summary
+        lastVerificationRequestPayload = rawPayload
+        verificationRequestWillSendListener?.invoke(summary, rawPayload)
+    }
+
+    /**
+     * Check if biometric authentication is available (iOS parity: isBiometricAuthenticationAvailable).
+     */
+    fun isBiometricAvailable(context: Context): Boolean {
+        return try {
+            val bm = androidx.biometric.BiometricManager.from(context)
+            bm.canAuthenticate(androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG or androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK) == androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS
+        } catch (e: Throwable) {
+            android.util.Log.w(TAG, "Biometric check failed: ${e.message}")
+            false
+        }
+    }
+
+    /**
+     * Get available biometric type for display (iOS parity: availableBiometricType).
+     * @return "face", "fingerprint", "iris", or "none"
+     */
+    fun getBiometricType(context: Context): String {
+        if (!isBiometricAvailable(context)) return "none"
+        return try {
+            val bm = androidx.biometric.BiometricManager.from(context)
+            val canStrong = bm.canAuthenticate(androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG) == androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS
+            val canWeak = bm.canAuthenticate(androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK) == androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS
+            val hasFace = bm.canAuthenticate(androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG or androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL) == androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS
+            if (hasFace) "face" else if (canStrong || canWeak) "fingerprint" else "none"
+        } catch (e: Throwable) {
+            "none"
+        }
     }
 
     /**
@@ -273,13 +335,26 @@ object ArtiusIDSDK {
             prefs.edit().putString("environment", environmentName).apply()
             android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
             
-            // Automatically configure UrlBuilder based on SDKConfiguration environment
-            val urlConfig = when (configuration.environment) {
-                com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
-                com.artiusid.sdk.config.Environment.QA -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
-                com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
-                com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
-                com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
+            // Configure UrlBuilder: optional URL template (iOS parity) or default by environment
+            val domainDefault = if (configuration.environment == com.artiusid.sdk.config.Environment.PRODUCTION) "artiusid.com" else "artiusid.dev"
+            val urlConfig = if (!configuration.urlTemplate.isNullOrBlank() && !configuration.mobileDomain.isNullOrBlank() &&
+                !configuration.registrationUrlTemplate.isNullOrBlank() && !configuration.registrationDomain.isNullOrBlank()) {
+                com.artiusid.sdk.config.UrlConfiguration(
+                    environment = environmentName,
+                    domain = domainDefault,
+                    urlTemplate = configuration.urlTemplate,
+                    mobileDomain = configuration.mobileDomain,
+                    registrationUrlTemplate = configuration.registrationUrlTemplate,
+                    registrationDomain = configuration.registrationDomain
+                )
+            } else {
+                when (configuration.environment) {
+                    com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
+                    com.artiusid.sdk.config.Environment.QA -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
+                    com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
+                    com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
+                    com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
+                }
             }
             com.artiusid.sdk.utils.UrlBuilder.setConfiguration(urlConfig)
             android.util.Log.i(TAG, "🌐 Backend URLs configured: ${urlConfig.getDescription()}")
@@ -377,7 +452,9 @@ object ArtiusIDSDK {
             // Convert enhanced theme to basic theme for backward compatibility
             themeConfiguration = convertToBasicTheme(enhancedTheme)
             
-            // Set environment name for logging
+            hostAppContext = context.applicationContext
+            // Set environment in SharedPreferences for UrlBuilder
+            val prefsEnhanced = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
             val environmentName = when (configuration.environment) {
                 com.artiusid.sdk.config.Environment.SANDBOX -> "Sandbox"
                 com.artiusid.sdk.config.Environment.QA -> "QA"
@@ -385,19 +462,31 @@ object ArtiusIDSDK {
                 com.artiusid.sdk.config.Environment.STAGING -> "Staging"
                 com.artiusid.sdk.config.Environment.PRODUCTION -> "Production"
             }
+            prefsEnhanced.edit().putString("environment", environmentName).apply()
             android.util.Log.i(TAG, "🌐 Environment set to: $environmentName")
             
-            // Automatically configure UrlBuilder based on SDKConfiguration environment
-            val urlConfig = when (configuration.environment) {
-                com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
-                com.artiusid.sdk.config.Environment.QA -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
-                com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
-                com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
-                com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
+            val domainDefaultEnhanced = if (configuration.environment == com.artiusid.sdk.config.Environment.PRODUCTION) "artiusid.com" else "artiusid.dev"
+            val urlConfigEnhanced = if (!configuration.urlTemplate.isNullOrBlank() && !configuration.mobileDomain.isNullOrBlank() &&
+                !configuration.registrationUrlTemplate.isNullOrBlank() && !configuration.registrationDomain.isNullOrBlank()) {
+                com.artiusid.sdk.config.UrlConfiguration(
+                    environment = environmentName,
+                    domain = domainDefaultEnhanced,
+                    urlTemplate = configuration.urlTemplate,
+                    mobileDomain = configuration.mobileDomain,
+                    registrationUrlTemplate = configuration.registrationUrlTemplate,
+                    registrationDomain = configuration.registrationDomain
+                )
+            } else {
+                when (configuration.environment) {
+                    com.artiusid.sdk.config.Environment.SANDBOX -> com.artiusid.sdk.config.UrlConfiguration.SANDBOX_DEV
+                    com.artiusid.sdk.config.Environment.QA -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
+                    com.artiusid.sdk.config.Environment.DEVELOPMENT -> com.artiusid.sdk.config.UrlConfiguration.DEVELOPMENT_DEV
+                    com.artiusid.sdk.config.Environment.STAGING -> com.artiusid.sdk.config.UrlConfiguration.STAGING_DEV
+                    com.artiusid.sdk.config.Environment.PRODUCTION -> com.artiusid.sdk.config.UrlConfiguration.PRODUCTION_COM
+                }
             }
-            com.artiusid.sdk.utils.UrlBuilder.setConfiguration(urlConfig)
-            android.util.Log.i(TAG, "🌐 Backend URLs configured: ${urlConfig.getDescription()}")
-            // ✅ Log the actual URLs that will be generated
+            com.artiusid.sdk.utils.UrlBuilder.setConfiguration(urlConfigEnhanced)
+            android.util.Log.i(TAG, "🌐 Backend URLs configured: ${urlConfigEnhanced.getDescription()}")
             android.util.Log.i(TAG, "🌐 Verification URL: ${com.artiusid.sdk.utils.UrlBuilder.getVerificationUrl(context)}")
             android.util.Log.i(TAG, "🌐 Certificate URL: ${com.artiusid.sdk.utils.UrlBuilder.getLoadCertificateUrl(context)}")
             android.util.Log.i(TAG, "🌐 Approval URL: ${com.artiusid.sdk.utils.UrlBuilder.getApprovalRequestUrl(context)}")
@@ -518,6 +607,16 @@ object ArtiusIDSDK {
         } catch (e: Exception) {
             android.util.Log.e(TAG, "❌ Certificate registration failed", e)
             return false
+        }
+    }
+
+    /**
+     * Ensure certificate is registered; throws on failure (iOS parity: async throws).
+     * Use from coroutines: runCatching { ensureCertificateRegisteredOrThrow(context) } or try/catch.
+     */
+    suspend fun ensureCertificateRegisteredOrThrow(context: Context) {
+        if (!ensureCertificateRegistered(context)) {
+            throw IllegalStateException("Certificate registration failed")
         }
     }
     
@@ -851,39 +950,42 @@ object ArtiusIDSDK {
             if (!_isInitialized) {
                 android.util.Log.e(TAG, "📞 [Call $callId] ❌ SDK not initialized")
                 isApprovalRequestInProgress = false
-                ApprovalRequestResult(success = false, message = "SDK not initialized", requestId = null)
-            } else {
-                // Create approval API service using shared mTLS context (like iOS requiresTLS: true)
-                android.util.Log.d(TAG, "📞 [Call $callId] 🔐 Using mTLS for approval testing (matching iOS requiresTLS: true)")
-                val okHttpClient = sharedContextManager?.getSharedOkHttpClient() 
-                    ?: throw IllegalStateException("Shared context not available")
-                
-                val retrofitFactory = com.artiusid.sdk.utils.RetrofitFactory(context)
-                val approvalApiService = retrofitFactory.createApprovalRequestApiService(okHttpClient)
-                
-                // Log the API base URL being used
-                val baseUrl = com.artiusid.sdk.utils.UrlBuilder.getApprovalRequestBaseUrl(context)
-                android.util.Log.d(TAG, "📞 [Call $callId] 🌐 Approval API Base URL: $baseUrl")
-                android.util.Log.d(TAG, "📞 [Call $callId] 🌐 Full endpoint: ${baseUrl}ApprovalRequestTestingFunction")
-                
-                // Create SettingsRepository with proper API service
-                val settingsRepository = com.artiusid.sdk.data.repository.SettingsRepository(context, approvalApiService)
-                
-                // Send approval request
-                val result = settingsRepository.sendApprovalRequest()
-                
-                // Reset guard flag after completion
-                isApprovalRequestInProgress = false
-                val totalDuration = System.currentTimeMillis() - startTime
-                android.util.Log.d(TAG, "📞 ========================================")
-                android.util.Log.d(TAG, "📞 [Call $callId] ✅ sendApprovalRequest() COMPLETED successfully")
-                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Total duration: ${totalDuration}ms")
-                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Guard flag RESET - ready for next request")
-                android.util.Log.d(TAG, "📞 [Call $callId] ✅ Result: success=${result.success}, message='${result.message}', requestId=${result.requestId}")
-                android.util.Log.d(TAG, "📞 ========================================")
-                
-                result
+                return ApprovalRequestResult(success = false, message = "SDK not initialized", requestId = null)
             }
+            // Pre-check: approval requests require a member ID from completed verification
+            val accountNumber = com.artiusid.sdk.utils.VerificationStateManager(context).getAccountNumber()
+            if (accountNumber.isNullOrEmpty()) {
+                android.util.Log.w(TAG, "📞 [Call $callId] ❌ No member ID - user must complete verification first")
+                isApprovalRequestInProgress = false
+                return ApprovalRequestResult(success = false, message = "Complete verification first to get a member ID for approval requests.", requestId = null)
+            }
+            // Ensure mTLS certificate is loaded so shared client can be used
+            if (!ensureCertificateRegistered(context)) {
+                android.util.Log.w(TAG, "📞 [Call $callId] ⚠️ Certificate not ready; attempting request anyway")
+            }
+            // Create approval API service using shared mTLS context (like iOS requiresTLS: true)
+            android.util.Log.d(TAG, "📞 [Call $callId] 🔐 Using mTLS for approval testing (matching iOS requiresTLS: true)")
+            val okHttpClient = sharedContextManager?.getSharedOkHttpClient() 
+                ?: throw IllegalStateException("Shared context not available. Ensure SDK is initialized and certificate is loaded.")
+            
+            val retrofitFactory = com.artiusid.sdk.utils.RetrofitFactory(context)
+            val approvalApiService = retrofitFactory.createApprovalRequestApiService(okHttpClient)
+            
+            val baseUrl = com.artiusid.sdk.utils.UrlBuilder.getApprovalRequestBaseUrl(context)
+            android.util.Log.d(TAG, "📞 [Call $callId] 🌐 Approval API Base URL: $baseUrl")
+            android.util.Log.d(TAG, "📞 [Call $callId] 🌐 Full endpoint: ${baseUrl}ApprovalRequestTestingFunction")
+            
+            val settingsRepository = com.artiusid.sdk.data.repository.SettingsRepository(context, approvalApiService)
+            val result = settingsRepository.sendApprovalRequest()
+            
+            isApprovalRequestInProgress = false
+            val totalDuration = System.currentTimeMillis() - startTime
+            android.util.Log.d(TAG, "📞 ========================================")
+            android.util.Log.d(TAG, "📞 [Call $callId] ✅ sendApprovalRequest() COMPLETED successfully")
+            android.util.Log.d(TAG, "📞 [Call $callId] ✅ Total duration: ${totalDuration}ms")
+            android.util.Log.d(TAG, "📞 [Call $callId] ✅ Result: success=${result.success}, message='${result.message}', requestId=${result.requestId}")
+            android.util.Log.d(TAG, "📞 ========================================")
+            result
         } catch (e: Exception) {
             // Reset guard flag on error
             isApprovalRequestInProgress = false
@@ -950,6 +1052,7 @@ object ArtiusIDSDK {
     fun updateFcmToken(fcmToken: String?) {
         android.util.Log.i(TAG, "🔄 Client provided FCM token update")
         com.artiusid.sdk.utils.FirebaseConfigurationManager.updateClientFcmToken(fcmToken)
+        fcmTokenUpdatedListener?.invoke(fcmToken)
     }
     
     /**
@@ -962,11 +1065,121 @@ object ArtiusIDSDK {
     }
 
     /**
+     * Register Okta user with the backend (iOS parity: OktaRegistrationManager.registerOktaUser).
+     * Uses mTLS when SDK is initialized; otherwise plain HTTPS.
+     *
+     * @param context Application context
+     * @param userId Okta user ID (optional)
+     * @param userEmail User email (optional)
+     * @param phoneNumber Phone E.164 (optional)
+     * @param memberId Artius member ID (required)
+     * @return OktaRegistrationResponse or null on failure
+     */
+    suspend fun registerOktaUser(
+        context: Context,
+        userId: String?,
+        userEmail: String?,
+        phoneNumber: String?,
+        memberId: String
+    ): com.artiusid.sdk.data.model.OktaRegistrationResponse? {
+        return com.artiusid.sdk.utils.OktaRegistrationManager.registerOktaUser(
+            context = context,
+            userId = userId,
+            userEmail = userEmail,
+            phoneNumber = phoneNumber,
+            memberId = memberId
+        )
+    }
+
+    /**
      * Get shared context manager for mTLS and Firebase context sharing
      * Internal use only - for SDK components that need shared context
      */
     internal fun getSharedContextManager(): SharedContextManager? = sharedContextManager
     
+    /**
+     * Map view-layer environment name to internal Environment (iOS parity: mapToInternalEnvironment).
+     * @param viewLayerName e.g. "sandbox", "development", "staging", "production", "qa"
+     */
+    fun mapToInternalEnvironment(viewLayerName: String): com.artiusid.sdk.config.Environment {
+        return when (viewLayerName.lowercase()) {
+            "sandbox" -> com.artiusid.sdk.config.Environment.SANDBOX
+            "development", "dev" -> com.artiusid.sdk.config.Environment.DEVELOPMENT
+            "staging", "stage" -> com.artiusid.sdk.config.Environment.STAGING
+            "production", "prod" -> com.artiusid.sdk.config.Environment.PRODUCTION
+            "qa" -> com.artiusid.sdk.config.Environment.QA
+            else -> com.artiusid.sdk.config.Environment.SANDBOX
+        }
+    }
+
+    /**
+     * Map view-layer environment name to verification environment (iOS parity: mapToVerificationEnvironment).
+     * On Android same as mapToInternalEnvironment.
+     */
+    fun mapToVerificationEnvironment(viewLayerName: String): com.artiusid.sdk.config.Environment =
+        mapToInternalEnvironment(viewLayerName)
+
+    /**
+     * API-only authentication (iOS parity: authenticate(request:)).
+     * Calls backend only and returns result; no UI.
+     * @param context Application context
+     * @param accountNumber Account number for the auth request
+     * @param request Authentication request (deviceId, deviceModel)
+     * @return Result with AuthenticationResult on success or throwable on failure
+     */
+    suspend fun authenticate(
+        context: Context,
+        accountNumber: String,
+        request: com.artiusid.sdk.data.model.AuthenticationRequest
+    ): Result<AuthenticationResult> {
+        return try {
+            if (!_isInitialized) {
+                return Result.failure(IllegalStateException("SDK not initialized"))
+            }
+            val okHttpClient = sharedContextManager?.getSharedOkHttpClient()
+                ?: return Result.failure(IllegalStateException("Shared context not available"))
+            val apiService = com.artiusid.sdk.utils.RetrofitFactory(context).createVerificationApiService(okHttpClient)
+            val clientId = com.artiusid.sdk.config.ClientConfiguration.getClientId()
+            val clientGroupId = com.artiusid.sdk.config.ClientConfiguration.getClientGroupId()
+            val response = apiService.authenticate(clientId, clientGroupId, accountNumber, request)
+            val data = response.authenticationData
+            val success = data.statusCode == 200
+            var accountInfo: AuthenticationAccountInfo? = null
+            if (data.payload.isNotEmpty()) {
+                try {
+                    val arr = org.json.JSONArray(data.payload)
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.optJSONObject(i) ?: continue
+                        if (obj.has("AccountActive")) {
+                            accountInfo = AuthenticationAccountInfo(
+                                accountNumber = accountNumber,
+                                fullName = null,
+                                isActive = obj.optInt("AccountActive", 0) > 0
+                            )
+                            break
+                        }
+                    }
+                } catch (_: Exception) { }
+            }
+            Result.success(
+                AuthenticationResult(
+                    success = success,
+                    authenticationId = "auth_${System.currentTimeMillis()}",
+                    confidence = if (success) 1f else 0f,
+                    processingTime = 0L,
+                    sessionId = "session_${System.currentTimeMillis()}",
+                    message = data.message,
+                    accountInfo = accountInfo,
+                    errorMessage = if (success) null else data.message,
+                    rawResponse = data.payload
+                )
+            )
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "authenticate failed", e)
+            Result.failure(e)
+        }
+    }
+
     /**
      * 🚨 CRITICAL FIX: Get host app context for SharedPreferences access
      * This ensures UrlBuilder uses the same SharedPreferences as the sample app

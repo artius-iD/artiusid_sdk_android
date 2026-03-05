@@ -56,7 +56,7 @@ cd mobile-sdk-android
 | **feature** | `feature/description` | New features | `feature/add-iris-scanning` |
 | **fix** | `fix/description` | Bug fixes | `fix/certificate-expiry` |
 | **hotfix** | `hotfix/description` | Critical production fixes | `hotfix/crash-on-launch` |
-| **release** | `release/vX.X.XX` | Release preparation | `release/v1.2.52` |
+| **release** | `release/vX.X.XX` | Release preparation | `release/v1.2.54` |
 
 ### **Branch Workflow**
 
@@ -283,7 +283,7 @@ Follow semantic versioning: `MAJOR.MINOR.PATCH`
 
 - **MAJOR:** Breaking changes (1.0.0 → 2.0.0)
 - **MINOR:** New features, backwards compatible (1.2.0 → 1.3.0)
-- **PATCH:** Bug fixes (1.2.51 → 1.2.52)
+- **PATCH:** Bug fixes (1.2.52 → 1.2.54)
 
 ### **Creating a Release**
 

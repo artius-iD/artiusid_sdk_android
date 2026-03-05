@@ -4,13 +4,14 @@
  */
 package com.artiusid.sample.okta
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Base64
 import android.util.Log
-import androidx.browser.customtabs.CustomTabsIntent
 import com.artiusid.sample.config.OktaConfig
+import com.artiusid.sdk.ArtiusIDSDK
 import org.json.JSONObject
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -23,6 +24,9 @@ import okhttp3.Request
 object OktaLoginHelper {
     private const val TAG = "OktaLoginHelper"
     private const val CODE_CHALLENGE_METHOD = "S256"
+    private const val PREFS_OKTA = "okta_pkce"
+    private const val KEY_VERIFIER = "pkce_verifier"
+    private const val KEY_STATE = "pkce_state"
 
     private var pendingContinuation: ((Result<OktaLoginResult>) -> Unit)? = null
 
@@ -39,15 +43,17 @@ object OktaLoginHelper {
 
     /**
      * Build the Okta authorization URL for browser sign-in.
+     * All query values are URL-encoded so custom scheme redirect_uri and PKCE params are valid.
      */
     fun buildAuthorizeUrl(state: String, codeChallenge: String): String {
+        fun enc(s: String) = URLEncoder.encode(s, StandardCharsets.UTF_8.name())
         val params = listOf(
-            "client_id" to OktaConfig.CLIENT_ID,
-            "redirect_uri" to OktaConfig.REDIRECT_URI,
+            "client_id" to enc(OktaConfig.CLIENT_ID),
+            "redirect_uri" to enc(OktaConfig.REDIRECT_URI),
             "response_type" to "code",
-            "scope" to URLEncoder.encode(OktaConfig.SCOPES, "UTF-8"),
-            "state" to state,
-            "code_challenge" to codeChallenge,
+            "scope" to enc(OktaConfig.SCOPES),
+            "state" to enc(state),
+            "code_challenge" to enc(codeChallenge),
             "code_challenge_method" to CODE_CHALLENGE_METHOD
         )
         val query = params.joinToString("&") { "${it.first}=${it.second}" }
@@ -55,54 +61,163 @@ object OktaLoginHelper {
     }
 
     /**
-     * Launch Chrome Custom Tabs for Okta sign-in. Call handleRedirect when the app receives the redirect intent.
+     * Launch in-app browser (OktaLoginActivity) for Okta sign-in. The WebView loads the authorize URL
+     * and intercepts the redirect so the Okta ID can be captured for the member without leaving the app.
      */
-    fun launchOktaLogin(context: Context, onResult: (Result<OktaLoginResult>) -> Unit) {
+    fun launchOktaLoginInApp(activity: Activity): String {
         val (verifier, challenge) = generatePkce()
         val state = Base64.encodeToString(ByteArray(16).also { SecureRandom().nextBytes(it) }, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
         PkceState.verifier = verifier
         PkceState.state = state
-        pendingContinuation = onResult
+        savePkceToPrefs(activity, verifier, state)
         val url = buildAuthorizeUrl(state, challenge)
-        Log.d(TAG, "Launching Okta login: $url")
-        val customTabsIntent = CustomTabsIntent.Builder().build()
-        customTabsIntent.launchUrl(context, Uri.parse(url))
+        Log.i(TAG, "Launching Okta login in-app (WebView)")
+        return url
     }
 
     /**
-     * Call this from Activity.onNewIntent when the redirect URI is received (e.g. com.artiusid.sampleapp:/callback?code=...&state=...).
+     * Handle redirect URI from in-app WebView (OktaLoginActivity). Exchanges code for tokens and
+     * invokes onComplete on the main thread with the result.
      */
-    fun handleRedirect(intent: Intent?): Boolean {
-        val data = intent?.data ?: return false
-        if (data.scheme != "com.artiusid.sampleapp" || data.host != "callback") return false
-        val code = data.getQueryParameter("code") ?: run {
-            val error = data.getQueryParameter("error") ?: "unknown"
-            pendingContinuation?.invoke(Result.failure(Exception("Okta error: $error")))
-            pendingContinuation = null
-            return true
+    fun handleRedirectFromWebView(
+        uri: Uri,
+        context: Context,
+        onComplete: (Result<OktaLoginResult>) -> Unit
+    ) {
+        if (uri.scheme != "com.artiusid.sampleapp" || uri.host != "callback") return
+        Log.i(TAG, "Redirect from WebView: scheme=${uri.scheme}, host=${uri.host}")
+        val code = uri.getQueryParameter("code") ?: run {
+            val error = uri.getQueryParameter("error") ?: "unknown"
+            Log.w(TAG, "Okta redirect error: $error")
+            (context as? Activity)?.runOnUiThread { onComplete(Result.failure(Exception("Okta error: $error"))) }
+            return
         }
-        val state = data.getQueryParameter("state")
-        if (state != PkceState.state) {
-            pendingContinuation?.invoke(Result.failure(Exception("State mismatch")))
-            pendingContinuation = null
-            return true
+        val stateParam = uri.getQueryParameter("state")
+        var state = PkceState.state
+        var verifier = PkceState.verifier
+        if (state == null || verifier == null) {
+            val loaded = loadPkceFromPrefs(context)
+            if (loaded != null) {
+                state = loaded.first
+                verifier = loaded.second
+                Log.i(TAG, "Using persisted PKCE state/verifier")
+            }
         }
-        val verifier = PkceState.verifier ?: run {
-            pendingContinuation?.invoke(Result.failure(Exception("No PKCE verifier")))
-            pendingContinuation = null
-            return true
+        if (stateParam != state) {
+            Log.w(TAG, "State mismatch")
+            clearPkcePrefs(context)
+            (context as? Activity)?.runOnUiThread { onComplete(Result.failure(Exception("State mismatch"))) }
+            return
         }
+        val verifierToUse = verifier
+        if (verifierToUse == null) {
+            clearPkcePrefs(context)
+            (context as? Activity)?.runOnUiThread { onComplete(Result.failure(Exception("No PKCE verifier"))) }
+            return
+        }
+        clearPkcePrefs(context)
         Thread {
             try {
-                val result = exchangeCodeForTokens(code, verifier)
-                pendingContinuation?.invoke(Result.success(result))
+                val result = exchangeCodeForTokens(code, verifierToUse)
+                Log.i(TAG, "Token exchange success (in-app)")
+                (context as? Activity)?.runOnUiThread { onComplete(Result.success(result)) }
             } catch (e: Exception) {
                 Log.e(TAG, "Token exchange failed", e)
-                pendingContinuation?.invoke(Result.failure(e))
+                (context as? Activity)?.runOnUiThread { onComplete(Result.failure(e)) }
             }
-            pendingContinuation = null
+        }.start()
+    }
+
+
+    /**
+     * Call this from Activity.onNewIntent/onCreate when the redirect URI is received (e.g. com.artiusid.sampleapp:/callback?code=...&state=...).
+     * Pass the Activity context so the result callback runs on the main thread (and so we can set Okta user ID on process-death recovery).
+     */
+    fun handleRedirect(intent: Intent?, context: Context?): Boolean {
+        val data = intent?.data ?: return false
+        if (data.scheme != "com.artiusid.sampleapp" || data.host != "callback") return false
+        Log.i(TAG, "Redirect received: scheme=${data.scheme}, host=${data.host}")
+        val code = data.getQueryParameter("code") ?: run {
+            val error = data.getQueryParameter("error") ?: "unknown"
+            Log.w(TAG, "Okta redirect error: $error")
+            deliverResult(Result.failure(Exception("Okta error: $error")), context)
+            return true
+        }
+        val stateParam = data.getQueryParameter("state")
+        var state = PkceState.state
+        var verifier = PkceState.verifier
+        if (state == null || verifier == null) {
+            val loaded = context?.let { loadPkceFromPrefs(it) }
+            if (loaded != null) {
+                state = loaded.first
+                verifier = loaded.second
+                Log.i(TAG, "Using persisted PKCE state/verifier (process was recreated)")
+            }
+        }
+        if (stateParam != state) {
+            Log.w(TAG, "State mismatch (expected=${state?.take(8)}..., got=${stateParam?.take(8)}...)")
+            clearPkcePrefs(context)
+            deliverResult(Result.failure(Exception("State mismatch")), context)
+            return true
+        }
+        val verifierToUse = verifier
+        if (verifierToUse == null) {
+            Log.w(TAG, "No PKCE verifier in memory or prefs")
+            clearPkcePrefs(context)
+            deliverResult(Result.failure(Exception("No PKCE verifier")), context)
+            return true
+        }
+        clearPkcePrefs(context)
+        Thread {
+            try {
+                val result = exchangeCodeForTokens(code, verifierToUse)
+                Log.i(TAG, "Token exchange success, delivering result")
+                deliverResult(Result.success(result), context)
+            } catch (e: Exception) {
+                Log.e(TAG, "Token exchange failed", e)
+                deliverResult(Result.failure(e), context)
+            } finally {
+                pendingContinuation = null
+            }
         }.start()
         return true
+    }
+
+    private fun savePkceToPrefs(context: Context, verifier: String, state: String) {
+        context.getSharedPreferences(PREFS_OKTA, Context.MODE_PRIVATE).edit()
+            .putString(KEY_VERIFIER, verifier)
+            .putString(KEY_STATE, state)
+            .apply()
+    }
+
+    private fun loadPkceFromPrefs(context: Context): Pair<String?, String?>? {
+        val prefs = context.getSharedPreferences(PREFS_OKTA, Context.MODE_PRIVATE)
+        val verifier = prefs.getString(KEY_VERIFIER, null)
+        val state = prefs.getString(KEY_STATE, null)
+        return if (verifier != null && state != null) Pair(state, verifier) else null
+    }
+
+    private fun clearPkcePrefs(context: Context?) {
+        context?.getSharedPreferences(PREFS_OKTA, Context.MODE_PRIVATE)?.edit()?.remove(KEY_VERIFIER)?.remove(KEY_STATE)?.apply()
+    }
+
+    private fun deliverResult(result: Result<OktaLoginResult>, context: Context?) {
+        val cont = pendingContinuation
+        val run: () -> Unit = {
+            cont?.invoke(result)
+            if (cont == null && result.isSuccess) {
+                result.getOrNull()?.let { r ->
+                    ArtiusIDSDK.setOktaUserId(r.oktaUserId)
+                    Log.i(TAG, "Okta user ID set after process recovery: ${r.oktaUserId.take(10)}...")
+                }
+            }
+        }
+        val activity = context as? Activity
+        if (activity != null) {
+            activity.runOnUiThread(run)
+        } else {
+            run()
+        }
     }
 
     private fun exchangeCodeForTokens(code: String, codeVerifier: String): OktaLoginResult {

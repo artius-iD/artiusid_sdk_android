@@ -6,7 +6,8 @@
 
 package com.artiusid.sdk.presentation.screens.document
 
-enum class DocumentType {
-    ID_CARD,
-    PASSPORT
+/** Document type (iOS parity: photoID, passport with displayName). */
+enum class DocumentType(val displayName: String) {
+    ID_CARD("Photo ID"),
+    PASSPORT("Passport")
 } 

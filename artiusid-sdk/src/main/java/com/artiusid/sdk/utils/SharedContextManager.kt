@@ -93,6 +93,7 @@ class SharedContextManager(
         maxAttempts: Int = 3,
         delayBetweenAttempts: Long = 5000
     ) {
+        Log.i(TAG, "🔐 Ensuring shared certificate: cert is retrieved from keystore (keychain) or, if not present, from cert URL and stored in keychain for signing")
         Log.i(TAG, "🔐 Ensuring shared certificate using host app context (max $maxAttempts attempts)...")
         Log.d(TAG, "  - Host context: ${hostContext.packageName}")
         Log.d(TAG, "  - Device ID: $deviceId")

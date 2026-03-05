@@ -227,6 +227,52 @@ fun VerificationResultsScreen(
                                 isScore = false,
                                 valueColor = Color(0xFFFBBF24) // Yellow-400
                             )
+
+                            // Recapture (iOS parity: requiresRecapture, recaptureType)
+                            if (verificationData.requiresRecapture) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "Recapture",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Requires Recapture",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.White.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = "Yes",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color(0xFFFBBF24)
+                                    )
+                                }
+                                if (!verificationData.recaptureType.isNullOrEmpty()) {
+                                    Divider(color = Color.White.copy(alpha = 0.2f))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Recapture Type",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White.copy(alpha = 0.7f)
+                                        )
+                                        Text(
+                                            text = verificationData.recaptureType,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color(0xFFFBBF24)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -306,7 +352,7 @@ private fun ScoreRow(
     }
 }
 
-// Data class for verification results (matching the standalone app structure)
+// Data class for verification results (matching the standalone app structure; iOS parity: requiresRecapture, recaptureType)
 data class VerificationResultData(
     // Personal/Risk data
     val personScore: Double = 0.0,
@@ -328,9 +374,22 @@ data class VerificationResultData(
     // Account info
     val accountNumber: String? = null,
     val firstName: String? = null,
-    val lastName: String? = null
+    val lastName: String? = null,
+    
+    // Recapture (iOS parity: requiresRecapture, recaptureType)
+    val requiresRecapture: Boolean = false,
+    val recaptureType: String? = null
 ) {
     companion object {
+        /** Build from SDK VerificationResult (iOS parity: includes requiresRecapture, recaptureType). */
+        fun fromVerificationResult(result: com.artiusid.sdk.models.VerificationResult): VerificationResultData {
+            val fromPayload = fromPayload(result.rawResponse)
+            return fromPayload.copy(
+                requiresRecapture = result.requiresRecapture,
+                recaptureType = result.recaptureType?.name
+            )
+        }
+
         // Create from JSON payload like the standalone app
         fun fromPayload(payload: String?): VerificationResultData {
             if (payload.isNullOrEmpty()) {
@@ -413,7 +472,9 @@ data class VerificationResultData(
                     riskInformationRating = riskInformationRating,
                     accountNumber = accountNumber,
                     firstName = names.first,
-                    lastName = names.second
+                    lastName = names.second,
+                    requiresRecapture = false,
+                    recaptureType = null
                 )
             } catch (e: Exception) {
                 android.util.Log.e("VerificationResultData", "Error parsing payload JSON", e)

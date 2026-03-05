@@ -39,6 +39,12 @@
                 <data android:scheme="com.artiusid.sampleapp" android:host="callback" android:pathPrefix="/" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".okta.OktaLoginActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ArtiusIDSample"
+            android:parentActivityName=".BridgeMainActivity" />
         
         <!-- Sample App's Firebase Messaging Service -->
         <!-- ARCHITECTURAL DECISION: Sample app manages its own Firebase tokens AND notifications -->

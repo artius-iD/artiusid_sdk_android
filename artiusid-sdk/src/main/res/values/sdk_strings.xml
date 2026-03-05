@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SDK string keys matching iOS Localizable.strings for cross-platform parity.
+  Use with LocalizationManager.getString(context, "key_name", fallback) and
+  SDKConfiguration.localizationOverrides map.
+-->
+<resources>
+    <!-- Welcome & Intro -->
+    <string name="welcome_title">Welcome</string>
+    <string name="welcome_subtitle">Secure identity verification</string>
+    <string name="welcome_message">Welcome to secure verification</string>
+    <string name="get_started_button">Get Started</string>
+    <string name="start_button">Start</string>
+
+    <!-- Document Selection -->
+    <string name="document_selection_title">Select Document</string>
+    <string name="document_selection_subtitle">Choose your ID type</string>
+    <string name="select_document_type">Select document type</string>
+    <string name="passport_option">Passport</string>
+    <string name="state_id_option">State ID</string>
+    <string name="driver_license_option">Driver License</string>
+
+    <!-- Document Scanning -->
+    <string name="document_scan_title">Scan Document</string>
+    <string name="passport_scan_title">Scan Passport</string>
+    <string name="state_id_scan_title">Scan State ID</string>
+    <string name="driver_license_scan_title">Scan Driver License</string>
+    <!-- document_front_instruction, document_back_instruction, passport_instruction in main strings.xml -->
+    <string name="position_document">Position document</string>
+    <string name="hold_steady">Hold steady</string>
+    <string name="capturing">Capturing…</string>
+
+    <!-- Face Scanning -->
+    <!-- face_scan_intro_title in main strings.xml -->
+    <string name="face_scan_intro_subtitle">See animation above for reference and when ready tap \"Scan My Face\".</string>
+    <string name="face_scan_title">Face Verification</string>
+    <string name="face_instruction">Position your face within the circle</string>
+    <string name="face_scan_searching">Searching for face…</string>
+    <string name="face_scan_processing">Processing…</string>
+    <string name="face_scan_complete">Face captured successfully</string>
+    <string name="position_face">Position your face</string>
+    <string name="look_at_camera">Look at the camera</string>
+    <string name="phone_too_close">Move phone away.</string>
+    <string name="phone_too_far">Move phone closer.</string>
+    <string name="position_your_face">Position face in circle</string>
+    <string name="move_head">Move head slowly in a small circle to complete all segments</string>
+
+    <!-- Face Scan Tips -->
+    <!-- tip_no_glasses, tip_no_hat, tip_no_mask in main strings.xml -->
+    <string name="tip_good_lighting">Ensure good lighting</string>
+    <string name="tip_neutral_expression">Neutral expression</string>
+    <string name="tip_remove_obstructions">Remove obstructions</string>
+
+    <!-- Liveness -->
+    <string name="liveness_completed">Completed!</string>
+    <string name="liveness_please_blink">Please Blink</string>
+
+    <!-- NFC -->
+    <string name="nfc_scan_title">Scan Passport Chip</string>
+    <string name="nfc_scan_subtitle">Hold phone to passport</string>
+    <string name="nfc_scan_instruction">Hold your phone against the passport</string>
+    <string name="nfc_scan_reading">Reading chip…</string>
+    <string name="nfc_scan_complete">Chip read successfully</string>
+    <string name="nfc_scan_failed">NFC scan failed</string>
+    <string name="hold_phone_to_passport">Hold phone to passport</string>
+    <string name="keep_phone_steady">Keep phone steady</string>
+
+    <!-- Processing -->
+    <string name="processing_title">Processing</string>
+    <string name="processing_message">Processing your verification…</string>
+    <!-- processing in main strings.xml -->
+    <!-- verification_processing in main strings.xml -->
+    <string name="analyzing_document">Analyzing document…</string>
+    <string name="analyzing_face">Analyzing face…</string>
+    <!-- please_wait in main strings.xml -->
+    <string name="please_do_not_close_app">Please do not close the application while we process your request. This can take up to a minute to process.</string>
+    <string name="developer_mode">DEVELOPER MODE</string>
+
+    <!-- Success -->
+    <string name="verification_success_title">Verification Complete</string>
+    <string name="verification_success_message">Your identity has been verified</string>
+    <string name="authentication_success_title">Authentication Complete</string>
+    <string name="authentication_success_message">You have been authenticated</string>
+    <string name="success_title">Success</string>
+    <string name="success_message">Success</string>
+    <string name="document_capture_front_success">Front captured successfully</string>
+    <string name="document_capture_back_success">Back captured successfully</string>
+    <string name="document_capture_passport_success">Passport captured successfully</string>
+
+    <!-- Error & Retry -->
+    <string name="error_title">Error</string>
+    <string name="error_message">Something went wrong</string>
+    <string name="network_error">Network connection error</string>
+    <!-- verification_failed in main strings.xml -->
+    <string name="authentication_failed">Authentication failed</string>
+    <string name="document_validation_error">Document could not be validated</string>
+    <string name="face_validation_error">Face could not be validated</string>
+    <string name="nfc_read_error">NFC read error</string>
+    <string name="document_not_clear">Document not clear</string>
+    <string name="document_not_recognized">Document not recognized</string>
+    <string name="face_not_detected">Face not detected</string>
+    <string name="face_not_clear">Face not clear</string>
+
+    <!-- Authentication View -->
+    <string name="auth_view_header">Authentication</string>
+    <string name="auth_biometric_required_title">Biometric Authentication Required</string>
+    <string name="auth_biometric_required_description">Please use your fingerprint or face to complete authentication</string>
+    <string name="auth_failed_title">Authentication Failed</string>
+    <string name="auth_successful_title">Authentication Successful!</string>
+    <string name="auth_try_again">Try Again</string>
+    <string name="auth_back_home">Back Home</string>
+    <string name="auth_biometric_not_available">Biometric authentication is not available on this device</string>
+    <string name="auth_biometric_not_enrolled">No biometric authentication is set up on this device</string>
+    <string name="auth_biometric_locked">Biometric authentication is locked. Please try again later.</string>
+    <string name="auth_biometric_failed">Biometric authentication failed</string>
+
+    <!-- Image Quality & Validation -->
+    <string name="validation_image_too_dark">Image too dark</string>
+    <string name="validation_image_too_bright">Image too bright</string>
+    <string name="validation_lighting_acceptable">Lighting acceptable</string>
+    <string name="validation_blur_detected">Please hold the phone steady</string>
+    <string name="validation_glare_detected">Glare detected, please adjust lighting</string>
+    <string name="validation_quality_acceptable">Image quality acceptable</string>
+    <string name="invalid_image_for_analysis">Invalid image for analysis</string>
+    <string name="validation_image_analysis_failed">Image analysis failed</string>
+    <string name="validation_image_too_small">Image too small</string>
+    <string name="validation_invalid_image">Invalid image captured</string>
+    <string name="validation_no_document">No document detected</string>
+    <string name="validation_move_closer">Please move closer to ID</string>
+    <string name="validation_outside_frame">Part of ID is outside camera view</string>
+    <string name="validation_analyze_failed">Failed to analyze image</string>
+    <string name="validation_success">Valid</string>
+    <string name="validation_no_photo">No photo found on ID</string>
+    <string name="validation_capture_invalid">Capture is invalid</string>
+    <string name="no_document_found_passport">No document found</string>
+    <string name="validation_ocr_failed">OCR failed</string>
+    <string name="validation_low_confidence">Low OCR confidence</string>
+    <string name="validation_position_mrz">Position the text at the bottom of the passport in the yellow box</string>
+
+    <!-- Buttons -->
+    <string name="continue_button">Continue</string>
+    <string name="try_again_button">Try Again</string>
+    <string name="retry_button">Retry</string>
+    <!-- cancel_button, done_button, next_button, back_button, skip_button, button_approve, button_deny in main strings.xml -->
+    <string name="submit_button">Submit</string>
+
+    <!-- Permissions -->
+    <string name="permission_camera_title">Camera Access Required</string>
+    <string name="permission_camera_message">Please allow camera access to continue</string>
+    <string name="permission_nfc_title">NFC Access Required</string>
+    <string name="permission_nfc_message">Please enable NFC to continue</string>
+    <string name="permission_settings_button">Open Settings</string>
+    <string name="permission_denied">Permission denied</string>
+
+    <!-- Approval -->
+    <!-- approval_request_title, approval_request_message in main strings.xml -->
+    <string name="approval_pending">Pending approval…</string>
+    <string name="approval_approved">Approved</string>
+    <string name="approval_declined">Declined</string>
+    <string name="waiting_for_approval">Waiting for approval</string>
+    <string name="approval_submitting_response">Submitting response…</string>
+
+    <!-- Verification Steps -->
+    <string name="step_document_scan">Document Scan</string>
+    <string name="step_face_scan">Face Scan</string>
+    <string name="step_nfc_read">NFC Read</string>
+    <string name="step_review">Review</string>
+    <string name="step_complete">Complete</string>
+
+    <!-- Document Types -->
+    <string name="passport">Passport</string>
+    <string name="state_id">State ID</string>
+    <string name="driver_license">Driver License</string>
+    <string name="identity_card">Identity Card</string>
+
+    <!-- Common: loading, cancel, ok, yes, no, close, retry, skip in main strings.xml -->
+
+    <!-- Time & Status -->
+    <string name="just_now">Just now</string>
+    <string name="minutes_ago">%d minutes ago</string>
+    <string name="hours_ago">%d hours ago</string>
+    <string name="days_ago">%d days ago</string>
+    <string name="pending">Pending</string>
+    <string name="approved">Approved</string>
+    <string name="declined">Declined</string>
+    <!-- processing in main strings.xml -->
+    <string name="complete">Complete</string>
+</resources>

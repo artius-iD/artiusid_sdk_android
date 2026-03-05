@@ -109,9 +109,9 @@ fun ApprovalResponseScreen(
                     .padding(bottom = 20.dp)
             )
             
-            // Title based on response (like iOS approval_response_approveTitle/declineTitle)
+            // Title: show "Approved" or "Declined" (iOS parity: approval_response_approved_title / approval_response_declined_title)
             Text(
-                text = if (isApproved) "Request Approved" else "Request Declined",
+                text = if (isApproved) context.getString(R.string.approval_response_approved_title) else context.getString(R.string.approval_response_declined_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (isApproved) com.artiusid.sdk.ui.theme.ThemedStatusColors.getSuccessColor() else com.artiusid.sdk.ui.theme.ThemedStatusColors.getErrorColor(),

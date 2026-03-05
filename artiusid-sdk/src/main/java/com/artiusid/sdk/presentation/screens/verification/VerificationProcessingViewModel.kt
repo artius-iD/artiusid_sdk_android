@@ -759,14 +759,14 @@ class VerificationProcessingViewModel @Inject constructor(
                 val requestJson = gson.toJson(orderedMap)
                 Log.d(TAG, "[DEBUG] Actual JSON being sent (LinkedHashMap): $requestJson")
 
-                // iOS parity: capture verification request payload summary (no full base64) for debug/support
+                // iOS parity: capture verification request payload summary and raw JSON for debug/support
                 val summary = orderedMap.mapValues { (_, v) ->
                     when (v) {
                         is String -> if (v.length > 200) "<base64: ${v.length} chars>" else v
                         else -> v
                     }
                 }.toMap()
-                com.artiusid.sdk.ArtiusIDSDK.captureVerificationRequestPayload(summary)
+                com.artiusid.sdk.ArtiusIDSDK.captureVerificationRequestPayload(summary, requestJson)
                 
                 // SDK v1.2.45 CRITICAL FIX: Add global API call tracking to detect duplicates
                 val apiCallId = java.util.UUID.randomUUID().toString().substring(0, 8)

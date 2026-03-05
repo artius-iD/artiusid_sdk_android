@@ -269,4 +269,20 @@ object UrlBuilder {
         val domain = getCurrentDomain(context)
         return "$env.$domain"
     }
+
+    /**
+     * AppConstants-style read-only map for debug/settings (iOS parity: AppConstants).
+     * Returns serverURL, verificationBaseUrl, approvalResponseUrl, loadCertificateUrl, etc.
+     */
+    fun getAppConstantsStyle(context: Context): Map<String, String> {
+        return mapOf(
+            "serverURL" to getVerificationBaseUrl(context),
+            "verificationBaseUrl" to getVerificationBaseUrl(context),
+            "approvalResponseUrl" to getApprovalResponseBaseUrl(context),
+            "approvalRequestUrl" to getApprovalRequestBaseUrl(context),
+            "loadCertificateUrl" to getLoadCertificateBaseUrl(context),
+            "environment" to getCurrentEnvironment(context),
+            "domain" to getCurrentDomain(context)
+        )
+    }
 } 

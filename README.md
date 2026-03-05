@@ -2,30 +2,29 @@
 
 A secure Android SDK for identity verification, face liveness detection, document scanning, and NFC passport reading.
 
-> **📝 Note for Internal Developers:** This README is client-facing documentation. For internal development, see **[DEVELOPER_README.md](DEVELOPER_README.md)**.
+> **📝 Note for Internal Developers:** This README is client-facing documentation. For internal development and **integrating changes from the mobile-ios-sdk GitLab repo**, see **[DEVELOPER_README.md](DEVELOPER_README.md)** and **[docs/IOS_ANDROID_PARITY.md](docs/IOS_ANDROID_PARITY.md)**.
 
 ---
 
 ## 📦 **Latest Release**
 
-**Version:** 1.2.52 ✅ STABLE RELEASE  
-**Release Date:** February 2026  
+**Version:** 1.2.54 ✅ STABLE RELEASE  
+**Release Date:** March 2026  
 **Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
 
 ---
 
-## ✅ **STABLE RELEASE - v1.2.52**
+## ✅ **STABLE RELEASE - v1.2.54**
 
-**PRODUCTION READY** - iOS parity for VerificationResult/recapture, sample app Okta & AppConstants config, Test Authentication Request.
+**PRODUCTION READY** - iOS parity punch list: full API alignment, config/theme/localization, sample app strings (en/es/fr/de), and documentation sync.
 
-**What's New in v1.2.52:**
-- 📋 **VerificationResult (iOS parity)** – `requiresRecapture`, `recaptureType`, plus full result fields (`accountNumber`, `fullName`, `verificationScore`, `documentStatus`, etc.). When API returns recapture (600–604), host receives result and can call `startVerification()` again.
-- 🔄 **DocumentRecaptureType** – `fromHttpErrorCode()` nullable; 605 = permanent failure (not recapture). Recapture-able errors 600–604 map to specific recapture states.
-- 🔐 **Sample App – Okta.plist & AppConstants** – Optional `okta.json` and `appconstants.json` in assets override Okta (issuer, clientId, redirectUri, scopes) and ArtiusID credentials (apiKey, clientId, clientGroupId). Copy from `.example` files; matches MFA iOS app config.
-- 🔐 **Sample App – Test Authentication Request** – New button and Approve/Deny/Cancel screen (iOS SampleAppView parity).
-- ✅ **All Previous** – mTLS clear on env switch, pre-set Okta user ID, re-verification, NFC reset, Okta login, Firebase/FCM, HILT
+**What's New in v1.2.54:**
+- 🔌 **Public API (iOS parity)** – URL template/domain in `SDKConfiguration`; `isBiometricAvailable(context)` / `getBiometricType(context)`; `setFcmToken()`; `getSDKInfo()` with `wrapperVersion`/`architecture`; verification/FCM listeners; `ensureCertificateRegisteredOrThrow()`; `authenticate(context, accountNumber, request)`; `mapToInternalEnvironment()` / `mapToVerificationEnvironment()`.
+- ⚙️ **Config & theme** – `copyWithFcmToken()` / `copyWithLogging()`; `UrlBuilder.getAppConstantsStyle(context)`; `SDKTypography.paragraphSpacing`; `IconCategory`; `DocumentType.displayName`; `LogLevel.shouldShow()`; `Environment.fromViewLayer()`.
+- 🌐 **Localization** – New `settings_*` and `sample_*` keys in `LocalizationKeys`; sample app strings in en, es, fr, de.
+- 📄 **Docs** – CLIENT_IMPLEMENTATION_GUIDE and THEMING_GUIDE aligned with iOS; RELEASE_NOTES and CHANGELOG updated.
 
-**Upgrade Priority:** **RECOMMENDED** – Aligns Android with latest iOS SDK behavior.
+**Upgrade Priority:** **RECOMMENDED** – Completes iOS ↔ Android parity for distribution.
 
 ---
 
@@ -35,16 +34,16 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.52 (STABLE RELEASE)
-curl -L -o artiusid-sdk-1.2.52.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.52/artiusid-sdk-1.2.52.aar
+# Download SDK v1.2.54 (STABLE RELEASE)
+curl -L -o artiusid-sdk-1.2.54.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.54/artiusid-sdk-1.2.54.aar
 ```
 
 ### **2. Add to Your Project**
 
 Copy the AAR to your app's `libs` directory:
 ```bash
-cp artiusid-sdk-1.2.52.aar your-app/app/libs/
+cp artiusid-sdk-1.2.54.aar your-app/app/libs/
 ```
 
 ### **3. Configure Dependencies**
@@ -63,7 +62,7 @@ android {
 }
 
 dependencies {
-    implementation files('libs/artiusid-sdk-1.2.52.aar')
+    implementation files('libs/artiusid-sdk-1.2.54.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
@@ -382,7 +381,13 @@ See [Configure Dependencies](#3-configure-dependencies) and [SDK Dependencies](S
 
 ## 📝 **Changelog**
 
-### **v1.2.52 (February 2026) - HOST APP FIXES**
+### **v1.2.54 (March 2026) - iOS parity punch list**
+- 🔌 **Public API** – Biometric helpers, setFcmToken, getSDKInfo (wrapperVersion/architecture), verification/FCM listeners, ensureCertificateRegisteredOrThrow, authenticate(request), environment mapping, optional URL template in SDKConfiguration.
+- ⚙️ **Config/theme** – copyWithFcmToken/copyWithLogging, getAppConstantsStyle, paragraphSpacing, IconCategory, DocumentType.displayName, LogLevel.shouldShow, Environment.fromViewLayer.
+- 🌐 **Localization** – settings_* and sample_* keys; sample app en/es/fr/de.
+- 📄 **Docs** – CLIENT_IMPLEMENTATION_GUIDE, THEMING_GUIDE, RELEASE_NOTES, CHANGELOG.
+
+### **v1.2.53 (March 2026) - ThemeManager, LocalizationManager, SDKResourceBundle**
 - 📄 **Compose alignment** – Documented BOM `2023.10.01` and compiler `1.5.3`; host apps must match to avoid `NoSuchMethodError` (performImeAction$default). Troubleshooting added.
 - 📱 **NFC 3-failures flow** – After 3 NFC read failures, proceed to verification without showing “Scan failed” screen; completion callback and OCR data preserved on both IsoDep and tag paths.
 
@@ -471,7 +476,7 @@ See [Configure Dependencies](#3-configure-dependencies) and [SDK Dependencies](S
 
 ## 📦 **Package Contents**
 
-- `artiusid-sdk-1.2.52.aar` - Main SDK library (25MB)
+- `artiusid-sdk-1.2.54.aar` - Main SDK library (25MB)
 - `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
 - `README_HILT_SETUP.md` - Quick HILT reference
 - `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
@@ -503,8 +508,8 @@ This SDK is provided under license. See LICENSE.txt for full terms and condition
 
 ---
 
-**Version:** 1.2.52  
-**Release Date:** February 2026  
+**Version:** 1.2.54  
+**Release Date:** March 2026  
 **Package Size:** 25MB  
 **Status:** Production Ready
 

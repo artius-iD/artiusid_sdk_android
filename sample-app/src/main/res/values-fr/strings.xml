@@ -218,4 +218,35 @@
     <string name="status_label">État</string>
     <string name="theme_preview_title">Aperçu du thème actuel</string>
     <string name="image_override_title">Sélection de remplacement d\'image</string>
+    <!-- settings_* / sample_* (iOS parity) -->
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_environment">Environnement</string>
+    <string name="settings_theme">Thème</string>
+    <string name="settings_imageOverrides">Remplacements d\'image</string>
+    <string name="settings_config_info">Config et info</string>
+    <string name="settings_account_number">Numéro de compte</string>
+    <string name="settings_fcm_token">Jeton FCM</string>
+    <string name="settings_device_id">ID appareil</string>
+    <string name="settings_sdk_version">Version du SDK</string>
+    <string name="settings_app_version">Version de l\'app</string>
+    <string name="settings_certificate">Certificat</string>
+    <string name="settings_status">Statut</string>
+    <string name="settings_loaded_date">Date de chargement</string>
+    <string name="settings_device">Appareil</string>
+    <string name="settings_model">Modèle</string>
+    <string name="settings_android_version">Version Android</string>
+    <string name="sample_done">Terminé</string>
+    <string name="sample_theme_preview">Aperçu du thème</string>
+    <string name="sample_primary_color">Primaire</string>
+    <string name="sample_secondary_color">Secondaire</string>
+    <string name="sample_background_color">Arrière-plan</string>
+    <string name="sample_verification">Vérification</string>
+    <string name="sample_authentication">Authentification</string>
+    <string name="sample_approval">Approbation</string>
+    <string name="sample_approval_request_result">Résultat de la demande d\'approbation</string>
+    <string name="sample_clear_result">Effacer le résultat</string>
+    <string name="sample_okta_id">ID Okta</string>
+    <string name="sample_login_with_okta">Se connecter avec Okta</string>
+    <string name="sample_relogin">Reconnexion</string>
 </resources>

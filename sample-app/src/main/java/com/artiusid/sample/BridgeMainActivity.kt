@@ -28,6 +28,7 @@ import com.artiusid.sdk.config.SDKConfiguration
 import com.artiusid.sdk.config.Environment
 import com.artiusid.sdk.models.SDKThemeConfiguration
 import com.artiusid.sdk.models.EnhancedSDKThemeConfiguration
+import com.artiusid.sdk.ui.theme.ThemeManager
 import com.artiusid.sample.theme.SampleAppThemes
 import com.artiusid.sample.theme.EnhancedThemeOption
 import com.artiusid.sample.localization.SampleAppLocalization
@@ -50,19 +51,25 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import android.app.Activity
+import android.content.Intent
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import com.artiusid.sdk.utils.UrlBuilder
 import com.artiusid.sample.config.AppConstants
 import com.artiusid.sample.config.AppUrlConfig
+import com.artiusid.sample.okta.OktaLoginActivity
 import com.artiusid.sample.okta.OktaLoginHelper
 import com.artiusid.sample.localization.LanguageManager
 import android.content.Context
 import com.artiusid.sample.R
+import com.artiusid.sdk.utils.SDKResourceBundle
 
 /**
  * Sample App demonstrating the artius.iD SDK Integration
@@ -131,7 +138,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     private var selectedImageOverride by mutableStateOf(ImageOverrideOption.DEFAULT)
     private var selectedEnvironment by mutableStateOf("Sandbox")
     private var selectedDomain by mutableStateOf("artiusid.dev")
-    private var includeOktaID by mutableStateOf(true) // Okta ID enabled by default (matches iOS)
+    private var includeOktaID by mutableStateOf(false) // Okta ID off by default when app opens
     private var verificationResultData by mutableStateOf<VerificationResultData?>(null)
     private var showResultsScreen by mutableStateOf(false)
     private var fcmTokenStatus by mutableStateOf("❌ Not available")
@@ -157,6 +164,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     private var shouldTriggerOktaAfterVerification by mutableStateOf(false)
     private var showClearVerificationDialog by mutableStateOf(false)
     private var showClearOktaReregisterDialog by mutableStateOf(false)
+    private var oktaLoginLauncher: ActivityResultLauncher<Intent>? = null
     private var developerMode by mutableStateOf(false)
     private var demoMode by mutableStateOf(false)
     private var faceMeshUploadEnabled by mutableStateOf(false)
@@ -215,6 +223,25 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         handleNotificationIntent(intent)
         // Handle Okta OIDC redirect if app was launched from browser callback
         handleOktaRedirect(intent)
+
+        oktaLoginLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            oktaLoginInProgress = false
+            when (result.resultCode) {
+                Activity.RESULT_OK -> {
+                    val userId = result.data?.getStringExtra(OktaLoginActivity.EXTRA_OKTA_USER_ID)
+                    if (!userId.isNullOrBlank()) {
+                        ArtiusIDSDK.setOktaUserId(userId)
+                        oktaSuccessMessage = getString(R.string.okta_login_success)
+                        android.util.Log.d("BridgeMainActivity", "✅ Okta user ID set (in-app): ${userId.take(10)}...")
+                    }
+                }
+                else -> {
+                    val error = result.data?.getStringExtra(OktaLoginActivity.EXTRA_ERROR)
+                    oktaError = error ?: getString(R.string.okta_login_button).plus(" failed")
+                    showOktaGuidanceDialog = true
+                }
+            }
+        }
 
         setContent {
             // After verification success, optionally show Okta provisioning (like iOS RootNavigationView)
@@ -285,6 +312,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                                                     override suspend fun sendApprovalRequestIOS(request: com.artiusid.sdk.data.model.ApprovalRequestTestingRequest) = 
                                                         throw NotImplementedError("Not needed for approval flow")
                                                     override suspend fun approval(request: com.artiusid.sdk.data.model.ApprovalRequest) = 
+                                                        throw NotImplementedError("Not needed for approval flow")
+                                                    override suspend fun registerOkta(request: Map<String, String>) = 
                                                         throw NotImplementedError("Not needed for approval flow")
                                                 }
                                                 @Suppress("UNCHECKED_CAST")
@@ -458,6 +487,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                             android.util.Log.d("BridgeMainActivity", "🎨 New theme background: ${it.themeConfig.colorScheme.backgroundColorHex}")
                             android.util.Log.d("BridgeMainActivity", "🎨 New theme primary button: ${it.themeConfig.colorScheme.primaryButtonColorHex}")
                             selectedTheme = it
+                            // Sync SDK ThemeManager facade (iOS parity)
+                            ThemeManager.setTheme(it.themeConfig)
                             // Re-initialize SDK with new theme configuration
                             initializeSDK()
                         }
@@ -748,25 +779,12 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     confirmButton = {
                         Button(
                             onClick = {
-                                showOktaGuidanceDialog = false
                                 oktaError = null
                                 oktaLoginInProgress = true
-                                OktaLoginHelper.launchOktaLogin(this@BridgeMainActivity) { result ->
-                                    runOnUiThread {
-                                        oktaLoginInProgress = false
-                                        result.fold(
-                                            onSuccess = { loginResult ->
-                                                ArtiusIDSDK.setOktaUserId(loginResult.oktaUserId)
-                                                oktaSuccessMessage = "Okta login successful"
-                                                android.util.Log.d("BridgeMainActivity", "✅ Okta user ID set: ${loginResult.oktaUserId.take(10)}...")
-                                            },
-                                            onFailure = { e ->
-                                                oktaError = e.message
-                                                showOktaGuidanceDialog = true
-                                            }
-                                        )
-                                    }
-                                }
+                                val authUrl = OktaLoginHelper.launchOktaLoginInApp(this@BridgeMainActivity)
+                                val intent = Intent(this@BridgeMainActivity, OktaLoginActivity::class.java)
+                                    .putExtra(OktaLoginActivity.EXTRA_AUTH_URL, authUrl)
+                                oktaLoginLauncher?.launch(intent)
                             },
                             enabled = !oktaLoginInProgress
                         ) { Text(getString(R.string.view_continue)) }
@@ -1117,6 +1135,43 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                     }
                 }
             }
+            
+            // SDK Debug Info (ThemeManager, LocalizationManager, ImageOverrideManager)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = getString(R.string.sdk_debug_info_title),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    Text(
+                        text = getString(R.string.sdk_debug_info_description),
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                    val debugInfo = ThemeManager.getDebugInfo()
+                    val sdkBundle = SDKResourceBundle(this@BridgeMainActivity)
+                    val welcomeViaBundle = sdkBundle.localizedString("welcome_title", "Welcome")
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            text = debugInfo + "\n\n(SDK string via SDKResourceBundle: \"$welcomeViaBundle\")",
+                            fontSize = 11.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
         }
     }
     
@@ -1230,8 +1285,12 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
 
     /** Handle Okta OIDC redirect (com.artiusid.sampleapp:/callback?code=...&state=...) */
     private fun handleOktaRedirect(intent: android.content.Intent?) {
-        if (intent != null && OktaLoginHelper.handleRedirect(intent)) {
-            android.util.Log.d("BridgeMainActivity", "🔐 Handled Okta redirect")
+        val data = intent?.data
+        if (data != null) {
+            android.util.Log.i("BridgeMainActivity", "🔐 Okta: intent with data scheme=${data.scheme} host=${data.host} (hasCode=${data.getQueryParameter("code") != null})")
+        }
+        if (intent != null && OktaLoginHelper.handleRedirect(intent, this)) {
+            android.util.Log.i("BridgeMainActivity", "🔐 Okta: redirect handled")
         }
     }
 
@@ -1442,7 +1501,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 configuration = sdkConfig,
                 enhancedTheme = selectedTheme.themeConfig
             )
-            
+            ThemeManager.setTheme(selectedTheme.themeConfig)
+            ThemeManager.setLocale(LanguageManager.getStoredLanguage(this))
             android.util.Log.d("BridgeMainActivity", "✅ SDK initialized successfully on startup")
             
             // ✅ NEW: Sample app manages its own Firebase tokens
@@ -2091,7 +2151,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         
         // Parse the verification result data for the results screen
-        verificationResultData = VerificationResultData.fromPayload(result.rawResponse)
+        verificationResultData = VerificationResultData.fromVerificationResult(result)
         
         // Show the results screen
         showResultsScreen = true

@@ -90,6 +90,13 @@ String customization examples:
 - Branded instruction text
 - Error message overrides
 
+#### **SDK APIs used (ThemeManager, SDKResourceBundle)**
+The sample app demonstrates the SDK’s unified theme and debug APIs:
+- **ThemeManager** – When you change theme or language, the app calls `ThemeManager.setTheme(config)` and `ThemeManager.setLocale(code)` so the SDK facade stays in sync (iOS parity).
+- **LanguageManager** – Calls `ThemeManager.setLocale(code)` after `ArtiusIDSDK.setLanguage()` so locale is reflected in `ThemeManager.getDebugInfo()`.
+- **SDK Debug Info card** – On the main screen, a collapsible-style block shows `ThemeManager.getDebugInfo()` (localization overrides, current theme, image override manager status).
+- **SDKResourceBundle** – The debug section uses `SDKResourceBundle(context).localizedString("welcome_title", "Welcome")` to show SDK string lookup with override/fallback support.
+
 ---
 
 ## 🌐 Environments

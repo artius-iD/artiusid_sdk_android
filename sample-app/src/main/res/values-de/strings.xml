@@ -218,4 +218,35 @@
     <string name="status_label">Status</string>
     <string name="theme_preview_title">Aktuelle Designvorschau</string>
     <string name="image_override_title">Bildersatzauswahl</string>
+    <!-- settings_* / sample_* (iOS parity) -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_language">Sprache</string>
+    <string name="settings_environment">Umgebung</string>
+    <string name="settings_theme">Design</string>
+    <string name="settings_imageOverrides">Bildersatz</string>
+    <string name="settings_config_info">Config und Info</string>
+    <string name="settings_account_number">Kontonummer</string>
+    <string name="settings_fcm_token">FCM-Token</string>
+    <string name="settings_device_id">Geräte-ID</string>
+    <string name="settings_sdk_version">SDK-Version</string>
+    <string name="settings_app_version">App-Version</string>
+    <string name="settings_certificate">Zertifikat</string>
+    <string name="settings_status">Status</string>
+    <string name="settings_loaded_date">Ladedatum</string>
+    <string name="settings_device">Gerät</string>
+    <string name="settings_model">Modell</string>
+    <string name="settings_android_version">Android-Version</string>
+    <string name="sample_done">Fertig</string>
+    <string name="sample_theme_preview">Designvorschau</string>
+    <string name="sample_primary_color">Primär</string>
+    <string name="sample_secondary_color">Sekundär</string>
+    <string name="sample_background_color">Hintergrund</string>
+    <string name="sample_verification">Überprüfung</string>
+    <string name="sample_authentication">Authentifizierung</string>
+    <string name="sample_approval">Genehmigung</string>
+    <string name="sample_approval_request_result">Ergebnis der Genehmigungsanfrage</string>
+    <string name="sample_clear_result">Ergebnis löschen</string>
+    <string name="sample_okta_id">Okta-ID</string>
+    <string name="sample_login_with_okta">Mit Okta anmelden</string>
+    <string name="sample_relogin">Erneut anmelden</string>
 </resources>

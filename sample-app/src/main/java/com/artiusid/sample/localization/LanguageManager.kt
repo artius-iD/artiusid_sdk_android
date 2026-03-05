@@ -11,6 +11,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.LocaleList
 import com.artiusid.sdk.ArtiusIDSDK
+import com.artiusid.sdk.ui.theme.ThemeManager
 import java.util.Locale
 
 /**
@@ -47,6 +48,7 @@ object LanguageManager {
             .putString(KEY_LANGUAGE, code)
             .apply()
         ArtiusIDSDK.setLanguage(context, code)
+        ThemeManager.setLocale(code)
         return createLocaleContext(context, code)
     }
 

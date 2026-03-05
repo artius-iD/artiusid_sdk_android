@@ -218,4 +218,35 @@
     <string name="status_label">Estado</string>
     <string name="theme_preview_title">Vista previa del tema actual</string>
     <string name="image_override_title">Selección de reemplazo de imagen</string>
+    <!-- settings_* / sample_* (iOS parity) -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_environment">Entorno</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_imageOverrides">Sobrescrituras de imagen</string>
+    <string name="settings_config_info">Configuración e información</string>
+    <string name="settings_account_number">Número de cuenta</string>
+    <string name="settings_fcm_token">Token FCM</string>
+    <string name="settings_device_id">ID de dispositivo</string>
+    <string name="settings_sdk_version">Versión del SDK</string>
+    <string name="settings_app_version">Versión de la app</string>
+    <string name="settings_certificate">Certificado</string>
+    <string name="settings_status">Estado</string>
+    <string name="settings_loaded_date">Fecha de carga</string>
+    <string name="settings_device">Dispositivo</string>
+    <string name="settings_model">Modelo</string>
+    <string name="settings_android_version">Versión de Android</string>
+    <string name="sample_done">Hecho</string>
+    <string name="sample_theme_preview">Vista previa del tema</string>
+    <string name="sample_primary_color">Primario</string>
+    <string name="sample_secondary_color">Secundario</string>
+    <string name="sample_background_color">Fondo</string>
+    <string name="sample_verification">Verificación</string>
+    <string name="sample_authentication">Autenticación</string>
+    <string name="sample_approval">Aprobación</string>
+    <string name="sample_approval_request_result">Resultado de solicitud de aprobación</string>
+    <string name="sample_clear_result">Borrar resultado</string>
+    <string name="sample_okta_id">ID de Okta</string>
+    <string name="sample_login_with_okta">Iniciar sesión con Okta</string>
+    <string name="sample_relogin">Volver a iniciar sesión</string>
 </resources>

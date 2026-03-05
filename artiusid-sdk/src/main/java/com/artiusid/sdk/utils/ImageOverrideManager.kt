@@ -21,7 +21,9 @@ import com.artiusid.sdk.models.ImageOverrideResult
 import com.artiusid.sdk.models.hasOverride
 import com.artiusid.sdk.models.getOverride
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -40,22 +42,27 @@ class ImageOverrideManager private constructor(
         @Volatile
         private var INSTANCE: ImageOverrideManager? = null
         
+        @Volatile
+        private var lastContext: Context? = null
+        
+        @Volatile
+        private var lastImageLoader: ImageLoader? = null
+        
         /**
          * Initialize the ImageOverrideManager singleton
          * If already initialized, updates with new overrides
          */
         fun initialize(
-            context: Context, 
+            context: Context,
             overrides: SDKImageOverrides,
             imageLoader: ImageLoader? = null
         ): ImageOverrideManager {
             return synchronized(this) {
-                // Always create a new instance to ensure overrides are updated
-                ImageOverrideManager(
-                    context.applicationContext,
-                    overrides,
-                    imageLoader ?: ImageLoader(context)
-                ).also { 
+                val appContext = context.applicationContext
+                val loader = imageLoader ?: ImageLoader(context)
+                lastContext = appContext
+                lastImageLoader = loader
+                ImageOverrideManager(appContext, overrides, loader).also {
                     INSTANCE = it
                     val totalOverrides = countActiveOverrides(overrides)
                     Log.d(TAG, "ImageOverrideManager initialized with $totalOverrides active overrides (${overrides.customOverrides.size} custom)")
@@ -64,10 +71,39 @@ class ImageOverrideManager private constructor(
         }
         
         /**
+         * Clear overrides and re-initialize with empty SDKImageOverrides. iOS parity: clearOverrides.
+         */
+        fun clearOverrides(): Boolean {
+            val ctx = lastContext
+            val loader = lastImageLoader
+            if (ctx == null || loader == null) {
+                Log.w(TAG, "clearOverrides: not initialized, nothing to clear")
+                return false
+            }
+            initialize(ctx, SDKImageOverrides(), loader)
+            Log.d(TAG, "Image overrides cleared")
+            return true
+        }
+        
+        /**
+         * Update overrides (re-initialize with new config). iOS parity: setOverrides/setConfiguration.
+         */
+        fun updateOverrides(context: Context, overrides: SDKImageOverrides, imageLoader: ImageLoader? = null): ImageOverrideManager {
+            return initialize(context, overrides, imageLoader ?: lastImageLoader)
+        }
+        
+        /**
          * Get the current instance (must be initialized first)
          */
         fun getInstance(): ImageOverrideManager {
             return INSTANCE ?: throw IllegalStateException("ImageOverrideManager not initialized. Call initialize() first.")
+        }
+        
+        /**
+         * Cancel any in-progress preloading (convenience; can also use getInstance().cancelPreloading()).
+         */
+        fun cancelPreloading() {
+            INSTANCE?.cancelPreloading()
         }
         
         /**
@@ -149,6 +185,10 @@ class ImageOverrideManager private constructor(
     // Cache for loaded drawables (memory cache)
     private val drawableCache = ConcurrentHashMap<String, Drawable>()
     
+    // Preload job for cancelPreloading (iOS parity)
+    @Volatile
+    private var preloadJob: Job? = null
+    
     /**
      * Resolve image source for a given default resource and override key
      * Returns the appropriate source (URL, resource ID, file path, etc.)
@@ -192,22 +232,20 @@ class ImageOverrideManager private constructor(
     }
     
     /**
-     * Preload images if configured to do so
+     * Preload images if configured to do so. Can be cancelled via cancelPreloading().
      */
     suspend fun preloadImages() {
         if (!overrides.preloadImages) {
             Log.d(TAG, "Image preloading disabled")
             return
         }
-        
+        preloadJob = coroutineContext[Job]
         Log.d(TAG, "Starting image preloading...")
-        
         withContext(Dispatchers.IO) {
             val preloadKeys = listOf(
                 "face_overlay", "passport_overlay", "state_id_front_overlay", "state_id_back_overlay",
                 "brand_logo", "success_icon", "failed_icon", "back_button_icon"
             )
-            
             preloadKeys.forEach { key ->
                 if (overrides.hasOverride(key)) {
                     try {
@@ -218,8 +256,16 @@ class ImageOverrideManager private constructor(
                 }
             }
         }
-        
         Log.d(TAG, "Image preloading completed")
+    }
+    
+    /**
+     * Cancel any in-progress preloading. iOS parity: cancelPreloading.
+     */
+    fun cancelPreloading() {
+        preloadJob?.cancel()
+        preloadJob = null
+        Log.d(TAG, "Preloading cancelled")
     }
     
     /**
@@ -341,6 +387,33 @@ class ImageOverrideManager private constructor(
             "imageCache" to imageCache.size,
             "drawableCache" to drawableCache.size
         )
+    }
+    
+    /**
+     * Alias for getCacheStats() for iOS parity: getCacheStatistics.
+     */
+    fun getCacheStatistics(): Map<String, Int> = getCacheStats()
+    
+    /**
+     * Clear in-memory caches (image + drawable). iOS parity: clearExpiredCache.
+     */
+    fun clearExpiredCache() {
+        imageCache.clear()
+        drawableCache.clear()
+        Log.d(TAG, "Cache cleared (image + drawable)")
+    }
+    
+    /**
+     * Debug description for logging/diagnostics. iOS parity: getDebugInfo.
+     */
+    fun getDebugInfo(): String = buildString {
+        val stats = getCacheStats()
+        append("ImageOverrideManager:\n")
+        append("  - Active overrides: ${countActiveOverrides(overrides)}\n")
+        append("  - Image cache size: ${stats["imageCache"] ?: 0}\n")
+        append("  - Drawable cache size: ${stats["drawableCache"] ?: 0}\n")
+        append("  - Preload enabled: ${overrides.preloadImages}\n")
+        if (preloadJob?.isActive == true) append("  - Preload: in progress\n") else append("  - Preload: idle\n")
     }
     
     /**

@@ -1,8 +1,10 @@
 # ArtiusID Android SDK - Client Implementation Guide
 
-**SDK Version:** v1.2.48  
-**Date:** October 29, 2025  
+**SDK Version:** v1.2.54  
+**Date:** March 2026  
 **Author:** Todd Bryant, artius.iD, Inc.
+
+**iOS parity:** High-level steps (init, verification, authentication, approval, Okta, errors) are aligned with the iOS client guide; platform-specific details (Kotlin/Swift, Gradle/SPM) differ where appropriate.
 
 ---
 

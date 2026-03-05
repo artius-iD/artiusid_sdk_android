@@ -17,12 +17,13 @@ object OktaConfig {
     private const val TAG = "OktaConfig"
     private const val ASSETS_FILE = "okta.json"
 
-    // Defaults (same values as iOS artiusid_ios_okta_mfa_app Okta.plist)
-    private const val DEFAULT_ISSUER = "https://integrator-6977887.okta.com"
-    private const val DEFAULT_CLIENT_ID = "0oazutsn89PywJlLo697"
-    /** Must be registered in Okta Application's Sign-in redirect URIs. Use this app's scheme so the redirect opens the app. */
+    // Defaults (override via assets/okta.json if needed). Issuer = authorization server base (e.g. .../oauth2/default).
+    private const val DEFAULT_ISSUER = "https://integrator-6977887.okta.com/oauth2/default"
+    private const val DEFAULT_CLIENT_ID = "0oa10fmwy10rRlYhF698"
+    /** Must be registered in Okta Application's Sign-in redirect URIs. */
     private const val DEFAULT_REDIRECT_URI = "com.artiusid.sampleapp:/callback"
-    private const val DEFAULT_SCOPES = "openid profile offline_access okta.myAccount.appAuthenticator.manage okta.myAccount.appAuthenticator.read"
+    /** Standard scopes that exist on the default authorization server. Add okta.myAccount.* in Okta Admin if needed for device authenticator. */
+    private const val DEFAULT_SCOPES = "openid profile"
 
     private var loadedIssuer: String? = null
     private var loadedClientId: String? = null
@@ -41,8 +42,10 @@ object OktaConfig {
     /** OAuth scopes. */
     val SCOPES: String get() = loadedScopes ?: DEFAULT_SCOPES
 
-    val AUTHORIZE_URL: String get() = "$ISSUER/oauth2/v1/authorize"
-    val TOKEN_URL: String get() = "$ISSUER/oauth2/v1/token"
+    /** Authorize endpoint (issuer is auth server base, e.g. .../oauth2/default). */
+    val AUTHORIZE_URL: String get() = "$ISSUER/v1/authorize"
+    /** Token endpoint. */
+    val TOKEN_URL: String get() = "$ISSUER/v1/token"
 
     /**
      * Load Okta config from assets/okta.json if present (matches iOS Okta.plist).
