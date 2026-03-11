@@ -13,6 +13,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.*
@@ -21,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.artiusid.sdk.ArtiusIDSDK
@@ -67,8 +74,16 @@ import com.artiusid.sample.config.AppUrlConfig
 import com.artiusid.sample.okta.OktaLoginActivity
 import com.artiusid.sample.okta.OktaLoginHelper
 import com.artiusid.sample.localization.LanguageManager
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import android.provider.Settings
 import com.artiusid.sample.R
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import com.artiusid.sdk.utils.SDKResourceBundle
 
 /**
@@ -84,49 +99,51 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     }
     
     /**
-     * Create Material3 ColorScheme from selected theme
+     * Create Material3 ColorScheme from selected theme - MATCHING iOS sample app exactly.
+     * For artius.iD and other themes: use primaryButtonColorHex for Material "primary" (app bar, accents)
+     * so the chrome matches the main CTA button; use primaryColorHex for text (onBackground/onSurface).
      */
     private fun createColorSchemeFromTheme(theme: EnhancedThemeOption): ColorScheme {
-        val themeConfig = theme.themeConfig
-        val colors = themeConfig.colorScheme
-        
-        // Determine if this is a dark theme by checking background color luminance
-        val backgroundColor = android.graphics.Color.parseColor(colors.backgroundColorHex)
-        val luminance = (0.299 * android.graphics.Color.red(backgroundColor) + 
-                        0.587 * android.graphics.Color.green(backgroundColor) + 
-                        0.114 * android.graphics.Color.blue(backgroundColor)) / 255.0
-        val isDarkTheme = luminance < 0.5
-        
-        // Special handling for artius.iD theme - use light scheme even though it has dark accent colors
-        val isArtiusIDTheme = theme == EnhancedThemeOption.ARTIUSID_DEFAULT
-        
-        return if (isDarkTheme && !isArtiusIDTheme) {
-            // Use dark color scheme for dark themes - HARDCODED to preserve current sample app appearance
+        val colors = theme.themeConfig.colorScheme
+        val parse = { hex: String -> Color(android.graphics.Color.parseColor(hex)) }
+        // Material primary = main accent (button/app bar) - use primaryButtonColor (e.g. artius.iD orange #F58220)
+        val primary = parse(colors.primaryButtonColorHex)
+        val onPrimary = parse(colors.primaryButtonTextColorHex)
+        val secondary = parse(colors.secondaryButtonColorHex)
+        val onSecondary = parse(colors.secondaryButtonTextColorHex)
+        val background = parse(colors.backgroundColorHex)
+        val onBackground = parse(colors.onBackgroundColorHex)
+        val surface = parse(colors.surfaceColorHex.takeIf { it.isNotEmpty() } ?: colors.backgroundColorHex)
+        val onSurface = parse(colors.onSurfaceColorHex)
+        val luminance = (0.299 * android.graphics.Color.red(android.graphics.Color.parseColor(colors.backgroundColorHex)) +
+            0.587 * android.graphics.Color.green(android.graphics.Color.parseColor(colors.backgroundColorHex)) +
+            0.114 * android.graphics.Color.blue(android.graphics.Color.parseColor(colors.backgroundColorHex))) / 255.0
+        val isDark = luminance < 0.5
+        return if (isDark) {
             darkColorScheme(
-                primary = Color(0xFFF58220), // Orange - hardcoded from current theme
-                onPrimary = Color(0xFF22354D), // Dark blue - hardcoded
-                secondary = Color(0xFF22354D), // Dark blue - hardcoded
-                onSecondary = Color(0xFFFFFFFF), // White - hardcoded
-                background = Color(0xFFF8F9FA), // Light background - hardcoded
-                onBackground = Color(0xFF22354D), // Dark text - hardcoded
-                surface = Color(0xFFFFFFFF), // White surface - hardcoded
-                onSurface = Color(0xFF22354D), // Dark text - hardcoded
-                error = Color(0xFFD32F2F), // Red - hardcoded
-                onError = Color(0xFFFFFFFF) // White - hardcoded
+                primary = primary,
+                onPrimary = onPrimary,
+                secondary = secondary,
+                onSecondary = onSecondary,
+                background = background,
+                onBackground = onBackground,
+                surface = surface,
+                onSurface = onSurface,
+                error = parse(colors.errorColorHex),
+                onError = Color.White
             )
         } else {
-            // Use light color scheme for light themes - HARDCODED to preserve current sample app appearance
             lightColorScheme(
-                primary = Color(0xFF22354D), // Dark blue - hardcoded from current theme
-                onPrimary = Color(0xFFFFFFFF), // White - hardcoded
-                secondary = Color(0xFFF58220), // Orange - hardcoded
-                onSecondary = Color(0xFF22354D), // Dark blue - hardcoded
-                background = Color(0xFFF8F9FA), // Light background - hardcoded
-                onBackground = Color(0xFF22354D), // Dark text - hardcoded
-                surface = Color(0xFFFFFFFF), // White surface - hardcoded
-                onSurface = Color(0xFF22354D), // Dark text - hardcoded
-                error = Color(0xFFD32F2F), // Red - hardcoded
-                onError = Color(0xFFFFFFFF) // White - hardcoded
+                primary = primary,
+                onPrimary = onPrimary,
+                secondary = secondary,
+                onSecondary = onSecondary,
+                background = background,
+                onBackground = onBackground,
+                surface = surface,
+                onSurface = onSurface,
+                error = parse(colors.errorColorHex),
+                onError = Color.White
             )
         }
     }
@@ -141,6 +158,19 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     private var includeOktaID by mutableStateOf(false) // Okta ID off by default when app opens
     private var verificationResultData by mutableStateOf<VerificationResultData?>(null)
     private var showResultsScreen by mutableStateOf(false)
+    /** iOS parity: which result card to show (verification, authentication, approval, clear). Empty = show last result card. */
+    private var lastActionType by mutableStateOf("")
+    /** iOS parity: approval result for approval card ("yes"/"no"). */
+    private var lastApprovalResult by mutableStateOf<String?>(null)
+    /** iOS parity: authentication result for auth card. */
+    private var lastAuthenticationResult by mutableStateOf<String?>(null)
+    private var showSettings by mutableStateOf(false)
+    /** iOS parity: environment section hidden until long-press (3s) on Settings title. */
+    private var isEnvironmentUnlocked by mutableStateOf(false)
+    /** iOS parity: show "Processing" overlay when switching environment. */
+    private var isUpdatingEnvironment by mutableStateOf(false)
+    private var showInfoSheet by mutableStateOf(false)
+    private var copyToastMessage by mutableStateOf<String?>(null)
     private var fcmTokenStatus by mutableStateOf("❌ Not available")
     private var fcmTokenPreview by mutableStateOf("")
     private var memberIdStatus by mutableStateOf("❌ Not available")
@@ -378,6 +408,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                                     response = if (approvalResponse == "approve") "yes" else "no",
                                     onNavigateToHome = {
                                         android.util.Log.d("BridgeMainActivity", "🏠 Returning to home from approval response")
+                                        lastActionType = "approval"
+                                        lastApprovalResult = if (approvalResponse == "approve") "yes" else "no"
                                         showApprovalResponseScreen = false
                                         approvalRequestId = null
                                         approvalTitle = ""
@@ -431,341 +463,99 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         }
     }
     
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
     @Composable
     fun BridgeSampleApp() {
-        // Note: Approval notifications are now handled directly by ApprovalActivity
-        // No need to observe notification state in BridgeMainActivity anymore
-        
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Header
-            Text(
-                text = getString(R.string.intro_sdk_demo),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 24.dp)
-            )
-            
-            Text(
-                text = getString(R.string.intro_sdk_subtitle),
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-            
-            
-            // Theme Selection
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = getString(R.string.settings_themeSelection),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    ThemeDropdown(
-                        selectedTheme = selectedTheme,
-                        onThemeSelected = { 
-                            android.util.Log.d("BridgeMainActivity", "🎨 Theme dropdown changed to: ${it.displayName}")
-                            android.util.Log.d("BridgeMainActivity", "🎨 New theme brand name: ${it.themeConfig.brandName}")
-                            android.util.Log.d("BridgeMainActivity", "🎨 New theme background: ${it.themeConfig.colorScheme.backgroundColorHex}")
-                            android.util.Log.d("BridgeMainActivity", "🎨 New theme primary button: ${it.themeConfig.colorScheme.primaryButtonColorHex}")
-                            selectedTheme = it
-                            // Sync SDK ThemeManager facade (iOS parity)
-                            ThemeManager.setTheme(it.themeConfig)
-                            // Re-initialize SDK with new theme configuration
-                            initializeSDK()
+        // iOS parity: minimal nav bar (gear only, no title); content = ScrollView with VStack(header, buttons, result).
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { },
+                    actions = {
+                        IconButton(onClick = { showSettings = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = getString(R.string.settings_title),
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
                         }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        actionIconContentColor = MaterialTheme.colorScheme.onBackground
                     )
-                }
+                )
             }
+        ) { paddingValues ->
+            LaunchedEffect(Unit) {
+                checkCertificateStatus()
+                checkFCMTokenStatus()
+                checkMemberIdStatus()
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.Start
+            ) {
+                // Header (iOS: VStack spacing 8, largeTitle 34pt, body, padding top 24 / bottom 16)
+                Text(
+                    text = getString(R.string.sample_header_title),
+                    fontSize = 34.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp, bottom = 8.dp)
+                )
+                Text(
+                    text = getString(R.string.sample_header_subtitle),
+                    fontSize = 17.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
 
-            // Language Selection
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = getString(R.string.settings_languageSelection),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Text(
-                        text = getString(R.string.settings_languageSelectionDescription),
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                    LanguageDropdown(
-                        currentCode = LanguageManager.getStoredLanguage(this@BridgeMainActivity),
-                        onLanguageSelected = { code ->
-                            if (code != LanguageManager.getStoredLanguage(this@BridgeMainActivity)) {
-                                LanguageManager.setLanguage(this@BridgeMainActivity, code)
-                                recreate()
-                            }
-                        }
+                if (showClearVerificationDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showClearVerificationDialog = false },
+                        title = { Text(getString(R.string.settings_clearVerification)) },
+                        text = { Text(getString(R.string.settings_verificationClearedMessage)) },
+                        confirmButton = {
+                            Button(onClick = {
+                                com.artiusid.sdk.utils.VerificationStateManager(this@BridgeMainActivity).clearVerificationData()
+                                memberIdStatus = "❌ Verification Required"
+                                memberIdPreview = "Not verified"
+                                showClearVerificationDialog = false
+                            }) { Text(getString(R.string.alert_proceed)) }
+                        },
+                        dismissButton = { TextButton(onClick = { showClearVerificationDialog = false }) { Text(getString(R.string.alert_cancel)) } }
                     )
                 }
-            }
-            
-            // Image Override Selection
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = getString(R.string.image_override_title),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    ImageOverrideDropdown(
-                        selectedOverride = selectedImageOverride,
-                        onOverrideSelected = { 
-                            selectedImageOverride = it
-                            // Re-initialize SDK with new image overrides
-                            initializeSDK()
-                        }
-                    )
-                    
-                    // Show override statistics
-                    if (selectedImageOverride != ImageOverrideOption.DEFAULT) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        val stats = com.artiusid.sample.config.ImageOverrideHelper.getOverrideStats(selectedImageOverride.overrides)
-                        Text(
-                            text = "📊 ${stats["activeOverrides"]} overrides active (${stats["overridePercentage"]}%)",
-                            fontSize = 12.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
-            }
-            
-            // Environment and Domain Configuration
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = getString(R.string.settings_environmentalSettings),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    // Environment Selection
-                    Text(
-                        text = getString(R.string.environment_label) + ":",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    
-                    // ✅ DEBUG: Log current selectedEnvironment state
-                    android.util.Log.d("BridgeMainActivity", "🔍 UI: Rendering dropdown with selectedEnvironment = '$selectedEnvironment'")
-                    
-                    EnvironmentDropdown(
-                        selectedEnvironment = selectedEnvironment,
-                        onEnvironmentSelected = { newEnvironment ->
-                            android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL: Environment changed from $selectedEnvironment to $newEnvironment")
-                            
-                            // 🚨 CRITICAL FIX: Complete environment change handler
-                            handleEnvironmentChange(selectedEnvironment, newEnvironment)
-                        }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Domain Selection
-                    Text(
-                        text = getString(R.string.domain_label) + ":",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    
-                    DomainDropdown(
-                        selectedDomain = selectedDomain,
-                        onDomainSelected = { 
-                            selectedDomain = it
-                            UrlBuilder.setDomain(this@BridgeMainActivity, it)
-                            // Re-initialize SDK with new configuration
-                            initializeSDK()
-                        }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    // Show current configuration
-                    Text(
-                        text = "📍 Current: ${UrlBuilder.getCurrentConfiguration(this@BridgeMainActivity)}",
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(top = 4.dp)
+                if (showClearOktaReregisterDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showClearOktaReregisterDialog = false },
+                        title = { Text(getString(R.string.settings_clearOktaAndReregister)) },
+                        text = { Text(getString(R.string.settings_reregisterMessage)) },
+                        confirmButton = {
+                            Button(onClick = {
+                                ArtiusIDSDK.setOktaUserId(null)
+                                refreshFCMToken()
+                                showClearOktaReregisterDialog = false
+                            }) { Text(getString(R.string.alert_proceed)) }
+                        },
+                        dismissButton = { TextButton(onClick = { showClearOktaReregisterDialog = false }) { Text(getString(R.string.alert_cancel)) } }
                     )
                 }
-            }
-            
-            // Okta ID Configuration (NEW - matches iOS v2.0.12)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = getString(R.string.settings_includeOktaID),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = getString(R.string.settings_includeOktaID),
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = getString(R.string.okta_collection_description),
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-                        
-                        Switch(
-                            checked = includeOktaID,
-                            onCheckedChange = { 
-                                includeOktaID = it
-                                android.util.Log.d("BridgeMainActivity", "🔐 Okta ID setting changed: $it")
-                                // Re-initialize SDK with new configuration
-                                initializeSDK()
-                            }
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Show current status
-                    Text(
-                        text = if (includeOktaID) getString(R.string.okta_enabled_status) else getString(R.string.okta_disabled_status),
-                        fontSize = 12.sp,
-                        color = if (includeOktaID) Color(0xFF4CAF50) else Color.Gray,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    // Login with Okta (matches iOS Okta provisioning flow)
-                    val currentOktaUserId = ArtiusIDSDK.getOktaUserId()
-                    if (!currentOktaUserId.isNullOrEmpty()) {
-                        Text(
-                            text = "✅ Okta user ID set (${currentOktaUserId.take(10)}...)",
-                            fontSize = 12.sp,
-                            color = Color(0xFF4CAF50),
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                    Button(
-                        onClick = { showOktaGuidanceDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22354D))
-                    ) {
-                        Text(if (currentOktaUserId.isNullOrEmpty()) getString(R.string.okta_login_button) else getString(R.string.okta_relogin_button), color = Color.White)
-                    }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    // Okta actions (iOS Settings parity)
-                    OutlinedButton(onClick = {
-                        ArtiusIDSDK.setOktaUserId(null)
-                        android.util.Log.d("BridgeMainActivity", "🔐 Okta User ID reset")
-                    }, modifier = Modifier.fillMaxWidth()) {
-                        Text(getString(R.string.settings_resetOktaUserID), fontSize = 14.sp)
-                    }
-                    OutlinedButton(onClick = { showClearOktaReregisterDialog = true }, modifier = Modifier.fillMaxWidth()) {
-                        Text(getString(R.string.settings_clearOktaAndReregister), fontSize = 14.sp)
-                    }
-                    OutlinedButton(onClick = { refreshFCMToken() }, modifier = Modifier.fillMaxWidth()) {
-                        Text(getString(R.string.settings_forceFcmRegistration), fontSize = 14.sp)
-                    }
-                    OutlinedButton(onClick = { showClearVerificationDialog = true }, modifier = Modifier.fillMaxWidth()) {
-                        Text(getString(R.string.settings_clearVerification), fontSize = 14.sp)
-                    }
-                }
-            }
-            if (showClearVerificationDialog) {
-                AlertDialog(
-                    onDismissRequest = { showClearVerificationDialog = false },
-                    title = { Text(getString(R.string.settings_clearVerification)) },
-                    text = { Text(getString(R.string.settings_verificationClearedMessage)) },
-                    confirmButton = {
-                        Button(onClick = {
-                            com.artiusid.sdk.utils.VerificationStateManager(this@BridgeMainActivity).clearVerificationData()
-                            memberIdStatus = "❌ Verification Required"
-                            memberIdPreview = "Not verified"
-                            showClearVerificationDialog = false
-                        }) { Text(getString(R.string.alert_proceed)) }
-                    },
-                    dismissButton = { TextButton(onClick = { showClearVerificationDialog = false }) { Text(getString(R.string.alert_cancel)) } }
-                )
-            }
-            if (showClearOktaReregisterDialog) {
-                AlertDialog(
-                    onDismissRequest = { showClearOktaReregisterDialog = false },
-                    title = { Text(getString(R.string.settings_clearOktaAndReregister)) },
-                    text = { Text(getString(R.string.settings_reregisterMessage)) },
-                    confirmButton = {
-                        Button(onClick = {
-                            ArtiusIDSDK.setOktaUserId(null)
-                            refreshFCMToken()
-                            showClearOktaReregisterDialog = false
-                        }) { Text(getString(R.string.alert_proceed)) }
-                    },
-                    dismissButton = { TextButton(onClick = { showClearOktaReregisterDialog = false }) { Text(getString(R.string.alert_cancel)) } }
-                )
-            }
-            // Okta guidance dialog (matches iOS OktaProvisioningGuidanceView)
-            if (showOktaGuidanceDialog) {
+                // Okta guidance dialog (matches iOS OktaProvisioningGuidanceView)
+                if (showOktaGuidanceDialog) {
                 AlertDialog(
                     onDismissRequest = { showOktaGuidanceDialog = false; oktaError = null },
                     title = { Text(getString(R.string.okta_whyLoginRequired)) },
@@ -793,402 +583,761 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                         TextButton(onClick = { showOktaGuidanceDialog = false; oktaError = null }) { Text(getString(R.string.alert_cancel), color = Color.Red) }
                     }
                 )
-            }
-            if (oktaSuccessMessage != null) {
-                AlertDialog(
-                    onDismissRequest = { oktaSuccessMessage = null },
-                    title = { Text("Okta Login") },
-                    text = { Text(oktaSuccessMessage!!) },
-                    confirmButton = { Button(onClick = { oktaSuccessMessage = null }) { Text(getString(R.string.alert_ok)) } }
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Action Buttons
-            Button(
+                }
+                if (oktaSuccessMessage != null) {
+                    AlertDialog(
+                        onDismissRequest = { oktaSuccessMessage = null },
+                        title = { Text("Okta Login") },
+                        text = { Text(oktaSuccessMessage!!) },
+                        confirmButton = { Button(onClick = { oktaSuccessMessage = null }) { Text(getString(R.string.alert_ok)) } }
+                    )
+                }
+
+                // Action Buttons (iOS: VStack spacing 16, no extra spacer after header)
+                val scheme = selectedTheme.themeConfig.colorScheme
+                val verificationBlue = Color(0xFF007AFF)
+                val secondaryBtnColor = Color(android.graphics.Color.parseColor(scheme.secondaryColorHex))
+                val secondaryBtnOnColor = Color(android.graphics.Color.parseColor(scheme.secondaryButtonTextColorHex))
+                val buttonShape = RoundedCornerShape(8.dp)
+                Button(
                 onClick = { startVerificationFlow() },
                 enabled = !isVerificationLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                shape = buttonShape,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF22354D) // Hardcoded dark blue to preserve sample app appearance
+                    containerColor = verificationBlue,
+                    contentColor = Color.White
                 )
             ) {
                 if (isVerificationLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
+                        color = Color.White
                     )
                 } else {
                     Text(
-                        text = getString(R.string.intro_start_verification),
-                        fontSize = 18.sp,
+                        text = getString(R.string.sample_verification),
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
+                        color = Color.White
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Button(
                 onClick = { startAuthenticationFlow() },
                 enabled = !isVerificationLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                shape = buttonShape,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFF58220) // Hardcoded orange to preserve sample app appearance
+                    containerColor = secondaryBtnColor,
+                    contentColor = secondaryBtnOnColor
                 )
             ) {
                 Text(
-                    text = getString(R.string.intro_start_authentication),
-                    fontSize = 18.sp,
+                    text = getString(R.string.sample_authentication),
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
+                    color = secondaryBtnOnColor
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Button(
                 onClick = { sendApprovalRequest() },
                 enabled = !isApprovalLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                shape = buttonShape,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4CAF50) // Hardcoded green to preserve sample app appearance
+                    containerColor = Color(0xFF4CAF50),
+                    contentColor = Color.White
                 )
             ) {
                 if (isApprovalLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
-                        color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
+                        color = Color.White
                     )
                 } else {
                     Text(
-                        text = getString(R.string.intro_test_approval),
-                        fontSize = 18.sp,
+                        text = getString(R.string.sample_approval),
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFFFFFF) // Hardcoded white to preserve sample app appearance
+                        color = Color.White
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
-            // Test Authentication Request (iOS parity: SampleAppView "Test Authentication Request" button)
-            Button(
-                onClick = { showTestAuthenticationRequest = true },
-                enabled = !isVerificationLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
-            ) {
-                Text(
-                    text = getString(R.string.intro_test_authentication_request),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Test Sound Effects Button
-            Button(
-                onClick = { testSoundEffects() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4CAF50) // Green color for sound test
-                )
-            ) {
-                Text(
-                    text = "🔊 Test Camera Sounds",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFFFFFF)
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Temporary button to clear certificate for testing sandbox environment
+
+            // Clear ALL Credentials (iOS: sample_clear_credentials, #D32F2F)
             Button(
                 onClick = { clearExistingCertificate() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                shape = buttonShape,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF5722) // Orange/red for clear action
+                    containerColor = Color(0xFFD32F2F),
+                    contentColor = Color.White
                 )
             ) {
                 Text(
-                    text = "🚨 Clear ALL Credentials",
-                    fontSize = 18.sp,
+                    text = getString(R.string.sample_clear_credentials),
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFFFFFF)
+                    color = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Single result card (iOS: one of verification / authentication / approval / last result)
+            when {
+                lastActionType == "verification" && verificationResultData != null -> InlineVerificationResultCard(
+                    verificationData = verificationResultData!!,
+                    primaryButtonColorHex = selectedTheme.themeConfig.colorScheme.primaryButtonColorHex,
+                    primaryButtonTextColorHex = selectedTheme.themeConfig.colorScheme.primaryButtonTextColorHex,
+                    onViewFullDetails = { showResultsScreen = true }
+                )
+                lastActionType == "authentication" -> InlineAuthenticationResultCard(
+                    resultText = lastResult,
+                    status = lastAuthenticationResult
+                )
+                lastActionType == "approval" && lastApprovalResult != null -> InlineApprovalResultCard(approved = lastApprovalResult == "yes")
+                else -> LastResultCard(
+                    lastResult = lastResult,
+                    fcmTokenStatus = fcmTokenStatus,
+                    fcmTokenPreview = fcmTokenPreview,
+                    memberIdStatus = memberIdStatus,
+                    memberIdPreview = memberIdPreview
                 )
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // FCM Token Refresh Button (for debugging)
-            OutlinedButton(
-                onClick = { refreshFCMToken() },
-                enabled = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF22354D)), // Hardcoded dark blue
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(0xFF22354D), // Hardcoded dark blue to preserve sample app appearance
-                    containerColor = Color.Transparent
-                )
-            ) {
-                Text(
-                    text = "🔥 Refresh FCM Token",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF22354D) // Hardcoded dark blue to preserve sample app appearance
+            if (showSettings) {
+                ModalBottomSheet(
+                    onDismissRequest = { if (!isUpdatingEnvironment) showSettings = false },
+                    containerColor = MaterialTheme.colorScheme.background
+                ) {
+                    Box(Modifier.fillMaxWidth()) {
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.background)
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 16.dp, vertical = 24.dp)
+                        ) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                getString(R.string.settings_title),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .combinedClickable(
+                                        onClick = { },
+                                        onLongClick = { isEnvironmentUnlocked = true }
+                                    )
+                            )
+                            IconButton(onClick = { showInfoSheet = true }) {
+                                Icon(
+                                    painter = painterResource(android.R.drawable.ic_menu_info_details),
+                                    contentDescription = getString(R.string.settings_config_info)
+                                )
+                            }
+                            TextButton(
+                                onClick = { if (!isUpdatingEnvironment) showSettings = false },
+                                enabled = !isUpdatingEnvironment
+                            ) {
+                                Text(getString(R.string.sample_done))
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        SampleAppSettingsContent()
+                        }
+                        if (isUpdatingEnvironment) {
+                            Box(
+                                Modifier
+                                    .matchParentSize()
+                                    .background(Color.Black.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier
+                                        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                                        .padding(30.dp)
+                                ) {
+                                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(48.dp))
+                                    Spacer(Modifier.height(16.dp))
+                                    Text(
+                                        text = getString(R.string.gen_processing),
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (showInfoSheet) {
+                SettingsInfoSheet(
+                    onDismiss = { showInfoSheet = false },
+                    copyToastMessage = copyToastMessage,
+                    onCopy = { label, value ->
+                        if (value != "Not Available") {
+                            (getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)?.setPrimaryClip(
+                                ClipData.newPlainText(label, value)
+                            )
+                            copyToastMessage = getString(R.string.sample_copied) + " $label"
+                        }
+                    },
+                    clientIdGroupId = "${AppConstants.clientId}/${AppConstants.clientGroupId}",
+                    accountNumber = verificationResultData?.accountNumber ?: if (memberIdPreview.isNotEmpty()) memberIdPreview else "Not Available",
+                    fcmToken = ArtiusIDSDK.getCurrentFCMToken(this@BridgeMainActivity).ifEmpty { "Not Available" },
+                    deviceId = android.provider.Settings.Secure.getString(contentResolver, android.provider.Settings.Secure.ANDROID_ID) ?: "Not Available",
+                    sdkVersion = ArtiusIDSDK.getSdkVersion(),
+                    appVersion = run {
+                        try {
+                            @Suppress("DEPRECATION")
+                            val info = packageManager.getPackageInfo(packageName, 0)
+                            "${info.versionName ?: "?"} (${info.versionCode})"
+                        } catch (_: Exception) { "Not Available" }
+                    },
+                    certStatus = if (ArtiusIDSDK.hasCertificate(this@BridgeMainActivity)) getString(R.string.sample_status_loaded) else getString(R.string.sample_status_not_loaded),
+                    deviceModel = Build.MODEL,
+                    androidVersion = Build.VERSION.RELEASE
                 )
             }
-            
-            
-            // Application Modes (iOS Settings parity)
+            LaunchedEffect(copyToastMessage) {
+                val msg = copyToastMessage
+                if (msg != null) {
+                    kotlinx.coroutines.delay(1300)
+                    copyToastMessage = null
+                }
+            }
+        }
+    }
+    }
+    
+    /** iOS parity: Info sheet with Config & Info, copyable rows, and copy toast. */
+    @Composable
+    private fun SettingsInfoSheet(
+        onDismiss: () -> Unit,
+        copyToastMessage: String?,
+        onCopy: (label: String, value: String) -> Unit,
+        clientIdGroupId: String,
+        accountNumber: String,
+        fcmToken: String,
+        deviceId: String,
+        sdkVersion: String,
+        appVersion: String,
+        certStatus: String,
+        deviceModel: String,
+        androidVersion: String
+    ) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(getString(R.string.settings_app_info), style = MaterialTheme.typography.titleLarge) },
+            text = {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(getString(R.string.settings_config_info), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+                    InfoRow(getString(R.string.settings_client_id), clientIdGroupId)
+                    Spacer(Modifier.height(12.dp))
+                    CopyableRow(getString(R.string.settings_account_number), accountNumber, onCopy)
+                    CopyableRow(getString(R.string.settings_fcm_token), fcmToken, onCopy)
+                    CopyableRow(getString(R.string.settings_device_id), deviceId, onCopy)
+                    Spacer(Modifier.height(16.dp))
+                    Text(getString(R.string.settings_system_info), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+                    InfoRow(getString(R.string.settings_sdk_version), sdkVersion)
+                    InfoRow(getString(R.string.settings_app_version), appVersion)
+                    Spacer(Modifier.height(16.dp))
+                    Text(getString(R.string.settings_certificate), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+                    InfoRow(getString(R.string.settings_status), certStatus)
+                    Spacer(Modifier.height(16.dp))
+                    Text(getString(R.string.settings_device), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+                    InfoRow(getString(R.string.settings_model), deviceModel)
+                    InfoRow(getString(R.string.settings_android_version), androidVersion)
+                    if (copyToastMessage != null) {
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            copyToastMessage,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .background(MaterialTheme.colorScheme.surfaceVariant, androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                                .padding(8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = onDismiss) { Text(getString(R.string.sample_done)) }
+            }
+        )
+    }
+
+    @Composable
+    private fun InfoRow(label: String, value: String) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            Text(value, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        }
+    }
+
+    @Composable
+    private fun CopyableRow(label: String, value: String, onCopy: (String, String) -> Unit) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text(value, fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            IconButton(onClick = { onCopy(label, value) }) {
+                Icon(
+                    painter = painterResource(android.R.drawable.ic_menu_share),
+                    contentDescription = getString(R.string.sample_copied)
+                )
+            }
+        }
+    }
+
+    /** Settings cards use white background; use consistent dark text (cardTextColor) for readability. */
+    @Composable
+    private fun SampleAppSettingsContent() {
+        val settingsTextColor = cardTextColor
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = getString(R.string.settings_applicationModes),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 12.dp)
+                Column(Modifier.padding(16.dp)) {
+                    Text(getString(R.string.settings_language), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = settingsTextColor, modifier = Modifier.padding(bottom = 8.dp))
+                    LanguageDropdown(
+                        currentCode = LanguageManager.getStoredLanguage(this@BridgeMainActivity),
+                        contentColor = settingsTextColor,
+                        onLanguageSelected = { code ->
+                            if (code != LanguageManager.getStoredLanguage(this@BridgeMainActivity)) {
+                                LanguageManager.setLanguage(this@BridgeMainActivity, code)
+                                recreate()
+                            }
+                        }
                     )
+                }
+            }
+            if (isEnvironmentUnlocked) {
+                Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(getString(R.string.settings_environment), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = settingsTextColor, modifier = Modifier.padding(bottom = 8.dp))
+                        EnvironmentDropdown(
+                            selectedEnvironment = selectedEnvironment,
+                            contentColor = settingsTextColor,
+                            onEnvironmentSelected = { handleEnvironmentChange(selectedEnvironment, it) }
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = when (selectedEnvironment) {
+                                "Sandbox" -> getString(R.string.env_description_sandbox)
+                                "Development" -> getString(R.string.env_description_development)
+                                "Staging" -> getString(R.string.env_description_staging)
+                                else -> ""
+                            },
+                            fontSize = 12.sp,
+                            color = Color.DarkGray
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(getString(R.string.domain_label) + ": ", fontSize = 14.sp, color = settingsTextColor)
+                        DomainDropdown(
+                            selectedDomain = selectedDomain,
+                            contentColor = settingsTextColor,
+                            onDomainSelected = {
+                                selectedDomain = it
+                                UrlBuilder.setDomain(this@BridgeMainActivity, it)
+                                initializeSDK()
+                            }
+                        )
+                    }
+                }
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(getString(R.string.sample_theme_preview), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = settingsTextColor, modifier = Modifier.padding(bottom = 12.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        ColorSwatch(getString(R.string.sample_primary_color), selectedTheme.themeConfig.colorScheme.primaryColorHex)
+                        ColorSwatch(getString(R.string.sample_secondary_color), selectedTheme.themeConfig.colorScheme.secondaryColorHex)
+                        ColorSwatch(getString(R.string.sample_background_color), selectedTheme.themeConfig.colorScheme.backgroundColorHex)
+                    }
+                }
+            }
+            // iOS parity: Theme section – rows with two color circles, displayName, description, checkmark
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(getString(R.string.settings_theme), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = cardTextColor, modifier = Modifier.padding(bottom = 12.dp))
+                    EnhancedThemeOption.values().forEach { theme ->
+                        val themePrimary = Color(android.graphics.Color.parseColor(theme.themeConfig.colorScheme.primaryColorHex))
+                        val themeSecondary = Color(android.graphics.Color.parseColor(theme.themeConfig.colorScheme.secondaryColorHex))
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedTheme = theme
+                                    ThemeManager.setTheme(theme.themeConfig)
+                                    initializeSDK()
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(end = 12.dp)
+                            ) {
+                                Box(Modifier.size(16.dp).background(themePrimary, CircleShape))
+                                Spacer(Modifier.width(4.dp))
+                                Box(Modifier.size(16.dp).background(themeSecondary, CircleShape))
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    text = theme.displayName,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = cardTextColor
+                                )
+                                Text(
+                                    text = theme.description,
+                                    fontSize = 12.sp,
+                                    color = Color.DarkGray,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+                            if (selectedTheme == theme) {
+                                val c = android.graphics.Color.parseColor(theme.themeConfig.colorScheme.primaryColorHex)
+                                val lum = (0.299 * android.graphics.Color.red(c) + 0.587 * android.graphics.Color.green(c) + 0.114 * android.graphics.Color.blue(c)) / 255.0
+                                val checkTint = if (lum > 0.7) cardTextColor else themePrimary
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = null,
+                                    tint = checkTint,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            // iOS parity: Image Overrides section – rows with count badge, displayName, description, checkmark
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                val settingsScheme = selectedTheme.themeConfig.colorScheme
+                Column(Modifier.padding(16.dp)) {
+                    Text(getString(R.string.settings_imageOverrides), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = cardTextColor, modifier = Modifier.padding(bottom = 12.dp))
+                    ImageOverrideOption.values().forEach { scenario ->
+                        val primaryColor = Color(android.graphics.Color.parseColor(settingsScheme.primaryColorHex))
+                        val accentColor = Color(android.graphics.Color.parseColor(settingsScheme.secondaryColorHex))
+                        val isSelected = selectedImageOverride == scenario
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedImageOverride = scenario; initializeSDK() }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Selection indicator: filled circle when selected, empty circle when not
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .then(
+                                        if (isSelected)
+                                            Modifier.background(accentColor, CircleShape)
+                                        else
+                                            Modifier.border(2.dp, Color.Gray, CircleShape)
+                                    )
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    text = scenario.displayName,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = cardTextColor
+                                )
+                                Text(
+                                    text = scenario.description,
+                                    fontSize = 12.sp,
+                                    color = Color.DarkGray,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = null,
+                                    tint = accentColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.Gray.copy(alpha = 0.05f), RoundedCornerShape(8.dp))
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            painter = painterResource(android.R.drawable.ic_menu_info_details),
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = Color(android.graphics.Color.parseColor(settingsScheme.primaryColorHex))
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = getString(R.string.settings_imageOverrides_description),
+                            fontSize = 12.sp,
+                            color = Color.DarkGray
+                        )
+                    }
+                }
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(getString(R.string.settings_applicationModes), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = settingsTextColor, modifier = Modifier.padding(bottom = 12.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(getString(R.string.settings_developerMode), Modifier.weight(1f), fontSize = 14.sp)
+                        Text(getString(R.string.settings_developerMode), Modifier.weight(1f), fontSize = 14.sp, color = settingsTextColor)
                         Switch(checked = developerMode, onCheckedChange = { developerMode = it })
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(getString(R.string.settings_demoMode), Modifier.weight(1f), fontSize = 14.sp)
+                        Text(getString(R.string.settings_demoMode), Modifier.weight(1f), fontSize = 14.sp, color = settingsTextColor)
                         Switch(checked = demoMode, onCheckedChange = { demoMode = it })
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text(getString(R.string.settings_enableFaceMeshUpload), Modifier.weight(1f), fontSize = 14.sp)
+                        Text(getString(R.string.settings_enableFaceMeshUpload), Modifier.weight(1f), fontSize = 14.sp, color = settingsTextColor)
                         Switch(checked = faceMeshUploadEnabled, onCheckedChange = { faceMeshUploadEnabled = it })
                     }
                 }
             }
-            // Device & Tokens / Results Display
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = getString(R.string.settings_deviceAndTokens),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            )
-            if (lastResult.isNotEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = getString(R.string.last_result_title),
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Text(
-                            text = lastResult,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                        
-                        // Add FCM Token and Certificate Info
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // FCM Token Section
-                        Text(
-                            text = getString(R.string.fcm_token_status_title),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        
-                        Text(
-                            text = getString(R.string.status_label) + ": $fcmTokenStatus",
-                            fontSize = 12.sp,
-                            color = if (fcmTokenStatus.contains("✅")) Color(0xFF4CAF50) else Color(0xFFF44336)
-                        )
-                        
-                        if (fcmTokenPreview.isNotEmpty()) {
-                            Text(
-                                text = "Token: $fcmTokenPreview",
-                                fontSize = 10.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        // Certificate Section
-                        Text(
-                            text = getString(R.string.certificate_status_title),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        
-                        // ✅ Use SDK public API instead of internal classes
-                        val hasCertificate = ArtiusIDSDK.hasCertificate(this@BridgeMainActivity)
-                        
-                        val certStatus = if (hasCertificate) "✅ Loaded" else "❌ Not loaded"
-                        val certColor = if (hasCertificate) Color(0xFF4CAF50) else Color(0xFFF44336)
-                        
-                        Text(
-                            text = getString(R.string.status_label) + ": $certStatus",
-                            fontSize = 12.sp,
-                            color = certColor
-                        )
-                        
-                        if (hasCertificate) {
-                            // ✅ Use SDK public API for detailed certificate status
-                            val certDetails = ArtiusIDSDK.getCertificateStatus(this@BridgeMainActivity)
-                            val keyMatch = certDetails["hasValidKey"] as? Boolean ?: false
-                            
-                            Text(
-                                text = "Key Match: ${if (keyMatch) "✅ Valid" else "❌ Invalid"}",
-                                fontSize = 10.sp,
-                                color = if (keyMatch) Color(0xFF4CAF50) else Color(0xFFF44336),
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        // Member ID Section
-                        Text(
-                            text = getString(R.string.member_id_status_title),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
-                        
-                        Text(
-                            text = getString(R.string.status_label) + ": $memberIdStatus",
-                            fontSize = 12.sp,
-                            color = if (memberIdStatus.contains("✅")) Color(0xFF4CAF50) else Color(0xFFF44336)
-                        )
-                        
-                        if (memberIdPreview.isNotEmpty()) {
-                            Text(
-                                text = "ID: $memberIdPreview",
-                                fontSize = 10.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                        }
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // Theme Preview
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = getString(R.string.theme_preview_title),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        ColorSwatch("Primary", selectedTheme.themeConfig.colorScheme.primaryColorHex)
-                        ColorSwatch("Secondary", selectedTheme.themeConfig.colorScheme.secondaryColorHex)
-                        ColorSwatch("Background", selectedTheme.themeConfig.colorScheme.backgroundColorHex)
+                Column(Modifier.padding(16.dp)) {
+                    Text(getString(R.string.settings_includeOktaID), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = settingsTextColor, modifier = Modifier.padding(bottom = 8.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(getString(R.string.okta_collection_description), fontSize = 12.sp, color = Color.DarkGray)
+                        }
+                        Switch(checked = includeOktaID, onCheckedChange = { includeOktaID = it; initializeSDK() })
                     }
-                }
-            }
-            
-            // SDK Debug Info (ThemeManager, LocalizationManager, ImageOverrideManager)
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = getString(R.string.sdk_debug_info_title),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Text(
-                        text = getString(R.string.sdk_debug_info_description),
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                    val debugInfo = ThemeManager.getDebugInfo()
-                    val sdkBundle = SDKResourceBundle(this@BridgeMainActivity)
-                    val welcomeViaBundle = sdkBundle.localizedString("welcome_title", "Welcome")
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = 200.dp)
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        Text(
-                            text = debugInfo + "\n\n(SDK string via SDKResourceBundle: \"$welcomeViaBundle\")",
-                            fontSize = 11.sp,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                    if (!ArtiusIDSDK.getOktaUserId().isNullOrEmpty()) {
+                        TextButton(onClick = { showOktaGuidanceDialog = true }) {
+                            Text(getString(R.string.okta_relogin_button))
+                        }
                     }
                 }
             }
         }
     }
     
+    /** iOS parity: Last result card (white bg, dark text for readability). */
+    private val cardTextColor = Color(0xFF212121)
+
+    @Composable
+    private fun LastResultCard(
+        lastResult: String,
+        fcmTokenStatus: String,
+        fcmTokenPreview: String,
+        memberIdStatus: String,
+        memberIdPreview: String
+    ) {
+        Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+            Column(Modifier.padding(16.dp)) {
+                Text(
+                    text = getString(R.string.sample_last_result),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = cardTextColor,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                if (lastResult.isNotEmpty()) {
+                    Text(text = lastResult, fontSize = 14.sp, color = cardTextColor, modifier = Modifier.padding(bottom = 12.dp))
+                }
+                Text(getString(R.string.sample_fcm_status), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 4.dp))
+                Text(
+                    text = "${getString(R.string.status_label)}: $fcmTokenStatus",
+                    fontSize = 12.sp,
+                    color = if (fcmTokenStatus.contains("✅")) Color(0xFF4CAF50) else Color(0xFFF44336)
+                )
+                if (fcmTokenPreview.isNotEmpty()) {
+                    Text(text = "${getString(R.string.sample_token_label)} $fcmTokenPreview", fontSize = 10.sp, color = Color.Gray, modifier = Modifier.padding(top = 2.dp))
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(getString(R.string.sample_cert_status), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = cardTextColor, modifier = Modifier.padding(bottom = 4.dp))
+                val hasCertificate = ArtiusIDSDK.hasCertificate(this@BridgeMainActivity)
+                val certStatus = if (hasCertificate) "✅ ${getString(R.string.sample_status_loaded)}" else "❌ ${getString(R.string.sample_status_not_loaded)}"
+                Text(text = "${getString(R.string.status_label)}: $certStatus", fontSize = 12.sp, color = if (hasCertificate) Color(0xFF4CAF50) else Color(0xFFF44336))
+                Spacer(Modifier.height(12.dp))
+                Text(getString(R.string.sample_account_number_status), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = cardTextColor, modifier = Modifier.padding(bottom = 4.dp))
+                Text(
+                    text = "${getString(R.string.status_label)}: $memberIdStatus",
+                    fontSize = 12.sp,
+                    color = if (memberIdStatus.contains("✅")) Color(0xFF4CAF50) else Color(0xFFF44336)
+                )
+                if (memberIdPreview.isNotEmpty()) {
+                    Text(text = "${getString(R.string.sample_id_label)} $memberIdPreview", fontSize = 10.sp, color = Color.Gray, modifier = Modifier.padding(top = 2.dp))
+                }
+            }
+        }
+    }
+
+    /** iOS parity: Inline verification result card with "View full details". */
+    @Composable
+    private fun InlineVerificationResultCard(
+        verificationData: VerificationResultData,
+        primaryButtonColorHex: String,
+        primaryButtonTextColorHex: String,
+        onViewFullDetails: () -> Unit
+    ) {
+        val btnColor = Color(android.graphics.Color.parseColor(primaryButtonColorHex))
+        val btnOnColor = Color(android.graphics.Color.parseColor(primaryButtonTextColorHex))
+        Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+            Column(Modifier.padding(16.dp)) {
+                Text("Verification Result", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = cardTextColor, modifier = Modifier.padding(bottom = 8.dp))
+                Text(text = "${verificationData.firstName ?: ""} ${verificationData.lastName ?: ""}".trim().ifEmpty { "—" }, fontSize = 14.sp, color = cardTextColor)
+                verificationData.accountNumber?.let { Text(text = "Member ID: $it", fontSize = 12.sp, color = Color.Gray) }
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = onViewFullDetails, colors = ButtonDefaults.buttonColors(containerColor = btnColor, contentColor = btnOnColor)) {
+                    Text("View full details", color = btnOnColor)
+                }
+            }
+        }
+    }
+
+    /** iOS parity: Inline authentication result card. */
+    @Composable
+    private fun InlineAuthenticationResultCard(resultText: String, status: String?) {
+        Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+            Column(Modifier.padding(16.dp)) {
+                Text(getString(R.string.sample_authentication_result), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = cardTextColor, modifier = Modifier.padding(bottom = 8.dp))
+                val statusLabel = when (status) {
+                    "success" -> getString(R.string.sample_authentication_success)
+                    "failed" -> getString(R.string.sample_authentication_failed)
+                    "cancelled" -> getString(R.string.sample_authentication_cancelled)
+                    else -> getString(R.string.sample_authentication_complete)
+                }
+                Text(text = "${getString(R.string.sample_response)}: $statusLabel", fontSize = 14.sp, color = cardTextColor, modifier = Modifier.padding(bottom = 4.dp))
+                Text(text = resultText, fontSize = 12.sp, color = Color.Gray)
+            }
+        }
+    }
+
+    /** iOS parity: Inline approval result card (Approved/Declined). */
+    @Composable
+    private fun InlineApprovalResultCard(approved: Boolean) {
+        Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+            Column(Modifier.padding(16.dp)) {
+                Text(getString(R.string.sample_approval_request_result), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = cardTextColor, modifier = Modifier.padding(bottom = 8.dp))
+                Text(
+                    text = if (approved) getString(R.string.sample_approved) else getString(R.string.sample_declined),
+                    fontSize = 16.sp,
+                    color = if (approved) Color(0xFF4CAF50) else Color(0xFFF44336)
+                )
+            }
+        }
+    }
+
+    /** iOS parity: ColorSwatchView 60×60, corner 8, gray stroke 0.3, label below (12pt). */
     @Composable
     fun ColorSwatch(label: String, colorHex: String) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-                modifier = Modifier.size(40.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(android.graphics.Color.parseColor(colorHex)) // Keep dynamic for color swatches
-                )
-            ) {}
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .background(
+                        Color(android.graphics.Color.parseColor(colorHex)),
+                        RoundedCornerShape(8.dp)
+                    )
+                    .border(1.dp, Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+            )
             Text(
                 text = label,
                 fontSize = 12.sp,
+                color = Color.Gray,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
@@ -1307,7 +1456,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         android.util.Log.d("BridgeMainActivity", "🚨 CRITICAL ENVIRONMENT CHANGE HANDLER")
         android.util.Log.d("BridgeMainActivity", "🚨 From: $oldEnvironment → To: $newEnvironment")
         android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
-        
+        isUpdatingEnvironment = true
         // Step 1: Update UI state immediately
         selectedEnvironment = newEnvironment
         
@@ -1383,6 +1532,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
                 
                 // Step 6: Update UI status
                 runOnUiThread {
+                    isUpdatingEnvironment = false
                     fcmTokenStatus = "✅ Ready"
                     
                     android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
@@ -1398,6 +1548,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             } catch (e: Exception) {
                 android.util.Log.e("BridgeMainActivity", "❌ Error during environment change", e)
                 runOnUiThread {
+                    isUpdatingEnvironment = false
                     fcmTokenStatus = "❌ Error"
                 }
             }
@@ -1504,6 +1655,18 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             ThemeManager.setTheme(selectedTheme.themeConfig)
             ThemeManager.setLocale(LanguageManager.getStoredLanguage(this))
             android.util.Log.d("BridgeMainActivity", "✅ SDK initialized successfully on startup")
+            
+            // ✅ Get certificate on app load (required for mTLS; obtain immediately after SDK init)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    android.util.Log.d("BridgeMainActivity", "🔐 Loading certificate on app load...")
+                    val ready = ArtiusIDSDK.ensureCertificateRegistered(this@BridgeMainActivity)
+                    android.util.Log.d("BridgeMainActivity", if (ready) "🔐 Certificate ready on app load" else "🔐 Certificate load completed (check status)")
+                    runOnUiThread { checkCertificateStatus() }
+                } catch (e: Exception) {
+                    android.util.Log.e("BridgeMainActivity", "🔐 Certificate load on startup failed", e)
+                }
+            }
             
             // ✅ NEW: Sample app manages its own Firebase tokens
             setupFirebaseTokenManagement()
@@ -1891,10 +2054,11 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
             android.util.Log.d("BridgeMainActivity", "🚨 ========================================")
             
             lastResult = "✅ ALL CREDENTIALS CLEARED - Cross-environment contamination eliminated. Environment preserved: $selectedEnvironment. Ready for fresh verification."
-            
+            lastActionType = "clear"
         } catch (e: Exception) {
             android.util.Log.e("BridgeMainActivity", "❌ Error clearing all credentials", e)
             lastResult = "❌ Error clearing all credentials: ${e.message}"
+            lastActionType = "clear"
         }
     }
     
@@ -2150,11 +2314,9 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
         isVerificationLoading = false
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         
-        // Parse the verification result data for the results screen
+        // Parse the verification result data for inline result card (iOS parity: show result on main, not full screen)
         verificationResultData = VerificationResultData.fromVerificationResult(result)
-        
-        // Show the results screen
-        showResultsScreen = true
+        lastActionType = "verification"
         // Like iOS: after verification success, offer Okta login if no Okta user ID yet
         if (ArtiusIDSDK.getOktaUserId().isNullOrEmpty()) {
             shouldTriggerOktaAfterVerification = true
@@ -2176,6 +2338,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     
     override fun onVerificationError(error: SDKError) {
         isVerificationLoading = false
+        lastActionType = "verification"
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = """
             ❌ Verification Error [$timestamp]
@@ -2186,6 +2349,7 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     
     override fun onVerificationCancelled() {
         isVerificationLoading = false
+        lastActionType = "verification"
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = "⏹️ Verification Cancelled [$timestamp]"
     }
@@ -2193,6 +2357,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     // AuthenticationCallback implementation
     override fun onAuthenticationSuccess(result: AuthenticationResult) {
         isVerificationLoading = false
+        lastActionType = "authentication"
+        lastAuthenticationResult = "success"
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = """
             ✅ Authentication Success [$timestamp]
@@ -2205,6 +2371,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     
     override fun onAuthenticationError(error: SDKError) {
         isVerificationLoading = false
+        lastActionType = "authentication"
+        lastAuthenticationResult = "failed"
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = """
             ❌ Authentication Error [$timestamp]
@@ -2215,6 +2383,8 @@ class BridgeMainActivity : FragmentActivity(), VerificationCallback, Authenticat
     
     override fun onAuthenticationCancelled() {
         isVerificationLoading = false
+        lastActionType = "authentication"
+        lastAuthenticationResult = "cancelled"
         val timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
         lastResult = "⏹️ Authentication Cancelled [$timestamp]"
     }
@@ -2321,12 +2491,44 @@ private fun ThemeDropdown(
             onDismissRequest = { expanded = false }
         ) {
             EnhancedThemeOption.values().forEach { theme ->
+                val scheme = theme.themeConfig.colorScheme
+                val primaryColor = Color(android.graphics.Color.parseColor(scheme.primaryColorHex))
+                val secondaryColor = Color(android.graphics.Color.parseColor(scheme.secondaryColorHex))
+                val isSelected = theme == selectedTheme
                 DropdownMenuItem(
                     text = {
-                        Text(
-                            text = theme.displayName,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(Modifier.padding(end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Box(Modifier.size(16.dp).background(primaryColor, CircleShape))
+                                    Spacer(Modifier.width(4.dp))
+                                    Box(Modifier.size(16.dp).background(secondaryColor, CircleShape))
+                                }
+                                Column {
+                                    Text(
+                                        text = theme.displayName,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = theme.description,
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
+                            }
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     },
                     onClick = {
                         onThemeSelected(theme)
@@ -2400,23 +2602,32 @@ private fun ImageOverrideDropdown(
 @Composable
 private fun LanguageDropdown(
     currentCode: String,
+    contentColor: Color = Color(0xFF212121),
     onLanguageSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val languages = LanguageManager.getSupportedLanguages()
     val displayName = languages.find { it.first == currentCode }?.second ?: currentCode
     Box {
+        val currentFlag = when (currentCode) {
+            "en" -> "🇺🇸"
+            "es-ES", "es" -> "🇪🇸"
+            "fr" -> "🇫🇷"
+            "de" -> "🇩🇪"
+            else -> "🌐"
+        }
         OutlinedButton(
             onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = contentColor)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = displayName, fontWeight = FontWeight.Medium)
-                Text("▼", fontSize = 12.sp)
+                Text(text = "$currentFlag $displayName", fontWeight = FontWeight.Medium, color = contentColor)
+                Text("▼", fontSize = 12.sp, color = contentColor)
             }
         }
         DropdownMenu(
@@ -2424,8 +2635,15 @@ private fun LanguageDropdown(
             onDismissRequest = { expanded = false }
         ) {
             languages.forEach { (code, name) ->
+                val flag = when (code) {
+                    "en" -> "🇺🇸"
+                    "es-ES", "es" -> "🇪🇸"
+                    "fr" -> "🇫🇷"
+                    "de" -> "🇩🇪"
+                    else -> "🌐"
+                }
                 DropdownMenuItem(
-                    text = { Text(text = name, fontWeight = FontWeight.Medium) },
+                    text = { Text(text = "$flag $name", fontWeight = FontWeight.Medium, color = contentColor) },
                     onClick = {
                         onLanguageSelected(code)
                         expanded = false
@@ -2439,6 +2657,7 @@ private fun LanguageDropdown(
 @Composable
 private fun EnvironmentDropdown(
     selectedEnvironment: String,
+    contentColor: Color = Color(0xFF212121),
     onEnvironmentSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -2456,7 +2675,8 @@ private fun EnvironmentDropdown(
     Box {
         OutlinedButton(
             onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = contentColor)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -2465,11 +2685,10 @@ private fun EnvironmentDropdown(
             ) {
                 Text(
                     text = selectedEnvironment,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = contentColor
                 )
-                // ✅ DEBUG: Log what's being displayed
-                android.util.Log.d("BridgeMainActivity", "🔍 Dropdown: Displaying '$selectedEnvironment'")
-                Text("▼", fontSize = 12.sp)
+                Text("▼", fontSize = 12.sp, color = contentColor)
             }
         }
         
@@ -2482,7 +2701,8 @@ private fun EnvironmentDropdown(
                     text = {
                         Text(
                             text = environment,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            color = contentColor
                         )
                     },
                     onClick = {
@@ -2498,6 +2718,7 @@ private fun EnvironmentDropdown(
 @Composable
 private fun DomainDropdown(
     selectedDomain: String,
+    contentColor: Color = Color(0xFF212121),
     onDomainSelected: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -2511,7 +2732,8 @@ private fun DomainDropdown(
     Box {
         OutlinedButton(
             onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = contentColor)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -2520,9 +2742,10 @@ private fun DomainDropdown(
             ) {
                 Text(
                     text = selectedDomain,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = contentColor
                 )
-                Text("▼", fontSize = 12.sp)
+                Text("▼", fontSize = 12.sp, color = contentColor)
             }
         }
         
@@ -2535,7 +2758,8 @@ private fun DomainDropdown(
                     text = {
                         Text(
                             text = domain,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            color = contentColor
                         )
                     },
                     onClick = {

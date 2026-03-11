@@ -206,6 +206,9 @@
     <string name="intro_sdk_subtitle">Sichere Identitätsüberprüfung und Authentifizierung</string>
     <string name="environment_label">Umgebung</string>
     <string name="domain_label">Domäne</string>
+    <string name="env_description_sandbox">Sandbox-Testumgebung</string>
+    <string name="env_description_development">Entwicklungsumgebung</string>
+    <string name="env_description_staging">Staging-/Vorproduktionsumgebung</string>
     <string name="okta_collection_description">Okta-ID während des Überprüfungsablaufs erfassen</string>
     <string name="okta_enabled_status">Okta-ID-Erfassung aktiviert</string>
     <string name="okta_disabled_status">Okta-ID-Erfassung deaktiviert</string>
@@ -241,10 +244,12 @@
     <string name="sample_primary_color">Primär</string>
     <string name="sample_secondary_color">Sekundär</string>
     <string name="sample_background_color">Hintergrund</string>
-    <string name="sample_verification">Überprüfung</string>
-    <string name="sample_authentication">Authentifizierung</string>
-    <string name="sample_approval">Genehmigung</string>
+    <string name="sample_verification">🔍 Überprüfung starten</string>
+    <string name="sample_authentication">🔐 Authentifizierung starten</string>
+    <string name="sample_approval">📋 Genehmigungsprozess testen</string>
     <string name="sample_approval_request_result">Ergebnis der Genehmigungsanfrage</string>
+    <string name="sample_approved">Genehmigt</string>
+    <string name="sample_declined">Abgelehnt</string>
     <string name="sample_clear_result">Ergebnis löschen</string>
     <string name="sample_okta_id">Okta-ID</string>
     <string name="sample_login_with_okta">Mit Okta anmelden</string>

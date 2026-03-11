@@ -23,3 +23,22 @@ plugins {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+// Download latest SDK AAR from GitHub Releases for sample-app (use: ./gradlew downloadSdkAarFromGitHub)
+task downloadSdkAarFromGitHub(type: Exec) {
+    def version = findProperty('SDK_VERSION_NAME') ?: '1.2.55'
+    def libsDir = file("sample-app/libs")
+    def aarFile = file("sample-app/libs/artiusid-sdk-${version}.aar")
+    libsDir.mkdirs()
+    commandLine 'curl', '-L', '-f', '-o', aarFile.absolutePath,
+        "https://github.com/artius-iD/artiusid_sdk_android/releases/download/v${version}/artiusid-sdk-${version}.aar"
+    doFirst {
+        if (!aarFile.parentFile.exists()) aarFile.parentFile.mkdirs()
+    }
+    doLast {
+        if (!aarFile.exists() || aarFile.length() == 0) {
+            throw new GradleException("Download failed: ${aarFile}")
+        }
+        println "Downloaded artiusid-sdk-${version}.aar to sample-app/libs/"
+    }
+}

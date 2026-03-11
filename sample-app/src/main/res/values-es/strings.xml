@@ -206,6 +206,9 @@
     <string name="intro_sdk_subtitle">Verificación de identidad y autenticación seguras</string>
     <string name="environment_label">Entorno</string>
     <string name="domain_label">Dominio</string>
+    <string name="env_description_sandbox">Entorno de pruebas sandbox</string>
+    <string name="env_description_development">Entorno de desarrollo</string>
+    <string name="env_description_staging">Entorno de preproducción</string>
     <string name="okta_collection_description">Recopilar ID de Okta durante el flujo de verificación</string>
     <string name="okta_enabled_status">Recopilación de ID de Okta habilitada</string>
     <string name="okta_disabled_status">Recopilación de ID de Okta deshabilitada</string>
@@ -241,10 +244,12 @@
     <string name="sample_primary_color">Primario</string>
     <string name="sample_secondary_color">Secundario</string>
     <string name="sample_background_color">Fondo</string>
-    <string name="sample_verification">Verificación</string>
-    <string name="sample_authentication">Autenticación</string>
-    <string name="sample_approval">Aprobación</string>
+    <string name="sample_verification">🔍 Iniciar verificación</string>
+    <string name="sample_authentication">🔐 Iniciar autenticación</string>
+    <string name="sample_approval">📋 Probar proceso de aprobación</string>
     <string name="sample_approval_request_result">Resultado de solicitud de aprobación</string>
+    <string name="sample_approved">Aprobado</string>
+    <string name="sample_declined">Rechazado</string>
     <string name="sample_clear_result">Borrar resultado</string>
     <string name="sample_okta_id">ID de Okta</string>
     <string name="sample_login_with_okta">Iniciar sesión con Okta</string>

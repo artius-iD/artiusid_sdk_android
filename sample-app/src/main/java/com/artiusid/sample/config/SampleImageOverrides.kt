@@ -10,18 +10,68 @@ import com.artiusid.sdk.models.SDKImageOverrides
 import com.artiusid.sdk.models.ImageLoadingStrategy
 
 /**
- * Sample App Image Override Configurations
- * Provides predefined image override sets for demonstration and testing
+ * Sample App Image Override Configurations - MATCHING iOS SampleImageOverrides
+ * Feather and Branded assets copied from iOS Assets.xcassets into assets/image_overrides/
  */
 object SampleImageOverrides {
     
     /**
-     * No overrides - use default SDK images
+     * No overrides - use default SDK images (iOS: .default)
      */
     val DEFAULT = SDKImageOverrides()
     
     /**
-     * Corporate Images - Professional blue/grey overrides
+     * Branded Override - custom icons/logos (iOS: brandedOverride)
+     * Assets in image_overrides/branded/
+     */
+    val BRANDED_OVERRIDE = SDKImageOverrides(
+        backButtonIcon = "image_overrides/branded/custom_nav_back.png",
+        cameraButtonIcon = "image_overrides/branded/custom_action_camera.png",
+        scanFaceIcon = "image_overrides/branded/custom_icon_face_scan.png",
+        docScanIcon = "image_overrides/branded/custom_icon_doc_scan.png",
+        doneIcon = "image_overrides/branded/custom_nav_done.png",
+        successIcon = "image_overrides/branded/custom_status_success.png",
+        failedIcon = "image_overrides/branded/custom_status_failed.png",
+        errorIcon = "image_overrides/branded/custom_status_error.png",
+        approvalIcon = "image_overrides/branded/custom_status_approval.png",
+        declinedIcon = "image_overrides/branded/custom_status_declined.png",
+        brandLogo = "image_overrides/branded/custom_logo.png",
+        brandImage = "image_overrides/branded/custom_brand_image.png",
+        passportIcon = "image_overrides/branded/custom_doc_passport.png",
+        stateIdIcon = "image_overrides/branded/custom_doc_id.png",
+        defaultLoadingStrategy = ImageLoadingStrategy.ASSET,
+        enableCaching = true,
+        enableFallback = true,
+        preloadImages = true
+    )
+    
+    /**
+     * Feather-like override - monochrome line icons (iOS: featherLikeOverride)
+     * Assets in image_overrides/feather/
+     */
+    val FEATHER_LIKE_OVERRIDE = SDKImageOverrides(
+        backButtonIcon = "image_overrides/feather/feather_nav_back.png",
+        cameraButtonIcon = "image_overrides/feather/feather_action_camera.png",
+        scanFaceIcon = "image_overrides/feather/feather_icon_face_scan.png",
+        docScanIcon = "image_overrides/feather/feather_icon_doc_scan.png",
+        doneIcon = "image_overrides/feather/feather_nav_done.png",
+        successIcon = "image_overrides/feather/feather_status_success.png",
+        failedIcon = "image_overrides/feather/feather_status_failed.png",
+        errorIcon = "image_overrides/feather/feather_status_error.png",
+        approvalIcon = "image_overrides/feather/feather_status_approval.png",
+        declinedIcon = "image_overrides/feather/feather_status_declined.png",
+        brandLogo = "image_overrides/feather/feather_logo.png",
+        brandImage = "image_overrides/feather/feather_brand_image.png",
+        passportIcon = "image_overrides/feather/feather_doc_passport.png",
+        stateIdIcon = "image_overrides/feather/feather_doc_id.png",
+        defaultLoadingStrategy = ImageLoadingStrategy.ASSET,
+        enableCaching = true,
+        enableFallback = true,
+        preloadImages = true
+    )
+    
+    /**
+     * Corporate Images - Professional blue/grey overrides (legacy; iOS uses Branded/Feather)
      */
     val CORPORATE = SDKImageOverrides(
         // Face scan assets - using custom corporate styling
@@ -184,23 +234,32 @@ object SampleImageOverrides {
 }
 
 /**
- * Image Override Option for UI selection
+ * Image Override Option for UI selection - MATCHING iOS ImageOverrideOption
  */
 enum class ImageOverrideOption(
     val displayName: String,
     val description: String,
-    val overrides: SDKImageOverrides
+    val overrides: SDKImageOverrides,
+    /** Number of image properties customized (iOS parity: customizationCount) */
+    val customizationCount: Int = 0
 ) {
     DEFAULT(
-        displayName = "SDK Default",
-        description = "Use default SDK images and animations",
-        overrides = SampleImageOverrides.DEFAULT
+        displayName = "Default",
+        description = "Use all SDK default images",
+        overrides = SampleImageOverrides.DEFAULT,
+        customizationCount = 0
     ),
-    
-    CORPORATE(
-        displayName = "Corporate Images",
-        description = "Professional styling with Freepik Special Lineal icons",
-        overrides = SampleImageOverrides.CORPORATE
+    BRANDED_OVERRIDE(
+        displayName = "Branded Override",
+        description = "Demonstrate branded image overrides with custom icons",
+        overrides = SampleImageOverrides.BRANDED_OVERRIDE,
+        customizationCount = 14
+    ),
+    FEATHER_LIKE(
+        displayName = "Feather Like",
+        description = "Demonstrate Feather-like monochrome line icons",
+        overrides = SampleImageOverrides.FEATHER_LIKE_OVERRIDE,
+        customizationCount = 14
     )
 }
 

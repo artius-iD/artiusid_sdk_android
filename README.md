@@ -2,29 +2,27 @@
 
 A secure Android SDK for identity verification, face liveness detection, document scanning, and NFC passport reading.
 
-> **📝 Note for Internal Developers:** This README is client-facing documentation. For internal development and **integrating changes from the mobile-ios-sdk GitLab repo**, see **[DEVELOPER_README.md](DEVELOPER_README.md)** and **[docs/IOS_ANDROID_PARITY.md](docs/IOS_ANDROID_PARITY.md)**.
+> **📝 Note for Internal Developers:** This README is client-facing documentation. For internal development and **integrating changes from the mobile-ios-sdk GitLab repo**, see **[DEVELOPER_README.md](DEVELOPER_README.md)**, **[docs/IOS_ANDROID_PARITY.md](docs/IOS_ANDROID_PARITY.md)**, and the itemized **[docs/IOS_ANDROID_PUNCHLIST.md](docs/IOS_ANDROID_PUNCHLIST.md)** (iOS ↔ Android parity checklist).
 
 ---
 
 ## 📦 **Latest Release**
 
-**Version:** 1.2.54 ✅ STABLE RELEASE  
+**Version:** 1.2.55 ✅ STABLE RELEASE  
 **Release Date:** March 2026  
 **Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
 
 ---
 
-## ✅ **STABLE RELEASE - v1.2.54**
+## ✅ **STABLE RELEASE - v1.2.55**
 
-**PRODUCTION READY** - iOS parity punch list: full API alignment, config/theme/localization, sample app strings (en/es/fr/de), and documentation sync.
+**PRODUCTION READY** - Sample app polish: artius.iD theme orange accent, Settings text readability, Image Overrides selection UI; SDK version exposed via `ArtiusIDSDK.getSdkVersion()`.
 
-**What's New in v1.2.54:**
-- 🔌 **Public API (iOS parity)** – URL template/domain in `SDKConfiguration`; `isBiometricAvailable(context)` / `getBiometricType(context)`; `setFcmToken()`; `getSDKInfo()` with `wrapperVersion`/`architecture`; verification/FCM listeners; `ensureCertificateRegisteredOrThrow()`; `authenticate(context, accountNumber, request)`; `mapToInternalEnvironment()` / `mapToVerificationEnvironment()`.
-- ⚙️ **Config & theme** – `copyWithFcmToken()` / `copyWithLogging()`; `UrlBuilder.getAppConstantsStyle(context)`; `SDKTypography.paragraphSpacing`; `IconCategory`; `DocumentType.displayName`; `LogLevel.shouldShow()`; `Environment.fromViewLayer()`.
-- 🌐 **Localization** – New `settings_*` and `sample_*` keys in `LocalizationKeys`; sample app strings in en, es, fr, de.
-- 📄 **Docs** – CLIENT_IMPLEMENTATION_GUIDE and THEMING_GUIDE aligned with iOS; RELEASE_NOTES and CHANGELOG updated.
+**What's New in v1.2.55:**
+- 🎨 **Sample app** – artius.iD Default theme uses orange (#F58220) for primary button and icons; Settings menu text readable on white (dropdowns, labels); Image Overrides show filled/empty circle selection (no number badges).
+- 📌 **SDK version** – `ArtiusIDSDK.getSdkVersion()` returns current version (e.g. "1.2.55"); approval result card shows localized "Approved"/"Declined" (iOS parity).
 
-**Upgrade Priority:** **RECOMMENDED** – Completes iOS ↔ Android parity for distribution.
+**Upgrade Priority:** **RECOMMENDED** – Polish release for sample app and version exposure.
 
 ---
 
@@ -34,16 +32,16 @@ A secure Android SDK for identity verification, face liveness detection, documen
 
 Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.54 (STABLE RELEASE)
-curl -L -o artiusid-sdk-1.2.54.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.54/artiusid-sdk-1.2.54.aar
+# Download SDK v1.2.55 (STABLE RELEASE)
+curl -L -o artiusid-sdk-1.2.55.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.55/artiusid-sdk-1.2.55.aar
 ```
 
 ### **2. Add to Your Project**
 
 Copy the AAR to your app's `libs` directory:
 ```bash
-cp artiusid-sdk-1.2.54.aar your-app/app/libs/
+cp artiusid-sdk-1.2.55.aar your-app/app/libs/
 ```
 
 ### **3. Configure Dependencies**
@@ -62,7 +60,7 @@ android {
 }
 
 dependencies {
-    implementation files('libs/artiusid-sdk-1.2.54.aar')
+    implementation files('libs/artiusid-sdk-1.2.55.aar')
     
     // Required dependencies
     def hilt_version = "2.48"
@@ -381,6 +379,10 @@ See [Configure Dependencies](#3-configure-dependencies) and [SDK Dependencies](S
 
 ## 📝 **Changelog**
 
+### **v1.2.55 (March 2026) - Sample app polish & version exposure**
+- 🎨 **Sample app** – artius.iD theme orange accent; Settings text/dropdowns readable on white; Image Overrides selection circles (filled/empty).
+- 📌 **SDK** – `ArtiusIDSDK.getSdkVersion()`; approval result "Approved"/"Declined" (iOS parity).
+
 ### **v1.2.54 (March 2026) - iOS parity punch list**
 - 🔌 **Public API** – Biometric helpers, setFcmToken, getSDKInfo (wrapperVersion/architecture), verification/FCM listeners, ensureCertificateRegisteredOrThrow, authenticate(request), environment mapping, optional URL template in SDKConfiguration.
 - ⚙️ **Config/theme** – copyWithFcmToken/copyWithLogging, getAppConstantsStyle, paragraphSpacing, IconCategory, DocumentType.displayName, LogLevel.shouldShow, Environment.fromViewLayer.
@@ -476,7 +478,7 @@ See [Configure Dependencies](#3-configure-dependencies) and [SDK Dependencies](S
 
 ## 📦 **Package Contents**
 
-- `artiusid-sdk-1.2.54.aar` - Main SDK library (25MB)
+- `artiusid-sdk-1.2.55.aar` - Main SDK library (25MB)
 - `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
 - `README_HILT_SETUP.md` - Quick HILT reference
 - `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
@@ -508,7 +510,7 @@ This SDK is provided under license. See LICENSE.txt for full terms and condition
 
 ---
 
-**Version:** 1.2.54  
+**Version:** 1.2.55  
 **Release Date:** March 2026  
 **Package Size:** 25MB  
 **Status:** Production Ready

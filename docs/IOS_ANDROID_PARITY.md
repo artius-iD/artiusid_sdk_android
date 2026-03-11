@@ -11,7 +11,7 @@ This document lists differences between the iOS and Android SDKs and tracks pari
 When the iOS SDK or sample-app in GitLab receives updates, use this workflow:
 
 1. **Review iOS changes** – Check mobile-ios-sdk repo (and sample-app) for new APIs, config, theme, or flow changes.
-2. **Check this parity doc** – See which sections below are still marked "Action" or need updating.
+2. **Check this parity doc and the punch list** – See which sections below are still marked "Action" or need updating; use [IOS_ANDROID_PUNCHLIST.md](IOS_ANDROID_PUNCHLIST.md) for the itemized checklist and add new rows there when iOS adds features.
 3. **Port to Android** – Implement equivalent behavior in `artiusid-sdk` and/or `sample-app`; follow Kotlin/Android conventions and existing patterns in this repo.
 4. **Update parity tables** – Mark items as done (✅) in this file and add a brief note if useful.
 5. **Update docs** – Sync [CLIENT_IMPLEMENTATION_GUIDE.md](client/CLIENT_IMPLEMENTATION_GUIDE.md) high-level steps if iOS has new integration steps; update [README.md](../README.md) or [RELEASE_NOTES](../client/) as needed.

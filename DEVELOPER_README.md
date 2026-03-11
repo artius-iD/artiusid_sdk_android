@@ -29,9 +29,12 @@ When the **mobile-ios-sdk** repo (or its sample-app) is updated:
    - Lists iOS vs Android feature parity.
    - Workflow: review iOS changes → port to Android → update parity tables.
    - Mark new items as "Action", then "✅ Done" when implemented.
-2. **Code comments** – Use `// iOS parity: <description>` where behavior intentionally matches iOS.
-3. **Docs to sync** – [docs/client/CLIENT_IMPLEMENTATION_GUIDE.md](docs/client/CLIENT_IMPLEMENTATION_GUIDE.md) (high-level steps), [THEMING_GUIDE.md](THEMING_GUIDE.md), and release notes under `docs/client/RELEASE_NOTES_*.md`.
-4. **Sample app** – If iOS sample app gets new flows (e.g. Okta, approval, theme), mirror in `sample-app` and note in sample-app README.
+2. **Punch list** – Use [docs/IOS_ANDROID_PUNCHLIST.md](docs/IOS_ANDROID_PUNCHLIST.md):
+   - Itemized checklist (Public API, Config/theme, Models, Sample app, Docs) for exact iOS doppelganger.
+   - Check off each item as you implement; add new rows when iOS adds features. All current items are complete.
+3. **Code comments** – Use `// iOS parity: <description>` where behavior intentionally matches iOS.
+4. **Docs to sync** – [docs/client/CLIENT_IMPLEMENTATION_GUIDE.md](docs/client/CLIENT_IMPLEMENTATION_GUIDE.md) (high-level steps), [THEMING_GUIDE.md](THEMING_GUIDE.md), and release notes under `docs/client/RELEASE_NOTES_*.md`.
+5. **Sample app** – If iOS sample app gets new flows (e.g. Okta, approval, theme), mirror in `sample-app` and note in sample-app README.
 
 ---
 
@@ -54,7 +57,7 @@ Details: [CONTRIBUTING.md – Creating a Release](CONTRIBUTING.md).
 | [BUILD_GUIDE.md](BUILD_GUIDE.md) | Build commands, variants, CI, integration testing |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Branching, PRs, release, security |
 | [docs/IOS_ANDROID_PARITY.md](docs/IOS_ANDROID_PARITY.md) | iOS ↔ Android parity and integration workflow |
-| [docs/IOS_ANDROID_PUNCHLIST.md](docs/IOS_ANDROID_PUNCHLIST.md) | **Approval punch list** – itemized changes for exact iOS doppelganger |
+| [docs/IOS_ANDROID_PUNCHLIST.md](docs/IOS_ANDROID_PUNCHLIST.md) | **Parity punch list** – itemized checklist (API, config, theme, sample app, docs) for exact iOS doppelganger |
 | [docs/client/CLIENT_IMPLEMENTATION_GUIDE.md](docs/client/CLIENT_IMPLEMENTATION_GUIDE.md) | Client integration (Firebase, SDK init, etc.) |
 | [THEMING_GUIDE.md](THEMING_GUIDE.md) | Theme/localization and iOS parity |
 | [HILT_INTEGRATION_GUIDE.md](HILT_INTEGRATION_GUIDE.md) | HILT/DI setup for host apps |

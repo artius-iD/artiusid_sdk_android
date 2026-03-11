@@ -4,6 +4,7 @@ High-level version history. Full details in [docs/client/RELEASE_NOTES_*.md](doc
 
 | Version | Date | Summary |
 |---------|------|---------|
+| [v1.2.55](docs/client/RELEASE_NOTES_v1.2.55.md) | March 2026 | iOS 2.0.138 parity: Sample app approval result card shows localized "Approved"/"Declined" (short) with title "Approval Request Result". SDK version already exposed via `ArtiusIDSDK.getSdkVersion()` (iOS 2.0.139). |
 | [v1.2.54](docs/client/RELEASE_NOTES_v1.2.54.md) | March 2026 | iOS parity punch list: API (biometric, FCM set/get, env mapping, authenticate(request), ensureCertificateRegisteredOrThrow, listeners), config (URL template, copyWithFcmToken/Logging), theme (paragraphSpacing, IconCategory), LocalizationKeys (settings_*, sample_*), sample app strings (en/es/fr/de) |
 | [v1.2.53](docs/client/RELEASE_NOTES_v1.2.53.md) | March 2026 | ThemeManager, LocalizationManager, SDKResourceBundle (iOS parity) |
 | [v1.2.52](docs/client/RELEASE_NOTES_v1.2.52.md) | — | Host app integration fixes (Compose/BOM) |

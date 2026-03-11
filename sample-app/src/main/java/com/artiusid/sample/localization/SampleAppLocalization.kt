@@ -47,6 +47,7 @@ object SampleAppLocalization {
             "settings_resetOktaUserID", "settings_clearOktaAndReregister", "settings_forceFcmRegistration", "settings_forceApnsRegistration",
             "biometric_authenticate", "biometric_success", "biometric_failed", "biometric_failedInitial",
             "auth_approved", "auth_denied", "auth_failed", "auth_cancelled", "approval_requestApproved", "approval_requestDenied",
+            "sample_approval_request_result", "sample_approved", "sample_declined",
             // Common/Generic
             "ok", "cancel", "retry", "back", "next", "done", "error", "success", "warning",
             "info", "help", "settings", "close", "menu", "loading", "processing", "please_wait",

@@ -316,10 +316,41 @@
     <string name="approval_cancelledMessage">The approval request was cancelled.</string>
     <string name="approval_responseRecorded">Your response has been recorded.</string>
 
-    <!-- Sample app specific -->
-    <string name="intro_start_verification">Start Verification</string>
-    <string name="intro_start_authentication">Start Authentication</string>
-    <string name="intro_test_approval">Test Approval Process</string>
+    <!-- Sample app specific (iOS parity: ArtiusIDSampleApp Localizable.strings) -->
+    <string name="sample_header_title">artius.iD SDK Demo</string>
+    <string name="sample_header_subtitle">Secure identity verification and authentication</string>
+    <string name="intro_start_verification">🔍 Start Verification</string>
+    <string name="intro_start_authentication">🔐 Start Authentication</string>
+    <string name="intro_test_approval">📋 Test Approval Process</string>
+    <string name="sample_clear_credentials">🚨 Clear ALL Credentials</string>
+    <string name="sample_last_result">📋 Last Result</string>
+    <string name="sample_fcm_status">🔥 FCM Token Status</string>
+    <string name="sample_cert_status">🔐 Client Certificate Status</string>
+    <string name="sample_account_number_status">👤 Member ID Status</string>
+    <string name="sample_token_label">Token:</string>
+    <string name="sample_id_label">ID:</string>
+    <string name="sample_approval_request_result">Approval Request Result</string>
+    <string name="sample_approved">Approved</string>
+    <string name="sample_declined">Declined</string>
+    <string name="sample_authentication_result">Authentication Result</string>
+    <string name="sample_response">Response</string>
+    <string name="sample_status_available">Available</string>
+    <string name="sample_status_not_available">Not Available</string>
+    <string name="sample_status_loaded">Loaded</string>
+    <string name="sample_status_not_loaded">Not Loaded</string>
+    <string name="sample_authentication_success">Authentication Successful</string>
+    <string name="sample_authentication_failed">Authentication Failed</string>
+    <string name="sample_authentication_complete">Authentication Complete</string>
+    <string name="sample_authentication_cancelled">Authentication Cancelled</string>
+    <string name="sample_status_unknown">Unknown</string>
+    <string name="settings_client_id">Client ID/Group ID</string>
+    <string name="settings_system_info">System Information</string>
+    <string name="settings_app_info">App Information</string>
+    <string name="settings_imageOverrides_description">Image overrides allow you to customize icons, buttons, logos, and status indicators throughout the SDK flows.</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
     <string name="intro_test_authentication_request">Test Authentication Request</string>
     <string name="test_authentication_request_title">Authentication Request</string>
     <string name="test_authentication_request_description">Please confirm this authentication request.</string>
@@ -327,6 +358,9 @@
     <string name="intro_sdk_subtitle">Secure identity verification and authentication</string>
     <string name="environment_label">Environment</string>
     <string name="domain_label">Domain</string>
+    <string name="env_description_sandbox">Sandbox testing environment</string>
+    <string name="env_description_development">Development environment</string>
+    <string name="env_description_staging">Staging/pre-production environment</string>
     <string name="okta_collection_description">Collect Okta ID during verification flow</string>
     <string name="okta_enabled_status">Okta ID collection enabled</string>
     <string name="okta_disabled_status">Okta ID collection disabled</string>
@@ -364,14 +398,14 @@
     <string name="settings_android_version">Android Version</string>
     <!-- sample_* (iOS parity) -->
     <string name="sample_done">Done</string>
+    <string name="sample_copied">Copied</string>
     <string name="sample_theme_preview">Theme Preview</string>
     <string name="sample_primary_color">Primary</string>
     <string name="sample_secondary_color">Secondary</string>
     <string name="sample_background_color">Background</string>
-    <string name="sample_verification">Verification</string>
-    <string name="sample_authentication">Authentication</string>
-    <string name="sample_approval">Approval</string>
-    <string name="sample_approval_request_result">Approval Request Result</string>
+    <string name="sample_verification">🔍 Start Verification</string>
+    <string name="sample_authentication">🔐 Start Authentication</string>
+    <string name="sample_approval">📋 Test Approval Process</string>
     <string name="sample_clear_result">Clear Result</string>
     <string name="sample_okta_id">Okta ID</string>
     <string name="sample_login_with_okta">Login with Okta</string>

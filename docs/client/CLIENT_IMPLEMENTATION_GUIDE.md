@@ -1,6 +1,6 @@
 # ArtiusID Android SDK - Client Implementation Guide
 
-**SDK Version:** v1.2.54  
+**SDK Version:** v1.2.55  
 **Date:** March 2026  
 **Author:** Todd Bryant, artius.iD, Inc.
 
