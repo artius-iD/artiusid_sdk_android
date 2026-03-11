@@ -2,6 +2,9 @@
 *.apk
 *.aab
 
+# AAR artifacts (distribute via GitHub Releases or package manager, not in repo)
+*.aar
+
 # Files for the ART/Dalvik VM
 *.dex
 
