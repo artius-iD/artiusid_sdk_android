@@ -4,8 +4,8 @@ Identity verification, biometric authentication and session binding for Android 
 
 | | |
 |---|---|
-| **Latest release** | [1.3.0](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.0) (September 16, 2026) |
-| **Download** | [`artiusid-sdk-1.3.0.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.0/artiusid-sdk-1.3.0.aar) |
+| **Latest release** | [1.3.1](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.1) (September 16, 2026) |
+| **Download** | [`artiusid-sdk-1.3.1.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.1/artiusid-sdk-1.3.1.aar) |
 | **Platform** | Android 7.0 (API 24) or later. Compiled against API 34. |
 | **Toolchain** | Kotlin 1.9.10, Jetpack Compose (compiler 1.5.3, BOM 2023.10.01), Hilt 2.48 with KSP, JDK 17 |
 | **iOS SDK** | [artius-iD/sdk](https://github.com/artius-iD/sdk) |
@@ -20,6 +20,10 @@ Identity verification, biometric authentication and session binding for Android 
 - **Mutual TLS.** The SDK registers a client certificate for the device and uses it for its service calls.
 - **Branding.** You can set your own colors, fonts, logo, text and language.
 
+## What's new in 1.3.1
+
+- Reduced the SDK's public API surface. The presence monitor's internal classes are no longer part of the public API. The host-facing binding, enrollment and presence APIs are unchanged.
+
 ## What's new in 1.3.0
 
 - Session binding for host apps: receive requests through `AppNotificationState` and answer them with `ArtiusIDSDK.sendBindingResponse`.
@@ -32,11 +36,11 @@ See [CHANGELOG.md](CHANGELOG.md) for earlier releases.
 
 ### 1. Add the AAR
 
-Download [`artiusid-sdk-1.3.0.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.0/artiusid-sdk-1.3.0.aar) and copy it to `app/libs/`:
+Download [`artiusid-sdk-1.3.1.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.1/artiusid-sdk-1.3.1.aar) and copy it to `app/libs/`:
 
 ```bash
-curl -L -o app/libs/artiusid-sdk-1.3.0.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.0/artiusid-sdk-1.3.0.aar
+curl -L -o app/libs/artiusid-sdk-1.3.1.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.1/artiusid-sdk-1.3.1.aar
 ```
 
 ### 2. Configure Gradle
@@ -80,7 +84,7 @@ An AAR carries no dependency metadata, so declare the libraries the SDK uses:
 
 ```kotlin
 dependencies {
-    implementation(files("libs/artiusid-sdk-1.3.0.aar"))
+    implementation(files("libs/artiusid-sdk-1.3.1.aar"))
 
     val camerax = "1.4.2"
     implementation("androidx.core:core-ktx:1.12.0")

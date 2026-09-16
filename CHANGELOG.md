@@ -4,6 +4,7 @@ High-level version history. Full details in [docs/client/RELEASE_NOTES_*.md](doc
 
 | Version | Date | Summary |
 |---------|------|---------|
+| [v1.3.1](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.1) | September 2026 | Reduced the public API surface: the presence monitor's internal classes are no longer part of the public API. Host-facing binding, enrollment and presence APIs unchanged. |
 | [v1.3.0](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.0) | September 2026 | Session binding for host apps (`AppNotificationState`, `ArtiusIDSDK.sendBindingResponse`). The binding, enrollment-state and sign-in result types keep their names in the minified AAR. Includes the fixes from 1.2.56 through 1.2.63. |
 | [v1.2.56 – v1.2.63](https://github.com/artius-iD/artiusid_sdk_android/releases) | March 2026 | Maintenance releases. |
 | [v1.2.55](docs/client/RELEASE_NOTES_v1.2.55.md) | March 2026 | iOS 2.0.138 parity: Sample app approval result card shows localized "Approved"/"Declined" (short) with title "Approval Request Result". SDK version already exposed via `ArtiusIDSDK.getSdkVersion()` (iOS 2.0.139). |
