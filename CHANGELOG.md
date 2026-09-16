@@ -4,6 +4,7 @@ High-level version history. Full details in [docs/client/RELEASE_NOTES_*.md](doc
 
 | Version | Date | Summary |
 |---------|------|---------|
+| [v1.3.2](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.2) | September 2026 | Fixed the binding-session gateway URL under template configuration (could resolve to a non-existent host, failing binding responses). Enrollment/verification unaffected. |
 | [v1.3.1](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.1) | September 2026 | Reduced the public API surface: the presence monitor's internal classes are no longer part of the public API. Host-facing binding, enrollment and presence APIs unchanged. |
 | [v1.3.0](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.0) | September 2026 | Session binding for host apps (`AppNotificationState`, `ArtiusIDSDK.sendBindingResponse`). The binding, enrollment-state and sign-in result types keep their names in the minified AAR. Includes the fixes from 1.2.56 through 1.2.63. |
 | [v1.2.56 – v1.2.63](https://github.com/artius-iD/artiusid_sdk_android/releases) | March 2026 | Maintenance releases. |
