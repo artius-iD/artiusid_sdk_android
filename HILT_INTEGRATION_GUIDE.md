@@ -260,7 +260,6 @@ class MainActivity : ComponentActivity() {
         try {
             val configuration = SDKConfiguration(
                 apiKey = "your-api-key",
-                baseUrl = "https://api.artiusid.com",
                 environment = Environment.PRODUCTION,
                 enableLogging = BuildConfig.DEBUG,
                 hostAppPackageName = packageName

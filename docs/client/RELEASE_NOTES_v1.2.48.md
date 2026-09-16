@@ -264,12 +264,11 @@ None at this time.
 - Check sample app for reference implementation
 
 **For Technical Issues:**
-- Email: support@artiusid.com
+- Developer portal: [developer.artiusid.ai](https://developer.artiusid.ai)
 - Include SDK version (v1.2.48) in subject line
 
 **For Documentation:**
-- [SDK Documentation](https://docs.artiusid.com)
-- [API Reference](https://docs.artiusid.com/api)
+- [README](../../README.md)
 
 ---
 

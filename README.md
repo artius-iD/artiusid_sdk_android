@@ -1,517 +1,421 @@
-# ArtiusID Android SDK
+# Artius.iD Android SDK
 
-A secure Android SDK for identity verification, face liveness detection, document scanning, and NFC passport reading.
+Identity verification, biometric authentication and session binding for Android apps, distributed as an Android library (AAR).
 
-> **📝 Note for Internal Developers:** This README is client-facing documentation. For internal development and **integrating changes from the mobile-ios-sdk GitLab repo**, see **[DEVELOPER_README.md](DEVELOPER_README.md)**, **[docs/IOS_ANDROID_PARITY.md](docs/IOS_ANDROID_PARITY.md)**, and the itemized **[docs/IOS_ANDROID_PUNCHLIST.md](docs/IOS_ANDROID_PUNCHLIST.md)** (iOS ↔ Android parity checklist).
+| | |
+|---|---|
+| **Latest release** | [1.3.0](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.0) (September 16, 2026) |
+| **Download** | [`artiusid-sdk-1.3.0.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.0/artiusid-sdk-1.3.0.aar) |
+| **Platform** | Android 7.0 (API 24) or later. Compiled against API 34. |
+| **Toolchain** | Kotlin 1.9.10, Jetpack Compose (compiler 1.5.3, BOM 2023.10.01), Hilt 2.48 with KSP, JDK 17 |
+| **iOS SDK** | [artius-iD/sdk](https://github.com/artius-iD/sdk) |
 
----
+## Features
 
-## 📦 **Latest Release**
+- **Enrollment.** Guided face capture and government ID capture (photo ID or passport, including the passport chip over NFC). When a document image can't be read, the SDK walks the user through a retry.
+- **Biometric authentication.** Returning users confirm their identity with the device's biometric check.
+- **Session binding (patent pending).** Users confirm browser sign-ins on their enrolled phone, so a stolen password or session token isn't enough on its own.
+- **Approval requests.** Users approve or decline requests that your backend sends to their phone.
+- **Organization sign-in.** Enrollment can be tied to your organization's own login, such as Okta or another OIDC provider.
+- **Mutual TLS.** The SDK registers a client certificate for the device and uses it for its service calls.
+- **Branding.** You can set your own colors, fonts, logo, text and language.
 
-**Version:** 1.2.55 ✅ STABLE RELEASE  
-**Release Date:** March 2026  
-**Download:** [GitHub Releases](https://github.com/artius-iD/artiusid_sdk_android/releases)
+## What's new in 1.3.0
 
----
+- Session binding for host apps: receive requests through `AppNotificationState` and answer them with `ArtiusIDSDK.sendBindingResponse`.
+- `AppNotificationState`, `BindingResultData`, `ThirdPartyLoginResult` and `VerificationStateManager` keep their names in the minified AAR, so apps can call them.
+- Includes the fixes from releases 1.2.56 through 1.2.63.
 
-## ✅ **STABLE RELEASE - v1.2.55**
+See [CHANGELOG.md](CHANGELOG.md) for earlier releases.
 
-**PRODUCTION READY** - Sample app polish: artius.iD theme orange accent, Settings text readability, Image Overrides selection UI; SDK version exposed via `ArtiusIDSDK.getSdkVersion()`.
+## Installation
 
-**What's New in v1.2.55:**
-- 🎨 **Sample app** – artius.iD Default theme uses orange (#F58220) for primary button and icons; Settings menu text readable on white (dropdowns, labels); Image Overrides show filled/empty circle selection (no number badges).
-- 📌 **SDK version** – `ArtiusIDSDK.getSdkVersion()` returns current version (e.g. "1.2.55"); approval result card shows localized "Approved"/"Declined" (iOS parity).
+### 1. Add the AAR
 
-**Upgrade Priority:** **RECOMMENDED** – Polish release for sample app and version exposure.
+Download [`artiusid-sdk-1.3.0.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.0/artiusid-sdk-1.3.0.aar) and copy it to `app/libs/`:
 
----
-
-## 🚀 **Quick Start**
-
-### **1. Download the SDK**
-
-Download the latest AAR from the [releases page](https://github.com/artius-iD/artiusid_sdk_android/releases):
 ```bash
-# Download SDK v1.2.55 (STABLE RELEASE)
-curl -L -o artiusid-sdk-1.2.55.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.2.55/artiusid-sdk-1.2.55.aar
+curl -L -o app/libs/artiusid-sdk-1.3.0.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.0/artiusid-sdk-1.3.0.aar
 ```
 
-### **2. Add to Your Project**
+### 2. Configure Gradle
 
-Copy the AAR to your app's `libs` directory:
-```bash
-cp artiusid-sdk-1.2.55.aar your-app/app/libs/
-```
+The SDK is compiled with the Compose compiler and BOM listed above. Use the same versions in your app. Mismatched versions crash at runtime (see [Troubleshooting](#troubleshooting)).
 
-### **3. Configure Dependencies**
+`app/build.gradle.kts`:
 
-**Compose version alignment (required):** The SDK is built with a specific Compose BOM and compiler. Host apps **must** use the same versions to avoid runtime crashes (e.g. `NoSuchMethodError: performImeAction$default`). See [Troubleshooting](#troubleshooting) if you see Compose semantics errors.
+```kotlin
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")       // 1.9.10
+    id("com.google.dagger.hilt.android")     // 2.48
+    id("com.google.devtools.ksp")            // 1.9.10-1.0.13
+    id("com.google.gms.google-services")     // for Firebase Cloud Messaging
+}
 
-Add to your app's `build.gradle`:
-
-```gradle
 android {
-    // ... other config ...
-    buildFeatures { compose true }
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.5.3'  // Must match SDK (see release notes)
+    compileSdk = 34
+    defaultConfig {
+        minSdk = 24
+        targetSdk = 34
+    }
+    buildFeatures { compose = true }
+    composeOptions { kotlinCompilerExtensionVersion = "1.5.3" }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions { jvmTarget = "17" }
+    packaging {
+        resources {
+            excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+            pickFirsts += setOf("META-INF/DEPENDENCIES", "META-INF/LICENSE*", "META-INF/NOTICE*")
+        }
     }
 }
+```
 
+An AAR carries no dependency metadata, so declare the libraries the SDK uses:
+
+```kotlin
 dependencies {
-    implementation files('libs/artiusid-sdk-1.2.55.aar')
-    
-    // Required dependencies
-    def hilt_version = "2.48"
-    implementation "com.google.dagger:hilt-android:${hilt_version}"
-    ksp "com.google.dagger:hilt-android-compiler:${hilt_version}"
-    implementation 'androidx.hilt:hilt-navigation-compose:1.1.0'
-    
-    // Compose – use same BOM as SDK (compose-bom:2023.10.01, compiler 1.5.3)
-    implementation platform('androidx.compose:compose-bom:2023.10.01')
-    implementation 'androidx.compose.ui:ui'
-    implementation 'androidx.compose.foundation:foundation'
-    implementation 'androidx.compose.material3:material3'
-    
-    // Image loading (required for SDK animations)
-    implementation 'io.coil-kt:coil-compose:2.5.0'
-    implementation 'io.coil-kt:coil-gif:2.5.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    
-    // Firebase (required for FCM functionality)
-    implementation platform('com.google.firebase:firebase-bom:32.7.2')
-    implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.firebase:firebase-messaging:23.4.1'
-    
-    // Biometric authentication
-    implementation 'androidx.biometric:biometric:1.1.0'
+    implementation(files("libs/artiusid-sdk-1.3.0.aar"))
+
+    val camerax = "1.4.2"
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation(platform("androidx.compose:compose-bom:2023.10.01"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material3:material3-window-size-class")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.material:material")
+    implementation("androidx.compose.runtime:runtime-livedata")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.navigation:navigation-compose:2.7.6")
+    implementation("androidx.camera:camera-core:$camerax")
+    implementation("androidx.camera:camera-camera2:$camerax")
+    implementation("androidx.camera:camera-lifecycle:$camerax")
+    implementation("androidx.camera:camera-view:$camerax")
+    implementation("androidx.camera:camera-extensions:$camerax")
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.23.2")
+    implementation("com.google.mlkit:face-detection:16.1.7")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("com.google.mlkit:object-detection:17.0.2")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("io.coil-kt:coil-gif:2.4.0")
+    implementation("io.coil-kt:coil-base:2.4.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("com.google.zxing:core:3.5.2")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+    implementation("com.google.dagger:hilt-android:2.48")
+    ksp("com.google.dagger:hilt-android-compiler:2.48")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation("io.insert-koin:koin-android:3.5.0")
+    implementation("io.insert-koin:koin-androidx-compose:3.5.0")
+    implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-messaging:23.4.1")
+    implementation("org.jmrtd:jmrtd:0.7.34")
+    implementation("net.sf.scuba:scuba-sc-android:0.0.23")
+    implementation("edu.ucar:jj2000:5.2")
+    implementation("com.github.mhshams:jnbis:1.1.0")
+    implementation("com.madgag.spongycastle:core:1.58.0.0")
+    implementation("com.madgag.spongycastle:prov:1.58.0.0")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
 ```
 
-### **4. Initialize the SDK**
+If you use the Groovy DSL, [SDK_DEPENDENCY_REQUIREMENTS.md](SDK_DEPENDENCY_REQUIREMENTS.md) explains each group of dependencies.
+
+### 3. Minified release builds
+
+The AAR's consumer rules keep the SDK's public API. If your release build runs R8, also add these lines to your `proguard-rules.pro` for classes that the SDK's libraries reference but Android doesn't include:
+
+```proguard
+-dontwarn java.applet.**
+-dontwarn java.awt.**
+-dontwarn javax.naming.**
+-dontwarn java.lang.management.**
+-dontwarn com.google.api.client.**
+-dontwarn org.joda.time.**
+```
+
+## Setup
+
+### 1. Get credentials
+
+For each environment you use, Artius.iD issues a client ID, a client group ID and the service domains. To request sandbox access, use the [Artius.iD developer portal](https://developer.artiusid.ai).
+
+### 2. Make your app a Hilt app
+
+The SDK's screens use Hilt, so your `Application` class must be annotated. See the [Hilt integration guide](HILT_INTEGRATION_GUIDE.md) for details.
 
 ```kotlin
-import com.artiusid.sdk.ArtiusIDSDK
-import com.artiusid.sdk.config.SDKConfiguration
-import com.artiusid.sdk.config.Environment
-import com.artiusid.sdk.models.SDKThemeConfiguration
-
-@AndroidEntryPoint
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        // Initialize SDK
-        val config = SDKConfiguration(
-            apiKey = "your-api-key",
-            environment = Environment.PRODUCTION,
-            
-            // ✅ NEW: Configurable client ID (v1.2.37+)
-            clientId = 1,        // Your unique client ID
-            clientGroupId = 1,   // Your client group ID
-            
-            enableLogging = BuildConfig.DEBUG
-        )
-        
-        val theme = SDKThemeConfiguration(
-            brandName = "YourBrand",
-            primaryColorHex = "#YOUR_PRIMARY_COLOR",
-            secondaryColorHex = "#YOUR_SECONDARY_COLOR"
-        )
-        
-        ArtiusIDSDK.initializeWithEnhancedTheme(this, config, theme)
-    }
-}
+@HiltAndroidApp
+class MyApp : Application()
 ```
 
-### **5. Start Verification**
+### 3. Initialize the SDK
+
+Initialize once, from `Application.onCreate()` or before you start any SDK flow:
 
 ```kotlin
-import com.artiusid.sdk.callbacks.VerificationCallback
-import com.artiusid.sdk.models.VerificationResult
-import com.artiusid.sdk.models.SDKError
-
-ArtiusIDSDK.startVerification(
-    activity = this,
-    callback = object : VerificationCallback {
-        override fun onVerificationSuccess(result: VerificationResult) {
-            // Handle successful verification
-            Log.d("App", "Verification successful: ${result.verificationId}")
-        }
-        
-        override fun onVerificationError(error: SDKError) {
-            // Handle error
-            Log.e("App", "Verification error: ${error.message}")
-        }
-        
-        override fun onVerificationCancelled() {
-            // Handle cancellation
-            Log.d("App", "Verification cancelled by user")
-        }
-    }
-)
-```
-
----
-
-## 📚 **Documentation**
-
-### **Essential Guides:**
-- **[HILT Integration Guide](HILT_INTEGRATION_GUIDE.md)** - Complete HILT setup instructions
-- **[HILT Quick Setup](README_HILT_SETUP.md)** - Quick reference for HILT configuration
-- **[SDK Dependencies](SDK_DEPENDENCY_REQUIREMENTS.md)** - Required dependencies and versions
-
-### **Sample App:**
-- **[Localization Guide](sample-app/LOCALIZATION_GUIDE.md)** - How to customize SDK strings
-- **[Asset Documentation](sample-app/src/main/assets/README.md)** - Theme assets and customization
-
-### **Technical Documentation:**
-- **[Enhanced Autofocus Guide](artiusid-sdk/src/main/java/com/artiusid/sdk/documentation/EnhancedAutofocusGuide.md)** - Camera autofocus implementation
-
----
-
-## 🔧 **HILT Setup**
-
-### **Automated Setup (Recommended):**
-```bash
-./setup_hilt.sh
-```
-
-### **Diagnostic Tool:**
-```bash
-./gradlew diagnoseHilt
-```
-
-### **Manual Setup:**
-Follow the step-by-step guide in [HILT_INTEGRATION_GUIDE.md](HILT_INTEGRATION_GUIDE.md)
-
----
-
-## 🎯 **Configurable Client ID (NEW in v1.2.37)**
-
-Configure unique client identities for different applications:
-
-```kotlin
-val config = SDKConfiguration(
-    apiKey = "your-api-key",
-    environment = Environment.PRODUCTION,
-    
-    // Different apps use different client IDs
-    clientId = 2,        // TriNet app uses clientId=2
-    clientGroupId = 2,   // TriNet app uses clientGroupId=2
-    
-    enableLogging = BuildConfig.DEBUG
-)
-```
-
-### **Benefits:**
-- ✅ **Fixes FCM notification routing** - No more cross-app notifications
-- ✅ **Backend client separation** - Each app has unique identity
-- ✅ **iOS SDK compatibility** - Matches iOS AppConstants functionality
-- ✅ **Multi-client architecture** - Supports enterprise deployments
-
-### **Usage Examples:**
-- **Sample App:** `clientId = 1` (default/demo)
-- **TriNet App:** `clientId = 2` (production client)
-- **Enterprise App:** `clientId = 100` (custom client)
-
----
-
-## 🔥 **Optional Firebase Handling (NEW in v1.2.43)**
-
-Configure Firebase notification handling to work with your existing Firebase implementation:
-
-### **Option 1: Let SDK Handle Firebase (Default)**
-
-```kotlin
-val config = SDKConfiguration(
-    apiKey = "your-api-key",
-    environment = Environment.PRODUCTION,
-    
-    // SDK handles Firebase notifications (default behavior)
-    handleFirebaseNotifications = true,  // Default: true
-    customFcmToken = null               // Default: null
+val configuration = SDKConfiguration(
+    apiKey = "my-app",                          // any non-empty identifier for your app
+    environment = Environment.SANDBOX,
+    urlTemplate = "https://#env#.#domain#",
+    mobileDomain = "mobile.artiusid.ai",
+    registrationUrlTemplate = "https://#env#.#domain#",
+    registrationDomain = "registration.artiusid.ai",
+    clientId = CLIENT_ID,                       // issued by Artius.iD
+    clientGroupId = CLIENT_GROUP_ID,            // issued by Artius.iD
+    handleFirebaseNotifications = false,        // your app owns Firebase (see Push notifications)
+    hostAppPackageName = packageName,
 )
 
-ArtiusIDSDK.initialize(this, config, theme)
+val theme = EnhancedSDKThemeConfiguration.artiusIDDefault().withBrandName("Acme")
+
+ArtiusIDSDK.initializeWithEnhancedTheme(applicationContext, configuration, theme)
 ```
 
-### **Option 2: Client Handles Firebase**
+The SDK replaces `#env#` with the environment's prefix and `#domain#` with the domain you pass. The sandbox values above resolve to `https://sandbox.mobile.artiusid.ai` and `https://sandbox.registration.artiusid.ai`. For every other environment, pass the templates and domains that Artius.iD gives you. Always pass all four values explicitly instead of relying on the SDK's defaults.
+
+Other `SDKConfiguration` options:
+
+| Option | Default | Purpose |
+|---|---|---|
+| `isThirdPartyLoginEnabled` | `true` | Requires an organization sign-in before enrollment (see [Organization sign-in](#organization-sign-in)). |
+| `thirdPartyLoginUrl` | `null` | Your organization sign-in endpoint, as provided by Artius.iD. |
+| `includeOktaIDInVerificationPayload` | `true` | Includes the user's Okta ID in the enrollment request. |
+| `enableLogging` | `false` | Turns on SDK logging. Leave it off in release builds. |
+| `localizationOverrides` | empty | Replaces SDK strings by key. |
+
+Enrollment runs as binding enrollment by default. To run identity verification only, call `ArtiusIDSDK.setVerificationOperationMode(OperationMode.VERIFY)`.
+
+### 4. Push notifications
+
+Your app configures Firebase Cloud Messaging with its own `google-services.json`, then passes the token and Artius.iD requests to the SDK:
 
 ```kotlin
-val config = SDKConfiguration(
-    apiKey = "your-api-key",
-    environment = Environment.PRODUCTION,
-    
-    // Disable SDK's Firebase handling
-    handleFirebaseNotifications = false,
-    
-    // Provide your app's FCM token
-    customFcmToken = "your-fcm-token-here"
-)
+class ArtiusIDMessagingService : FirebaseMessagingService() {
 
-ArtiusIDSDK.initialize(this, config, theme)
-
-// Update token when it changes
-class YourFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
-        super.onNewToken(token)
-        
-        // Handle your app's notifications
-        handleYourAppNotifications(token)
-        
-        // Provide token to ArtiusID SDK
         ArtiusIDSDK.updateFcmToken(token)
     }
-    
-    override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        super.onMessageReceived(remoteMessage)
-        
-        // Handle your app's messages
-        if (isYourAppMessage(remoteMessage)) {
-            handleYourAppMessage(remoteMessage)
+
+    override fun onMessageReceived(message: RemoteMessage) {
+        val data = message.data
+        val approvalTitle = data["approvalTitle"]
+        val sessionId = data["sessionId"]
+        when {
+            !approvalTitle.isNullOrEmpty() -> AppNotificationState.handleApprovalNotification(
+                requestId = data["requestId"]?.toIntOrNull(),
+                title = approvalTitle,
+                description = data["approvalDescription"],
+            )
+            !sessionId.isNullOrEmpty() -> AppNotificationState.handleBindingNotification(
+                sessionId = sessionId,
+                title = data["bindingTitle"],
+                description = data["bindingDescription"],
+            )
+            else -> Unit // not an Artius.iD request
         }
-        // ArtiusID messages are handled by your backend routing
     }
 }
 ```
 
-### **Option 3: Runtime Token Updates**
+Register the service in `AndroidManifest.xml`:
 
-```kotlin
-// Update FCM token at any time
-ArtiusIDSDK.updateFcmToken("new-fcm-token")
-
-// Get Firebase configuration debug info
-val debugInfo = ArtiusIDSDK.getFirebaseDebugInfo()
-Log.d("Firebase", debugInfo)
+```xml
+<service
+    android:name=".ArtiusIDMessagingService"
+    android:exported="false">
+    <intent-filter>
+        <action android:name="com.google.firebase.MESSAGING_EVENT" />
+    </intent-filter>
+</service>
 ```
 
-**Benefits:**
-- ✅ **Flexible integration** - Works with existing Firebase implementations
-- ✅ **No conflicts** - SDK won't interfere with your notification handling
-- ✅ **Runtime updates** - Change FCM tokens dynamically
-- ✅ **Backward compatible** - Existing integrations continue to work unchanged
+When the app is in the background, show a notification that opens your activity. The activity then displays the pending request, as shown in [Approval requests and session binding](#approval-requests-and-session-binding).
 
----
-
-## 🎨 **Dynamic Branding**
-
-Configure your brand name in the SDK theme:
+## Enrollment
 
 ```kotlin
-val theme = SDKThemeConfiguration(
-    brandName = "YourBrand",  // Replaces "artius.iD" throughout the UI
-    primaryColorHex = "#YOUR_COLOR",
-    secondaryColorHex = "#YOUR_ACCENT_COLOR"
+ArtiusIDSDK.startVerification(activity, object : VerificationCallback {
+    override fun onVerificationSuccess(result: VerificationResult) {
+        if (result.requiresRecapture) {
+            // The user left a document retry. Offer to start again.
+        } else {
+            Log.i("Enroll", "Enrolled account ${result.accountNumber}")
+        }
+    }
+
+    override fun onVerificationError(error: SDKError) {
+        Log.w("Enroll", "Enrollment failed: ${error.code} ${error.message}")
+    }
+
+    override fun onVerificationCancelled() = Unit
+})
+```
+
+Check `requiresRecapture` first. The SDK already offers the user a retry for unreadable document images. You only receive this result if the user leaves that retry.
+
+`VerificationResult` also carries `fullName`, `firstName`, `lastName`, `verificationScore`, `faceMatchScore`, `documentStatus` and `errorMessage`.
+
+## Returning-user authentication
+
+```kotlin
+ArtiusIDSDK.startAuthentication(activity, object : AuthenticationCallback {
+    override fun onAuthenticationSuccess(result: AuthenticationResult) {
+        Log.i("Auth", "Authenticated: ${result.message}")
+    }
+
+    override fun onAuthenticationError(error: SDKError) {
+        Log.w("Auth", "Authentication failed: ${error.message}")
+    }
+
+    override fun onAuthenticationCancelled() = Unit
+})
+```
+
+## Organization sign-in
+
+To sign the user in with your organization's credentials and register the device's push token for that user, call:
+
+```kotlin
+suspend fun signIn(context: Context, loginId: String, password: String): String {
+    ArtiusIDSDK.setThirdPartyLoginUrl(LOGIN_URL)   // provided by Artius.iD
+    val result = ArtiusIDSDK.validateCredentialsAndRegisterFCM(context, loginId, password)
+    check(result.isSuccessful) { result.errorMessage ?: "Sign-in failed" }
+    return result.loginId ?: loginId
+}
+```
+
+Call it after the SDK has a push token. To use your own identity provider behind the SDK's sign-in screen, install a handler:
+
+```kotlin
+ArtiusIDSDK.setThirdPartyLoginHandler { loginId, password, environment ->
+    val accepted = myIdentityProvider.verify(loginId, password)
+    ThirdPartyLoginResult(
+        isSuccessful = accepted,
+        loginId = if (accepted) loginId else null,
+        errorMessage = if (accepted) null else "Invalid credentials",
+    )
+}
+```
+
+## Approval requests and session binding
+
+`AppNotificationState` holds the pending request as `StateFlow`s: `notificationType`, `notificationTitle`, `notificationDescription`, `requestId` and `sessionId`.
+
+1. When a request arrives, open your screen.
+2. Call `markNotificationConsumed()` so the same request doesn't open again.
+3. Call `reset()` when the user finishes or backs out.
+
+```kotlin
+@Composable
+fun ArtiusIDRequestHost() {
+    val type by AppNotificationState.notificationType.collectAsState()
+    var showing by remember { mutableStateOf<AppNotificationState.NotificationType?>(null) }
+
+    LaunchedEffect(type) {
+        if (type != AppNotificationState.NotificationType.DEFAULT) {
+            showing = type
+            AppNotificationState.markNotificationConsumed()
+        }
+    }
+
+    val done = {
+        showing = null
+        AppNotificationState.reset()
+    }
+    when (showing) {
+        AppNotificationState.NotificationType.APPROVAL -> ApprovalScreen(onDone = done)
+        AppNotificationState.NotificationType.BINDING -> BindingScreen(onDone = done)
+        else -> Unit
+    }
+}
+```
+
+**Approvals.** Show the request's title and description, then send the user's answer:
+
+```kotlin
+val result = ArtiusIDSDK.sendApprovalResponse(context, if (approved) "Approved" else "Deny")
+```
+
+**Session binding.** In 1.3.0, your app provides the binding screen and submits the user's decision with `ArtiusIDSDK.sendBindingResponse`. Artius.iD provides the screen specification, the browser-side setup and the additional session-binding permissions with your integration package. The binding screen needs an enrolled device (see [Enrollment](#enrollment)).
+
+## Branding and language
+
+```kotlin
+val theme = EnhancedSDKThemeConfiguration(
+    brandName = "Acme",
+    brandLogoResourceName = "acme_logo",       // a drawable in your app
+    colorScheme = SDKColorScheme(
+        primaryColorHex = "#1B6EF3",
+        secondaryColorHex = "#FF8A00",
+    ),
 )
+ArtiusIDSDK.initializeWithEnhancedTheme(applicationContext, configuration, theme)
+
+ArtiusIDSDK.setLanguage(context, "es")
 ```
 
-The SDK will automatically:
-- Display your brand name in all UI components
-- Use your brand in Firebase notifications
-- Apply intelligent text splitting (e.g., "Your.Brand" → "Your" + "Brand")
+`EnhancedSDKThemeConfiguration` also accepts `typography`, `iconTheme`, `textContent`, `componentStyling`, `layoutConfig` and `animationConfig`. See [THEMING_GUIDE.md](THEMING_GUIDE.md).
 
----
+## Troubleshooting
 
-## 📋 **Requirements**
+| Symptom | Fix |
+|---|---|
+| `NoSuchMethodError` from `androidx.compose.ui.semantics` (for example `performImeAction$default`) when an SDK screen opens | Use Compose BOM `2023.10.01` and `kotlinCompilerExtensionVersion = "1.5.3"`. |
+| `Hilt Activity must be attached to an @HiltAndroidApp Application` | Annotate your `Application` class with `@HiltAndroidApp`. |
+| R8 reports missing classes such as `java.awt.*` or `javax.naming.*` | Add the `-dontwarn` rules from [Minified release builds](#3-minified-release-builds). |
+| `Unresolved reference` to an SDK function that this README doesn't describe | The release AAR renames internal SDK code. Use the API documented here. |
+| Certificate registration fails after switching environments | Clear the app's data (`adb shell pm clear <your.package>`) and start again. |
+| Camera or NFC screens don't work on an emulator | Enrollment needs a physical device. |
+| No push token | Add your `google-services.json` and apply the `com.google.gms.google-services` plugin. |
 
-- **Minimum SDK:** Android 7.0 (API level 24)
-- **Target SDK:** Android 14 (API level 34)
-- **Kotlin:** 1.9.0+
-- **HILT:** 2.48 (exact version required)
-- **Gradle:** 8.0+
-- **Firebase Project:** Required for authentication and messaging
+For more Hilt help, run `./setup_hilt.sh` or see [README_HILT_SETUP.md](README_HILT_SETUP.md).
 
----
+## Repository contents
 
-## 🔒 **Security Features**
+| Path | Contents |
+|---|---|
+| [Releases](https://github.com/artius-iD/artiusid_sdk_android/releases) | The SDK AAR for each version |
+| [HILT_INTEGRATION_GUIDE.md](HILT_INTEGRATION_GUIDE.md), [README_HILT_SETUP.md](README_HILT_SETUP.md) | Hilt setup |
+| [SDK_DEPENDENCY_REQUIREMENTS.md](SDK_DEPENDENCY_REQUIREMENTS.md) | Dependency notes |
+| [THEMING_GUIDE.md](THEMING_GUIDE.md) | Theme options |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
+| `sample-app/` | An example integration written for the 1.2 releases |
 
-- Fully obfuscated AAR for IP protection
-- Hardware-backed encryption
-- Certificate pinning support
-- Anti-tampering protection
-- Secure keychain storage (iOS Keychain equivalent)
+## Support
 
----
+Request credentials and integration help through the [Artius.iD developer portal](https://developer.artiusid.ai). Company information is at [artiusid.ai](https://www.artiusid.ai).
 
-## 🐛 **Troubleshooting**
+## License
 
-### **Compose version alignment (NoSuchMethodError):**
-If you see a crash such as:
-```text
-NoSuchMethodError: No static method performImeAction$default(...) in class Landroidx/compose/ui/semantics/SemanticsPropertiesKt;
-```
-or similar semantics-related errors when the SDK shows a screen with a text field (e.g. verification, CollectOktaID), your app’s Compose BOM or compiler does not match the SDK. **Fix:** Use the same versions the SDK is built with:
-- **Compose BOM:** `androidx.compose:compose-bom:2023.10.01`
-- **Compose compiler:** `kotlinCompilerExtensionVersion '1.5.3'` in `android` → `composeOptions { }`
-
-See [Configure Dependencies](#3-configure-dependencies) and [SDK Dependencies](SDK_DEPENDENCY_REQUIREMENTS.md).
-
-### **HILT Issues:**
-1. Run `./gradlew diagnoseHilt` for automated diagnosis
-2. Check [HILT_INTEGRATION_GUIDE.md](HILT_INTEGRATION_GUIDE.md) for detailed setup
-3. Ensure exact HILT version 2.48 is used
-
-### **Branding Issues:**
-- Verify `SDKThemeConfiguration.brandName` is set
-- Check that `@AndroidEntryPoint` is on your Activity
-- Ensure Firebase is properly initialized
-
-### **Certificate Issues:**
-- Clear app data: `adb shell pm clear your.package.name`
-- Check logs for certificate registration errors
-- Verify network connectivity
-
----
-
-## 📞 **Support**
-
-### **Technical Support:**
-- Email: support@artiusid.com
-- GitHub: https://github.com/artius-iD/artiusid_sdk_android
-
-### **Licensing:**
-- Email: legal@artiusid.com
-
----
-
-## 📝 **Changelog**
-
-### **v1.2.55 (March 2026) - Sample app polish & version exposure**
-- 🎨 **Sample app** – artius.iD theme orange accent; Settings text/dropdowns readable on white; Image Overrides selection circles (filled/empty).
-- 📌 **SDK** – `ArtiusIDSDK.getSdkVersion()`; approval result "Approved"/"Declined" (iOS parity).
-
-### **v1.2.54 (March 2026) - iOS parity punch list**
-- 🔌 **Public API** – Biometric helpers, setFcmToken, getSDKInfo (wrapperVersion/architecture), verification/FCM listeners, ensureCertificateRegisteredOrThrow, authenticate(request), environment mapping, optional URL template in SDKConfiguration.
-- ⚙️ **Config/theme** – copyWithFcmToken/copyWithLogging, getAppConstantsStyle, paragraphSpacing, IconCategory, DocumentType.displayName, LogLevel.shouldShow, Environment.fromViewLayer.
-- 🌐 **Localization** – settings_* and sample_* keys; sample app en/es/fr/de.
-- 📄 **Docs** – CLIENT_IMPLEMENTATION_GUIDE, THEMING_GUIDE, RELEASE_NOTES, CHANGELOG.
-
-### **v1.2.53 (March 2026) - ThemeManager, LocalizationManager, SDKResourceBundle**
-- 📄 **Compose alignment** – Documented BOM `2023.10.01` and compiler `1.5.3`; host apps must match to avoid `NoSuchMethodError` (performImeAction$default). Troubleshooting added.
-- 📱 **NFC 3-failures flow** – After 3 NFC read failures, proceed to verification without showing “Scan failed” screen; completion callback and OCR data preserved on both IsoDep and tag paths.
-
-### **v1.2.51 (February 2026) - iOS PARITY (API & CONFIG)**
-- 📋 **ApprovalRequestResult** – `sendApprovalRequest()` now returns `ApprovalRequestResult(success, message, requestId)` (iOS parity).
-- 🔑 **getFCMToken / getCurrentFCMToken** – New `ArtiusIDSDK.getFCMToken(context)` and `getCurrentFCMToken(context)`.
-- ⚙️ **SDKConfiguration** – `requestTimeout`, `enableCertificatePinning`, `certificatePins`, `enableFaceVerification`, `enableDocumentScanning`; `validate()` and `isValid`.
-- 🌐 **Environment.QA** – New QA environment; **LogLevel** – `NONE`, `VERBOSE`.
-- 📄 **AuthenticationResult** – Optional `message`, `accountInfo`, `errorMessage`, `rawResponse` (iOS parity).
-
-### **v1.2.50 (February 2026) - iOS PARITY & RELEASE**
-- 🔄 **iOS Parity** – mTLS clear on init/env switch; pre-set Okta user ID; re-verification (`accountNumber`); NFC reset/retry guard
-- 🆔 **Pre-set Okta User ID** – `oktaUserId` in config, `setOktaUserId()` / `getOktaUserId()`; skip CollectOktaID when set
-- 🔁 **Re-verification** – `VerificationRequest.accountNumber` from VerificationStateManager
-- 📱 **NFC** – NfcStateManager tryAcquire/release/resetNFCState; reset on PassportChipScan and completion/failure
-- 🔐 **Sample app** – Okta OIDC browser sign-in, extract user ID from id_token
-
-### **v1.2.43 (October 23, 2025) - 🔥 FIREBASE FLEXIBILITY**
-- 🔥 **NEW:** Optional Firebase notification handling - client apps can handle their own Firebase
-- ✅ **NEW:** `handleFirebaseNotifications` configuration option (default: true)
-- ✅ **NEW:** `customFcmToken` configuration option for client-provided FCM tokens
-- ✅ **NEW:** `ArtiusIDSDK.updateFcmToken()` method for runtime token updates
-- ✅ **NEW:** `ArtiusIDSDK.getFirebaseDebugInfo()` method for configuration debugging
-- ✅ **NEW:** `FirebaseConfigurationManager` for centralized Firebase handling
-- ✅ **ENHANCED:** All FCM token retrieval now uses configurable priority system
-- ✅ **BACKWARD COMPATIBLE:** Existing Firebase integrations continue to work unchanged
-
-### **v1.2.41 (October 23, 2025) - ✅ STABLE RELEASE**
-- ✅ **FIXED:** Duplicate verification call timing issue causing millisecond-level conflicts
-- ✅ **NEW:** iOS-compliant approval API models (ApprovalRequestData, ApprovalRequestTestingResponse)
-- ✅ **IMPROVED:** Updated SendApprovalRequest to use nested response structure (response.approvalData.*)
-- ✅ **ENHANCED:** Stack trace logging for duplicate call investigation and debugging
-- ✅ **STABLE:** All critical verification issues resolved - production ready
-
-### **v1.2.40 (October 23, 2025) - 🔍 DIAGNOSTIC BUILD**
-- 🔍 **DIAGNOSTIC:** Added comprehensive stack trace logging to identify duplicate call sources
-- 🔍 **ENHANCED:** Detailed timing and thread ID logging in VerificationGuard
-- 🔍 **DEBUG:** Enhanced LaunchedEffect and VerificationProcessingViewModel logging
-- 🔍 **INVESTIGATION:** Millisecond-precision timing to track duplicate call origins
-
-### **v1.2.39 (October 23, 2025) - 🚨 CRITICAL FIX**
-- 🚨 **CRITICAL:** Fixed VerificationGuard stuck state persisting across app restarts
-- ✅ Added initialization block to ensure clean state on app startup
-- ✅ Fixed timeout calculation handling edge cases (0L timestamps)
-- ✅ Added comprehensive state validation and automatic recovery
-- ✅ Enhanced logging with detailed state information for debugging
-- ✅ Improved DisposableEffect cleanup with robust error handling
-- ✅ Added getDebugState() and forceReset() methods for troubleshooting
-- ✅ Resolves permanent verification blocking and (0s) elapsed time issues
-
-### **v1.2.38 (October 23, 2025) - 🚨 CRITICAL FIX**
-- 🚨 **CRITICAL:** Fixed EncryptedSharedPreferences corruption after certificate clearing
-- ✅ Added automatic corruption detection and recovery
-- ✅ New EncryptedPreferencesManager utility class
-- ✅ Updated all certificate managers with safe methods
-- ✅ Comprehensive logging and error handling
-- ✅ Users can clear and re-register certificates without app data loss
-- ✅ No more permanent AEADBadTagException blocking verification
-- ✅ Production-ready recovery mechanisms
-
-### **v1.2.37 (October 23, 2025)**
-- 🎯 **NEW: Configurable Client ID** - Match iOS SDK functionality
-- ✅ Fixes FCM notification routing between multiple apps
-- ✅ Enables proper multi-client backend architecture
-- ✅ Backward compatible (defaults to clientId=1)
-- ✅ Centralized ClientConfiguration management
-
-### **v1.2.36 (October 22, 2025)**
-- 🐛 **CRITICAL FIX:** VerificationGuard singleton stuck state
-- ✅ Added 2-minute timeout safety mechanism
-- ✅ Fixed DisposableEffect guard reset
-- ✅ Prevents permanent verification blocking
-
-### **v1.2.35 (October 22, 2025)**
-- 🐛 Fixed duplicate verification submissions
-- ✅ Singleton VerificationGuard implementation
-- ✅ Cross-ViewModel instance protection
-
-### **v1.2.21 (October 21, 2025)**
-- 🐛 Fixed duplicate verification requests
-- 🐛 Fixed duplicate authentication requests
-- ✅ Only ONE verification request per flow
-- ✅ 50% reduction in backend load
-
----
-
-## 📦 **Package Contents**
-
-- `artiusid-sdk-1.2.55.aar` - Main SDK library (25MB)
-- `HILT_INTEGRATION_GUIDE.md` - Complete HILT setup guide
-- `README_HILT_SETUP.md` - Quick HILT reference
-- `SDK_DEPENDENCY_REQUIREMENTS.md` - Required dependencies
-- `setup_hilt.sh` - Automated HILT configuration script
-- `hilt_diagnostic_script.gradle` - HILT diagnostic tool
-- Sample app with integration examples
-
----
-
-## 🚀 **Example Integration**
-
-Check out the `sample-app` directory for a complete working example that demonstrates:
-- SDK initialization with custom branding
-- Verification flow integration
-- Authentication flow integration
-- Theme customization
-- Image overrides
-- Localization
-- Error handling
-- Approval notifications
-
----
-
-## 📄 **License**
-
-Copyright © 2024-2025 artius.iD, Inc. All rights reserved.
-
-This SDK is provided under license. See LICENSE.txt for full terms and conditions.
-
----
-
-**Version:** 1.2.55  
-**Release Date:** March 2026  
-**Package Size:** 25MB  
-**Status:** Production Ready
-
+Copyright © 2024–2026 Artius.iD, Inc. All rights reserved. Your license agreement with Artius.iD governs use of this SDK.

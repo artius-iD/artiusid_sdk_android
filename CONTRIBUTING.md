@@ -395,7 +395,7 @@ Will this break existing integrations?
 **DO NOT** create public issues for security vulnerabilities.
 
 **Instead:**
-1. Email: security@artiusid.com
+1. Contact Artius.iD privately through [artiusid.ai](https://www.artiusid.ai)
 2. Include: Detailed description and reproduction steps
 3. Allow time for fix before public disclosure
 

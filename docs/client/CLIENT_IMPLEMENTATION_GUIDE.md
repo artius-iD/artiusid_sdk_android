@@ -165,7 +165,6 @@ class YourFirebaseMessagingService : FirebaseMessagingService() {
 ```kotlin
 val sdkConfig = SDKConfiguration(
     apiKey = "your_api_key",
-    baseUrl = "https://api.artiusid.com",
     environment = sdkEnvironment,
     clientId = 1,
     clientGroupId = 1,
@@ -413,8 +412,8 @@ This has been fixed in SDK v1.2.48. Update to latest SDK version.
 ## 9. 📞 SUPPORT
 
 For issues or questions:
-- **Email:** support@artiusid.com
-- **Documentation:** [SDK Documentation](https://docs.artiusid.com)
+- **Developer portal:** [developer.artiusid.ai](https://developer.artiusid.ai)
+- **Documentation:** [README](../../README.md)
 
 ---
 

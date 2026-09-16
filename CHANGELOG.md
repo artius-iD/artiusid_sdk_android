@@ -4,6 +4,8 @@ High-level version history. Full details in [docs/client/RELEASE_NOTES_*.md](doc
 
 | Version | Date | Summary |
 |---------|------|---------|
+| [v1.3.0](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.0) | September 2026 | Session binding for host apps (`AppNotificationState`, `ArtiusIDSDK.sendBindingResponse`). The binding, enrollment-state and sign-in result types keep their names in the minified AAR. Includes the fixes from 1.2.56 through 1.2.63. |
+| [v1.2.56 – v1.2.63](https://github.com/artius-iD/artiusid_sdk_android/releases) | March 2026 | Maintenance releases. |
 | [v1.2.55](docs/client/RELEASE_NOTES_v1.2.55.md) | March 2026 | iOS 2.0.138 parity: Sample app approval result card shows localized "Approved"/"Declined" (short) with title "Approval Request Result". SDK version already exposed via `ArtiusIDSDK.getSdkVersion()` (iOS 2.0.139). |
 | [v1.2.54](docs/client/RELEASE_NOTES_v1.2.54.md) | March 2026 | iOS parity punch list: API (biometric, FCM set/get, env mapping, authenticate(request), ensureCertificateRegisteredOrThrow, listeners), config (URL template, copyWithFcmToken/Logging), theme (paragraphSpacing, IconCategory), LocalizationKeys (settings_*, sample_*), sample app strings (en/es/fr/de) |
 | [v1.2.53](docs/client/RELEASE_NOTES_v1.2.53.md) | March 2026 | ThemeManager, LocalizationManager, SDKResourceBundle (iOS parity) |
@@ -13,4 +15,4 @@ High-level version history. Full details in [docs/client/RELEASE_NOTES_*.md](doc
 | [v1.2.49](docs/client/RELEASE_NOTES_v1.2.49.md) | — | iOS parity: mTLS clear on env switch, Okta user ID, re-verification, NFC reset |
 | [v1.2.48](docs/client/RELEASE_NOTES_v1.2.48.md) | Oct 2025 | Firebase architecture change (client-owned FMS), production-ready verification/recapture |
 
-**Integrating iOS changes:** See [docs/IOS_ANDROID_PARITY.md](docs/IOS_ANDROID_PARITY.md) and [DEVELOPER_README.md](DEVELOPER_README.md).
+For integration instructions, see [README.md](README.md).
