@@ -4,8 +4,8 @@ Identity verification, biometric authentication and session binding for Android 
 
 | | |
 |---|---|
-| **Latest release** | [1.3.2](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.3.2) (September 16, 2026) |
-| **Download** | [`artiusid-sdk-1.3.2.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.2/artiusid-sdk-1.3.2.aar) |
+| **Latest release** | [1.4.0](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.4.0) (September 21, 2026) |
+| **Download** | [`artiusid-sdk-1.4.0.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.4.0/artiusid-sdk-1.4.0.aar) |
 | **Platform** | Android 7.0 (API 24) or later. Compiled against API 34. |
 | **Toolchain** | Kotlin 1.9.10, Jetpack Compose (compiler 1.5.3, BOM 2023.10.01), Hilt 2.48 with KSP, JDK 17 |
 | **iOS SDK** | [artius-iD/sdk](https://github.com/artius-iD/sdk) |
@@ -17,8 +17,15 @@ Identity verification, biometric authentication and session binding for Android 
 - **Session binding (patent pending).** Users confirm browser sign-ins on their enrolled phone, so a stolen password or session token isn't enough on its own.
 - **Approval requests.** Users approve or decline requests that your backend sends to their phone.
 - **Organization sign-in.** Enrollment can be tied to your organization's own login, such as Okta or another OIDC provider.
-- **Mutual TLS.** The SDK registers a client certificate for the device and uses it for its service calls.
+- **Real-time session status.** A WebSocket heartbeat reports binding-session state changes (active, locked, closed) to your app as they happen, with automatic reconnect.
+- **Mutual TLS.** The SDK registers client certificates for the device and uses them for its service calls, with a separate certificate for the real-time gateway.
 - **Branding.** You can set your own colors, fonts, logo, text and language.
+
+## What's new in 1.4.0
+
+- Real-time binding-session status over a WebSocket connection. `ArtiusIDSDK.connectBindingWebSocket(...)` opens a heartbeat channel and reports session-status changes through `bindingSessionStatusFlow` and `onBindingSessionStatusChange`, with automatic reconnect configurable via `BindingWebSocketConfig`. `disconnectBindingWebSocket()` and `stopBindingWebSocket()` close it.
+- Separate client certificates for the REST API and the WebSocket gateway (`CertificatePurpose`, `ensureCertificateRegistered(context, purpose)`). Existing REST behavior is unchanged.
+- Brings the Android binding-session API in line with the iOS SDK.
 
 ## What's new in 1.3.2
 
@@ -40,11 +47,11 @@ See [CHANGELOG.md](CHANGELOG.md) for earlier releases.
 
 ### 1. Add the AAR
 
-Download [`artiusid-sdk-1.3.2.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.2/artiusid-sdk-1.3.2.aar) and copy it to `app/libs/`:
+Download [`artiusid-sdk-1.4.0.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.4.0/artiusid-sdk-1.4.0.aar) and copy it to `app/libs/`:
 
 ```bash
-curl -L -o app/libs/artiusid-sdk-1.3.2.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.3.2/artiusid-sdk-1.3.2.aar
+curl -L -o app/libs/artiusid-sdk-1.4.0.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.4.0/artiusid-sdk-1.4.0.aar
 ```
 
 ### 2. Configure Gradle
@@ -88,7 +95,7 @@ An AAR carries no dependency metadata, so declare the libraries the SDK uses:
 
 ```kotlin
 dependencies {
-    implementation(files("libs/artiusid-sdk-1.3.2.aar"))
+    implementation(files("libs/artiusid-sdk-1.4.0.aar"))
 
     val camerax = "1.4.2"
     implementation("androidx.core:core-ktx:1.12.0")
