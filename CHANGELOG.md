@@ -4,6 +4,7 @@ High-level version history. Full details in [docs/client/RELEASE_NOTES_*.md](doc
 
 | Version | Date | Summary |
 |---------|------|---------|
+| [v1.4.4](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.4.4) | September 2026 | Fixed a crash when an app reads the result of an approval response: `ApprovalResultData` is now kept intact in the minified AAR, so reading `statusCode` no longer throws `NoSuchMethodError`. |
 | [v1.4.3](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.4.3) | September 2026 | `verifyEnrolledAccount(context)` account-existence check (`ACTIVE` / `INACTIVE` / `UNREACHABLE`). Session binding: a lock caused by the phone being away is reported as such, so a paired browser shows a phone-away notice and resumes when the phone returns. |
 | [v1.4.2](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.4.2) | September 2026 | Corrected the Closed and Terminated session-status values to match the service (Terminated = 5, Closed = 6). |
 | [v1.4.1](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.4.1) | September 2026 | Enrollment retries go to the correct capture step; a failing document image, low face match or failed identity check is reported as a failure rather than a success. |
