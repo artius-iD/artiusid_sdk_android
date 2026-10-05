@@ -4,8 +4,8 @@ Identity verification, biometric authentication and session binding for Android 
 
 | | |
 |---|---|
-| **Latest release** | [1.5.0](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.5.0) (October 5, 2026) |
-| **Download** | [`artiusid-sdk-1.5.0.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.0/artiusid-sdk-1.5.0.aar) |
+| **Latest release** | [1.5.1](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.5.1) (October 5, 2026) |
+| **Download** | [`artiusid-sdk-1.5.1.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.1/artiusid-sdk-1.5.1.aar) |
 | **Platform** | Android 7.0 (API 24) or later. Compiled against API 34. |
 | **Toolchain** | Kotlin 1.9.10, Jetpack Compose (compiler 1.5.3, BOM 2023.10.01), Hilt 2.48 with KSP, JDK 17 |
 | **iOS SDK** | [artius-iD/sdk](https://github.com/artius-iD/sdk) |
@@ -20,6 +20,10 @@ Identity verification, biometric authentication and session binding for Android 
 - **Real-time session status.** A WebSocket heartbeat reports binding-session state changes (active, locked, closed) to your app as they happen, with automatic reconnect.
 - **Mutual TLS.** The SDK registers client certificates for the device and uses them for its service calls, with a separate certificate for the real-time gateway.
 - **Branding.** You can set your own colors, fonts, logo, text and language.
+
+## What's new in 1.5.1
+
+- Fixed session binding failing when it was approved within a few seconds of app launch. The client certificate is now kept across launches instead of being re-registered on every start, and the binding response waits for the certificate before it is sent.
 
 ## What's new in 1.5.0
 
@@ -72,11 +76,11 @@ See [CHANGELOG.md](CHANGELOG.md) for earlier releases.
 
 ### 1. Add the AAR
 
-Download [`artiusid-sdk-1.5.0.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.0/artiusid-sdk-1.5.0.aar) and copy it to `app/libs/`:
+Download [`artiusid-sdk-1.5.1.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.1/artiusid-sdk-1.5.1.aar) and copy it to `app/libs/`:
 
 ```bash
-curl -L -o app/libs/artiusid-sdk-1.5.0.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.0/artiusid-sdk-1.5.0.aar
+curl -L -o app/libs/artiusid-sdk-1.5.1.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.1/artiusid-sdk-1.5.1.aar
 ```
 
 ### 2. Configure Gradle
@@ -120,7 +124,7 @@ An AAR carries no dependency metadata, so declare the libraries the SDK uses:
 
 ```kotlin
 dependencies {
-    implementation(files("libs/artiusid-sdk-1.5.0.aar"))
+    implementation(files("libs/artiusid-sdk-1.5.1.aar"))
 
     val camerax = "1.4.2"
     implementation("androidx.core:core-ktx:1.12.0")
