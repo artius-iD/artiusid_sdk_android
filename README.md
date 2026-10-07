@@ -4,8 +4,8 @@ Identity verification, biometric authentication and session binding for Android 
 
 | | |
 |---|---|
-| **Latest release** | [1.5.1](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.5.1) (October 5, 2026) |
-| **Download** | [`artiusid-sdk-1.5.1.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.1/artiusid-sdk-1.5.1.aar) |
+| **Latest release** | [1.5.2](https://github.com/artius-iD/artiusid_sdk_android/releases/tag/v1.5.2) (October 7, 2026) |
+| **Download** | [`artiusid-sdk-1.5.2.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.2/artiusid-sdk-1.5.2.aar) |
 | **Platform** | Android 7.0 (API 24) or later. Compiled against API 34. |
 | **Toolchain** | Kotlin 1.9.10, Jetpack Compose (compiler 1.5.3, BOM 2023.10.01), Hilt 2.48 with KSP, JDK 17 |
 | **iOS SDK** | [artius-iD/sdk](https://github.com/artius-iD/sdk) |
@@ -20,6 +20,15 @@ Identity verification, biometric authentication and session binding for Android 
 - **Real-time session status.** A WebSocket heartbeat reports binding-session state changes (active, locked, closed) to your app as they happen, with automatic reconnect.
 - **Mutual TLS.** The SDK registers client certificates for the device and uses them for its service calls, with a separate certificate for the real-time gateway.
 - **Branding.** You can set your own colors, fonts, logo, text and language.
+
+## What's new in 1.5.2
+
+- **Requests open only from your own app.** Your launcher activity is exported, so another installed app could start it with its own approval text over a real pending request. Taps on notifications the SDK posts now go to a private SDK activity that sets `AppNotificationState` itself. For requests that reach your launcher activity as extras (for example a notification Firebase draws while your app is in the background), call `ArtiusIDSDK.handleNotificationIntent` from `onCreate` and `onNewIntent`: it opens a request only when Android confirms your app sent it, and drops it otherwise. See [Push notifications](#4-push-notifications).
+- **The SDK's `ApprovalActivity` is no longer exported**, and the SDK turns off Firebase's notification delegation to Google Play services (`firebase_messaging_notification_delegation_enabled=false`), so notification taps come from your app.
+- **Binding and approval need the device owner:** strong biometrics when enrolled, otherwise the screen lock (PIN, pattern or password). A device with neither can't approve.
+- Session binding in line with iOS: `BindingScreen` reports the decision and leaves arming presence monitoring to your app; the QR reader opens the camera once; a failed fingerprint or face attempt no longer opens a second prompt; binding sends the same device identifier the device's client certificate carries.
+- Fixed two crashes in the presence-monitoring foreground service (stopped during its start, and a start Android refused).
+- `ProximityAlertManager.setUseLocation` / `setUseHeading`.
 
 ## What's new in 1.5.1
 
@@ -76,11 +85,11 @@ See [CHANGELOG.md](CHANGELOG.md) for earlier releases.
 
 ### 1. Add the AAR
 
-Download [`artiusid-sdk-1.5.1.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.1/artiusid-sdk-1.5.1.aar) and copy it to `app/libs/`:
+Download [`artiusid-sdk-1.5.2.aar`](https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.2/artiusid-sdk-1.5.2.aar) and copy it to `app/libs/`:
 
 ```bash
-curl -L -o app/libs/artiusid-sdk-1.5.1.aar \
-  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.1/artiusid-sdk-1.5.1.aar
+curl -L -o app/libs/artiusid-sdk-1.5.2.aar \
+  https://github.com/artius-iD/artiusid_sdk_android/releases/download/v1.5.2/artiusid-sdk-1.5.2.aar
 ```
 
 ### 2. Configure Gradle
@@ -124,7 +133,7 @@ An AAR carries no dependency metadata, so declare the libraries the SDK uses:
 
 ```kotlin
 dependencies {
-    implementation(files("libs/artiusid-sdk-1.5.1.aar"))
+    implementation(files("libs/artiusid-sdk-1.5.2.aar"))
 
     val camerax = "1.4.2"
     implementation("androidx.core:core-ktx:1.12.0")
@@ -305,6 +314,37 @@ Register the service in `AndroidManifest.xml`:
 ```
 
 When the app is in the background, show a notification that opens your activity. The activity then displays the pending request, as shown in [Approval requests and session binding](#approval-requests-and-session-binding).
+
+Your launcher activity is exported, so any installed app can start it. Only act on a request in its extras when Android confirms your app sent it:
+
+- Open your own notifications through an `activity-alias` that is not exported. An intent addressed to one of your app's non-exported components counts as your app's on every Android version:
+
+  ```xml
+  <activity-alias
+      android:name=".NotificationTap"
+      android:exported="false"
+      android:targetActivity=".MainActivity" />
+  ```
+
+- Let the SDK check and open what reaches the activity, including the tray entry Firebase draws for a push that arrives in the background:
+
+  ```kotlin
+  override fun onCreate(savedInstanceState: Bundle?) {
+      super.onCreate(savedInstanceState)
+      if (savedInstanceState == null) {
+          ArtiusIDSDK.handleNotificationIntent(this, intent, isNewIntent = false)
+      }
+  }
+
+  override fun onNewIntent(intent: Intent) {
+      super.onNewIntent(intent)
+      setIntent(intent)
+      ArtiusIDSDK.handleNotificationIntent(this, intent, isNewIntent = true)
+  }
+  ```
+
+  It returns `OPENED`, `DROPPED` or `NO_REQUEST`, and removes the request from the intent either way. Android names the sender from Android 14 in `onCreate` and from Android 15 in `onNewIntent`; earlier, a background tray tap is dropped while the notifications your app posts itself still open. `ArtiusIDSDK.notificationSender(...)` returns the sender alone, and `trustedPackages` names a sibling app signed with your certificate.
+- Call `FirebaseMessaging.getInstance().setNotificationDelegationEnabled(false)` at startup. The SDK's manifest turns delegation off, but that setting doesn't reach installs where Firebase has already delegated.
 
 ## Enrollment
 
